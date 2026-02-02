@@ -4,6 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mavo Fashion</title>
+    
+    <!-- Add Google Fonts (Jost) as a high-quality fallback for SFU Futura -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -14,35 +20,39 @@
               secondary: '#4a4a4a',
             },
             fontFamily: {
-              sans: ['SFUFuturaBook', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
-              'sfu-light': ['SFUFuturaLight', 'sans-serif'],
-              'sfu-book': ['SFUFuturaBook', 'sans-serif'],
-              'sfu-heavy': ['SFUFuturaHeavy', 'sans-serif'],
+              // Priority: SFU Local -> Jost (Google) -> System Sans
+              sans: ['SFUFuturaBook', 'Jost', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
+              'sfu-light': ['SFUFuturaLight', 'Jost', 'sans-serif'],
+              'sfu-book': ['SFUFuturaBook', 'Jost', 'sans-serif'],
+              'sfu-heavy': ['SFUFuturaHeavy', 'Jost', 'sans-serif'],
             }
           }
         }
       }
     </script>
     <style>
-      /* Define custom fonts */
+      /* 
+         Using ./assets ensures paths work even if served from a sub-folder.
+         If these files are missing, the browser will gracefully fall back to 'Jost'.
+      */
       @font-face {
         font-family: 'SFUFuturaLight';
         src: url('./assets/fonts/SFUFuturaLight.ttf') format('truetype');
-        font-weight: normal;
+        font-weight: 300;
         font-style: normal;
         font-display: swap;
       }
       @font-face {
         font-family: 'SFUFuturaBook';
         src: url('./assets/fonts/SFUFuturaBook.ttf') format('truetype');
-        font-weight: normal;
+        font-weight: 400; /* Map to normal weight */
         font-style: normal;
         font-display: swap;
       }
       @font-face {
         font-family: 'SFUFuturaHeavy';
         src: url('./assets/fonts/SFUFuturaHeavy.ttf') format('truetype');
-        font-weight: bold;
+        font-weight: 800; /* Map to extra bold/heavy weight */
         font-style: normal;
         font-display: swap;
       }
@@ -50,7 +60,10 @@
       body {
         background-color: #ffffff;
         color: #1a1a1a;
+        /* Force application of the font stack */
+        font-family: 'SFUFuturaBook', 'Jost', 'Helvetica Neue', Helvetica, Arial, sans-serif;
       }
+      
       /* Custom scrollbar */
       ::-webkit-scrollbar {
         width: 6px;

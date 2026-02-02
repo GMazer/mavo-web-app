@@ -22,7 +22,8 @@ const Header: React.FC<HeaderProps> = ({ cartCount }) => {
           
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center mr-16">
-            <h1 className="text-3xl font-black tracking-tighter uppercase font-sfu-heavy">MAVO</h1>
+            {/* Removed font-black, rely solely on font-sfu-heavy (or Jost Heavy fallback) */}
+            <h1 className="text-3xl tracking-tighter uppercase font-sfu-heavy">MAVO</h1>
           </div>
 
           {/* Desktop Nav - Aligned Left next to Logo */}
