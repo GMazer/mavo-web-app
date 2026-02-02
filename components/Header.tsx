@@ -11,7 +11,8 @@ const Header: React.FC<HeaderProps> = ({ cartCount }) => {
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-transparent hover:border-gray-100 transition-colors">
-      <div className="max-w-[1600px] mx-auto px-6 lg:px-10">
+      {/* Changed max-w-[1600px] mx-auto to w-full for full-width layout */}
+      <div className="w-full px-6 lg:px-10">
         <div className="flex items-center h-20">
           
           {/* Logo */}

@@ -21,8 +21,8 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-white font-sans text-gray-900 flex flex-col">
       <Header cartCount={cart.length} />
 
-      {/* Breadcrumb - Spacing and Font adjusted */}
-      <div className="max-w-[1600px] mx-auto px-6 lg:px-10 py-6 w-full">
+      {/* Breadcrumb - Changed max-w-[1600px] mx-auto to w-full */}
+      <div className="w-full px-6 lg:px-10 py-6">
         <p className="text-[11px] text-gray-500 uppercase tracking-wide font-sfu-book">
             <span className="hover:text-black cursor-pointer">HOME</span> 
             <span className="mx-2 text-gray-300">/</span> 
@@ -30,21 +30,19 @@ const App: React.FC = () => {
         </p>
       </div>
 
-      <main className="max-w-[1600px] mx-auto px-6 lg:px-10 pb-20 w-full flex-grow">
+      {/* Main Content - Changed max-w-[1600px] mx-auto to w-full */}
+      <main className="w-full px-6 lg:px-10 pb-20 flex-grow">
         <div className="flex flex-col lg:flex-row gap-16">
             
-            {/* Sidebar Filters - Width adjusted to be slimmer like reference */}
+            {/* Sidebar Filters */}
             <aside className="w-full lg:w-52 flex-shrink-0 pt-1">
-                {/* Lọc theo: 24px Regular to match reference header size */}
                 <h2 className="text-2xl font-normal mb-8 font-sfu-book uppercase tracking-wide">Lọc theo</h2>
                 
                 <div className="py-2">
-                    {/* DANH MỤC Header */}
                     <button className="flex items-center justify-between w-full text-[13px] font-bold uppercase tracking-wider mb-3 font-sfu-book">
                         DANH MỤC
                         <ChevronDownIcon className="w-3 h-3" />
                     </button>
-                    {/* Separator line matches reference position */}
                     <div className="w-full border-t border-gray-200 mb-4"></div>
                     
                     <ul className="space-y-3 pl-1">
@@ -62,12 +60,11 @@ const App: React.FC = () => {
             {/* Product Grid Content */}
             <div className="flex-1">
                 <div className="mb-10">
-                    {/* QUẦN ÁO: Matches size of Lọc theo */}
                     <h1 className="text-2xl uppercase font-normal tracking-wide font-sfu-book">QUẦN ÁO</h1>
                 </div>
 
-                {/* Grid gap adjusted to gap-x-5 gap-y-12 to match clean look */}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-12">
+                {/* Added xl:grid-cols-5 and 2xl:grid-cols-6 to handle full width gracefully */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-5 gap-y-12">
                     {PRODUCTS.map(product => (
                         <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
                     ))}

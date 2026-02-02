@@ -3,7 +3,8 @@ import React from 'react';
 const Footer: React.FC = () => {
   return (
     <footer className="bg-black text-white pt-16 pb-8 text-sm">
-      <div className="max-w-[1440px] mx-auto px-6 lg:px-10">
+      {/* Changed max-w-[1440px] mx-auto to w-full */}
+      <div className="w-full px-6 lg:px-10">
         
         {/* Top Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 border-b border-gray-800 pb-12 mb-12">
