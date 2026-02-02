@@ -35,8 +35,8 @@ const App: React.FC = () => {
       <main className="w-full px-6 lg:px-10 pb-20 flex-grow">
         <div className="flex flex-col lg:flex-row gap-16">
             
-            {/* Sidebar Filters */}
-            <aside className="w-full lg:w-52 flex-shrink-0 pt-1">
+            {/* Sidebar Filters - Changed width to arbitrary 333px */}
+            <aside className="w-full lg:w-[333px] flex-shrink-0 pt-1">
                 <h2 className="text-[26px] font-normal mb-8 font-sfu-book uppercase tracking-wide">Lọc theo</h2>
                 
                 <div className="py-2">
