@@ -45,17 +45,17 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
       {/* Details Section */}
       <div className="mt-4 flex flex-col gap-1.5">
         {/* Product Name: Clean, light/regular font, left aligned */}
-        <h3 className="text-[13px] font-sfu-book text-gray-700 truncate leading-normal">
+        <h3 className="text-sm font-sfu-book text-gray-700 truncate leading-normal">
           {product.name}
         </h3>
 
         {/* Price Section */}
         <div className="flex items-baseline gap-2">
-          <p className="text-[13px] font-sfu-book text-black font-normal">
+          <p className="text-sm font-sfu-book text-black font-normal">
             {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price).replace('₫', '')} ₫
           </p>
           {product.originalPrice && (
-            <p className="text-[13px] text-gray-400 line-through decoration-gray-400 font-sfu-book font-light">
+            <p className="text-sm text-gray-400 line-through decoration-gray-400 font-sfu-book font-light">
               {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.originalPrice).replace('₫', '')} ₫
             </p>
           )}

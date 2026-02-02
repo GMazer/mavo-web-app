@@ -36,10 +36,10 @@ const App: React.FC = () => {
             
             {/* Sidebar Filters */}
             <aside className="w-full lg:w-52 flex-shrink-0 pt-1">
-                <h2 className="text-2xl font-normal mb-8 font-sfu-book uppercase tracking-wide">Lọc theo</h2>
+                <h2 className="text-[26px] font-normal mb-8 font-sfu-book uppercase tracking-wide">Lọc theo</h2>
                 
                 <div className="py-2">
-                    <button className="flex items-center justify-between w-full text-[13px] font-bold uppercase tracking-wider mb-3 font-sfu-book">
+                    <button className="flex items-center justify-between w-full text-sm font-bold uppercase tracking-wider mb-3 font-sfu-book">
                         DANH MỤC
                         <ChevronDownIcon className="w-3 h-3" />
                     </button>
@@ -48,7 +48,7 @@ const App: React.FC = () => {
                     <ul className="space-y-3 pl-1">
                         {categories.map((cat, idx) => (
                             <li key={idx}>
-                                <a href="#" className="text-[13px] text-gray-600 hover:text-black transition-colors block py-0.5 font-sfu-book">
+                                <a href="#" className="text-sm text-gray-600 hover:text-black transition-colors block py-0.5 font-sfu-book">
                                     {cat}
                                 </a>
                             </li>
@@ -60,7 +60,7 @@ const App: React.FC = () => {
             {/* Product Grid Content */}
             <div className="flex-1">
                 <div className="mb-10">
-                    <h1 className="text-2xl uppercase font-normal tracking-wide font-sfu-book">QUẦN ÁO</h1>
+                    <h1 className="text-[26px] uppercase font-normal tracking-wide font-sfu-book">QUẦN ÁO</h1>
                 </div>
 
                 {/* Grid limited to 4 columns max as requested, allowing images to scale up on large screens */}

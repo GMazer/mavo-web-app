@@ -27,7 +27,7 @@ const Header: React.FC<HeaderProps> = ({ cartCount }) => {
           </div>
 
           {/* Desktop Nav - Aligned Left next to Logo */}
-          <nav className="hidden xl:flex items-center space-x-8 text-[13px] font-sfu-book text-gray-600 tracking-wide uppercase">
+          <nav className="hidden xl:flex items-center space-x-8 text-sm font-sfu-book text-gray-600 tracking-wide uppercase">
             {/* Standard links turn Red #E71313 on hover */}
             <a href="#" className={`${navLinkBase} ${hoverEffect} hover:text-[#E71313]`}>QUẦN ÁO</a>
             <a href="#" className={`${navLinkBase} ${hoverEffect} hover:text-[#E71313]`}>GIÀY DÉP</a>
@@ -60,7 +60,7 @@ const Header: React.FC<HeaderProps> = ({ cartCount }) => {
               )}
             </button>
             
-            <span className="text-[13px] font-medium text-gray-600 cursor-pointer hover:text-black font-sfu-book">VN</span>
+            <span className="text-sm font-medium text-gray-600 cursor-pointer hover:text-black font-sfu-book">VN</span>
           </div>
         </div>
       </div>
