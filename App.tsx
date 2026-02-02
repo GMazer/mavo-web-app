@@ -23,7 +23,8 @@ const App: React.FC = () => {
 
       {/* Breadcrumb - Changed max-w-[1600px] mx-auto to w-full */}
       <div className="w-full px-6 lg:px-10 py-6">
-        <p className="text-[11px] text-gray-500 uppercase tracking-wide font-sfu-book">
+        {/* Changed text-[11px] to text-sm (14px) */}
+        <p className="text-sm text-gray-500 uppercase tracking-wide font-sfu-book">
             <span className="hover:text-black cursor-pointer">HOME</span> 
             <span className="mx-2 text-gray-300">/</span> 
             <span className="text-black">Quần áo</span>

@@ -63,17 +63,23 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
         
         {/* Color Swatches */}
         {product.colors && product.colors.length > 0 && (
-            <div className="flex gap-2 mt-1">
+            <div className="flex gap-2 mt-2">
                 {product.colors.map((color, idx) => (
                     <div 
                         key={idx}
-                        className={`w-3.5 h-3.5 rounded-full border border-gray-300 cursor-pointer relative hover:border-gray-400 transition-colors`}
-                        style={{ backgroundColor: color }}
+                        // Outer Ring: Increased size to w-5 h-5 (20px), added padding to create gap between color and border
+                        className="w-5 h-5 rounded-full border border-gray-300 p-[2px] cursor-pointer hover:border-gray-500 transition-colors flex items-center justify-center"
                     >
-                        {/* Inner ring for white colors */}
-                         {color.toLowerCase() === '#ffffff' && (
-                             <div className="absolute inset-0 rounded-full border border-gray-100"></div>
-                         )}
+                        {/* Inner Color Circle */}
+                        <div 
+                            className="w-full h-full rounded-full"
+                            style={{ 
+                                backgroundColor: color,
+                                // Add a subtle border for white colors so they don't blend into the white gap
+                                border: color.toLowerCase() === '#ffffff' ? '1px solid #e5e7eb' : 'none'
+                            }}
+                        >
+                        </div>
                     </div>
                 ))}
             </div>

@@ -11,11 +11,13 @@ const Footer: React.FC = () => {
             {/* Column 1 */}
             <div>
                 <h3 className="text-base font-bold mb-4 uppercase">LIÊN HỆ VỚI MAVO</h3>
-                <p className="text-gray-400 text-xs mb-6 leading-relaxed max-w-xs">
+                {/* Changed text-xs to text-sm */}
+                <p className="text-gray-400 text-sm mb-6 leading-relaxed max-w-xs">
                     Nếu bạn có thắc mắc hoặc muốn đóng góp ý kiến vui lòng gửi liên hệ cho chúng tôi. 
                     Mọi ý kiến của bạn sẽ giúp cho trải nghiệm dịch vụ sản phẩm tốt hơn nữa
                 </p>
-                <button className="bg-white text-black px-6 py-2.5 rounded font-bold text-xs uppercase hover:bg-gray-200 transition-colors">
+                {/* Changed text-xs to text-sm */}
+                <button className="bg-white text-black px-6 py-2.5 rounded font-bold text-sm uppercase hover:bg-gray-200 transition-colors">
                     Đóng góp ý kiến
                 </button>
             </div>
@@ -23,7 +25,8 @@ const Footer: React.FC = () => {
             {/* Column 2 */}
             <div>
                 <h3 className="text-base font-bold mb-4 uppercase">HOTLINE: 1800 6525</h3>
-                <p className="text-gray-400 text-xs mb-2">Thời gian hỗ trợ hành chính: (8:30 - 17:00)</p>
+                {/* Changed text-xs to text-sm */}
+                <p className="text-gray-400 text-sm mb-2">Thời gian hỗ trợ hành chính: (8:30 - 17:00)</p>
                 <p className="text-sm font-bold uppercase mt-6 tracking-wide">EMAIL: CSKH@MAVOFASHION.COM</p>
             </div>
 
@@ -46,11 +49,14 @@ const Footer: React.FC = () => {
             {/* Col 1 */}
             <div className="space-y-8">
                 <div>
-                    <h4 className="font-bold mb-4 text-xs uppercase text-white">HỆ THỐNG CỬA HÀNG</h4>
+                    {/* Changed text-xs to text-sm */}
+                    <h4 className="font-bold mb-4 text-sm uppercase text-white">HỆ THỐNG CỬA HÀNG</h4>
                 </div>
                  <div>
-                    <h4 className="font-bold mb-4 text-xs uppercase text-white">CHÍNH SÁCH</h4>
-                    <ul className="space-y-2 text-xs text-gray-400">
+                    {/* Changed text-xs to text-sm */}
+                    <h4 className="font-bold mb-4 text-sm uppercase text-white">CHÍNH SÁCH</h4>
+                    {/* Changed text-xs to text-sm */}
+                    <ul className="space-y-2 text-sm text-gray-400">
                         <li><a href="#" className="hover:text-white transition-colors">Mavo Club</a></li>
                         <li><a href="#" className="hover:text-white transition-colors">Chính sách bảo mật</a></li>
                         <li><a href="#" className="hover:text-white transition-colors">Chính sách mua hàng</a></li>
@@ -65,20 +71,20 @@ const Footer: React.FC = () => {
             {/* Col 2 */}
             <div className="space-y-8">
                  <div>
-                    <h4 className="font-bold mb-4 text-xs uppercase text-white">CHĂM SÓC KHÁCH HÀNG</h4>
-                     <ul className="space-y-2 text-xs text-gray-400">
+                    <h4 className="font-bold mb-4 text-sm uppercase text-white">CHĂM SÓC KHÁCH HÀNG</h4>
+                     <ul className="space-y-2 text-sm text-gray-400">
                         <li><a href="#" className="hover:text-white transition-colors">Hỏi đáp - FAQs</a></li>
                     </ul>
                 </div>
                  <div>
-                    <h4 className="font-bold mb-4 text-xs uppercase text-white">TIN TỨC</h4>
-                     <ul className="space-y-2 text-xs text-gray-400">
+                    <h4 className="font-bold mb-4 text-sm uppercase text-white">TIN TỨC</h4>
+                     <ul className="space-y-2 text-sm text-gray-400">
                         <li><a href="#" className="hover:text-white transition-colors">Ra mắt thương hiệu</a></li>
                     </ul>
                 </div>
                 <div>
-                    <h4 className="font-bold mb-4 text-xs uppercase text-white">KIẾN THỨC MẶC ĐẸP</h4>
-                     <ul className="space-y-2 text-xs text-gray-400">
+                    <h4 className="font-bold mb-4 text-sm uppercase text-white">KIẾN THỨC MẶC ĐẸP</h4>
+                     <ul className="space-y-2 text-sm text-gray-400">
                         <li><a href="#" className="hover:text-white transition-colors">Hướng dẫn chọn size</a></li>
                     </ul>
                 </div>
@@ -87,8 +93,8 @@ const Footer: React.FC = () => {
             {/* Col 3 */}
             <div className="space-y-8">
                  <div>
-                    <h4 className="font-bold mb-4 text-xs uppercase text-white">TÀI LIỆU - TUYỂN DỤNG</h4>
-                     <ul className="space-y-2 text-xs text-gray-400">
+                    <h4 className="font-bold mb-4 text-sm uppercase text-white">TÀI LIỆU - TUYỂN DỤNG</h4>
+                     <ul className="space-y-2 text-sm text-gray-400">
                         <li><a href="#" className="hover:text-white transition-colors">Tuyển dụng</a></li>
                     </ul>
                 </div>
@@ -97,8 +103,8 @@ const Footer: React.FC = () => {
              {/* Col 4 */}
              <div className="space-y-8 col-span-2 lg:col-span-1">
                  <div>
-                    <h4 className="font-bold mb-4 text-xs uppercase text-white">VỀ MAVO</h4>
-                     <ul className="space-y-2 text-xs text-gray-400">
+                    <h4 className="font-bold mb-4 text-sm uppercase text-white">VỀ MAVO</h4>
+                     <ul className="space-y-2 text-sm text-gray-400">
                         <li><a href="#" className="hover:text-white transition-colors">Câu chuyện về Mavo</a></li>
                         <li className="uppercase font-semibold text-white mt-2">CÔNG TY CỔ PHẦN MAVO VIỆT NAM</li>
                         <li>Điện thoại: 18006525</li>
@@ -112,8 +118,8 @@ const Footer: React.FC = () => {
              {/* Col 5 */}
              <div className="space-y-8 col-span-2 lg:col-span-1">
                  <div>
-                    <h4 className="font-bold mb-4 text-xs uppercase text-white">THANH TOÁN</h4>
-                     <ul className="space-y-2 text-xs text-gray-400">
+                    <h4 className="font-bold mb-4 text-sm uppercase text-white">THANH TOÁN</h4>
+                     <ul className="space-y-2 text-sm text-gray-400">
                         <li>Chủ tài khoản: CTCP THỜI TRANG MAVO VIỆT NAM</li>
                         <li>STK: 114002967738</li>
                         <li>Ngân hàng TMCP Công thương Việt Nam CN TRÀNG AN - HỘI SỞ</li>
@@ -126,15 +132,16 @@ const Footer: React.FC = () => {
                      </div>
                 </div>
                  <div>
-                    <h4 className="font-bold mb-2 text-xs uppercase text-white">NGÔN NGỮ</h4>
-                     <button className="border border-gray-600 px-3 py-1 text-xs hover:border-white transition-colors text-gray-300 hover:text-white">VN</button>
+                    <h4 className="font-bold mb-2 text-sm uppercase text-white">NGÔN NGỮ</h4>
+                     <button className="border border-gray-600 px-3 py-1 text-sm hover:border-white transition-colors text-gray-300 hover:text-white">VN</button>
                 </div>
             </div>
 
         </div>
 
         {/* Bottom Bar */}
-        <div className="flex flex-col md:flex-row justify-between items-center text-xs text-gray-500">
+        {/* Changed text-xs to text-sm */}
+        <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
              <p>Copyright © 2024 Mavo. All Rights Reserved.</p>
              <div className="flex gap-4 mt-4 md:mt-0 items-center">
                 <img src="http://online.gov.vn/Content/EndUser/LogoCCDVSaleNoti/logoSaleNoti.png" alt="Bo Cong Thuong" className="h-10" />
