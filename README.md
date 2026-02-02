@@ -1,11 +1,26 @@
-<div align="center">
+# Lumina Fashion Store
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+Một trang web thương mại điện tử thời trang hiện đại.
 
-  <h1>Built with AI Studio</h2>
+## 1. Giới thiệu
+Dự án được xây dựng dựa trên `PROJECT_PLAN.md`, với giao diện người dùng (Storefront) đã hoàn thiện phần Front-end.
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+## 2. Cài đặt & Chạy
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+1. **Cài đặt thư viện:**
+   ```bash
+   npm install
+   ```
 
-</div>
+2. **Chạy dự án:**
+   ```bash
+   npm start
+   ```
+   Trang web sẽ hiển thị tại `index.html`.
+
+## 3. Cấu trúc
+- `ui/`: (Được triển khai trực tiếp tại root để preview)
+  - `components/`: Chứa các thành phần giao diện (Header, ProductCard).
+  - `data/`: Dữ liệu mẫu (Mock Data).
+- `admin-app/`: (Chưa triển khai) Nơi chứa CMS quản lý sản phẩm.
+- `backend/`: (Chưa triển khai) API Server.
