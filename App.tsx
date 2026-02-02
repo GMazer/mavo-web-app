@@ -21,37 +21,36 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-white font-sans text-gray-900 flex flex-col">
       <Header cartCount={cart.length} />
 
-      {/* Breadcrumb */}
-      <div className="max-w-[1440px] mx-auto px-6 lg:px-10 py-4 w-full">
-        <p className="text-xs text-gray-500 uppercase tracking-wide font-sfu-book">
+      {/* Breadcrumb - Spacing and Font adjusted */}
+      <div className="max-w-[1600px] mx-auto px-6 lg:px-10 py-6 w-full">
+        <p className="text-[11px] text-gray-500 uppercase tracking-wide font-sfu-book">
             <span className="hover:text-black cursor-pointer">HOME</span> 
-            <span className="mx-2">/</span> 
+            <span className="mx-2 text-gray-300">/</span> 
             <span className="text-black">Quần áo</span>
         </p>
       </div>
 
-      <main className="max-w-[1440px] mx-auto px-6 lg:px-10 pb-20 w-full flex-grow">
-        <div className="flex flex-col lg:flex-row gap-12">
+      <main className="max-w-[1600px] mx-auto px-6 lg:px-10 pb-20 w-full flex-grow">
+        <div className="flex flex-col lg:flex-row gap-16">
             
-            {/* Sidebar Filters */}
-            <aside className="w-full lg:w-64 flex-shrink-0">
-                {/* Lọc theo: 21px Regular */}
-                <h2 className="text-[21px] font-normal mb-6 font-sfu-book">Lọc theo</h2>
+            {/* Sidebar Filters - Width adjusted to be slimmer like reference */}
+            <aside className="w-full lg:w-52 flex-shrink-0 pt-1">
+                {/* Lọc theo: 24px Regular to match reference header size */}
+                <h2 className="text-2xl font-normal mb-8 font-sfu-book uppercase tracking-wide">Lọc theo</h2>
                 
-                <div className="py-4">
-                    {/* DANH MỤC: 14px */}
-                    <button className="flex items-center justify-between w-full text-[14px] uppercase tracking-wide mb-2 font-sfu-book">
+                <div className="py-2">
+                    {/* DANH MỤC Header */}
+                    <button className="flex items-center justify-between w-full text-[13px] font-bold uppercase tracking-wider mb-3 font-sfu-book">
                         DANH MỤC
-                        <ChevronDownIcon className="w-4 h-4" />
+                        <ChevronDownIcon className="w-3 h-3" />
                     </button>
-                    {/* Changed border-gray-300 to border-black */}
-                    <div className="w-full border-t border-black mb-4"></div>
+                    {/* Separator line matches reference position */}
+                    <div className="w-full border-t border-gray-200 mb-4"></div>
                     
-                    <ul className="space-y-3">
+                    <ul className="space-y-3 pl-1">
                         {categories.map((cat, idx) => (
                             <li key={idx}>
-                                {/* Category items: 14px */}
-                                <a href="#" className="text-[14px] text-gray-600 hover:text-black hover:underline transition-colors block py-0.5 font-sfu-book">
+                                <a href="#" className="text-[13px] text-gray-600 hover:text-black transition-colors block py-0.5 font-sfu-book">
                                     {cat}
                                 </a>
                             </li>
@@ -62,19 +61,20 @@ const App: React.FC = () => {
 
             {/* Product Grid Content */}
             <div className="flex-1">
-                <div className="mb-8">
-                    {/* QUẦN ÁO: 21px Regular */}
-                    <h1 className="text-[21px] uppercase font-normal tracking-wide font-sfu-book">QUẦN ÁO</h1>
+                <div className="mb-10">
+                    {/* QUẦN ÁO: Matches size of Lọc theo */}
+                    <h1 className="text-2xl uppercase font-normal tracking-wide font-sfu-book">QUẦN ÁO</h1>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
+                {/* Grid gap adjusted to gap-x-5 gap-y-12 to match clean look */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-12">
                     {PRODUCTS.map(product => (
                         <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
                     ))}
                 </div>
                 
-                {/* Pagination Placeholder */}
-                <div className="mt-16 flex justify-center gap-2">
+                {/* Pagination */}
+                <div className="mt-20 flex justify-center gap-2">
                     <span className="w-8 h-8 flex items-center justify-center bg-black text-white text-sm rounded-full font-sfu-book">1</span>
                     <span className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 text-gray-600 text-sm rounded-full cursor-pointer font-sfu-book">2</span>
                     <span className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 text-gray-600 text-sm rounded-full cursor-pointer"><ChevronRightIcon className="w-3 h-3" /></span>
