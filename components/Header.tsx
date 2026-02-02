@@ -1,17 +1,22 @@
 import React from 'react';
-import { ShoppingBagIcon, MagnifyingGlassIcon, UserIcon } from '@heroicons/react/24/outline';
+import { ShoppingBagIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 interface HeaderProps {
   cartCount: number;
 }
 
 const Header: React.FC<HeaderProps> = ({ cartCount }) => {
-  // Shared class for nav links
-  const navLinkClass = "relative py-2 hover:text-black transition-colors duration-300";
+  // Base style for nav links
+  const navLinkBase = "relative py-2 transition-colors duration-300 inline-block";
+  
+  // Sliding underline effect
+  // - after:bg-current: Underline color follows text color (Red on hover)
+  // - scale-x-0 to scale-x-100: Grows from 0 to 100% width
+  // - origin logic: Grows from left on hover, shrinks to right on leave
+  const hoverEffect = "after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-current after:scale-x-0 after:origin-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-left";
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-transparent hover:border-gray-100 transition-colors">
-      {/* Changed max-w-[1600px] mx-auto to w-full for full-width layout */}
       <div className="w-full px-6 lg:px-10">
         <div className="flex items-center h-20">
           
@@ -22,12 +27,18 @@ const Header: React.FC<HeaderProps> = ({ cartCount }) => {
 
           {/* Desktop Nav - Aligned Left next to Logo */}
           <nav className="hidden xl:flex items-center space-x-8 text-[13px] font-sfu-book text-gray-600 tracking-wide uppercase">
-            <a href="#" className={navLinkClass}>QUẦN ÁO</a>
-            <a href="#" className={navLinkClass}>GIÀY DÉP</a>
-            <a href="#" className={navLinkClass}>TÚI VÀ PHỤ KIỆN</a>
-            <a href="#" className={`font-bold text-black ${navLinkClass}`}>SALE OFF</a>
-            <a href="#" className={navLinkClass}>BỘ SƯU TẬP</a>
-            <a href="#" className={navLinkClass}>TRÌNH DIỄN THỜI TRANG</a>
+            {/* Standard links turn Red #E71313 on hover */}
+            <a href="#" className={`${navLinkBase} ${hoverEffect} hover:text-[#E71313]`}>QUẦN ÁO</a>
+            <a href="#" className={`${navLinkBase} ${hoverEffect} hover:text-[#E71313]`}>GIÀY DÉP</a>
+            <a href="#" className={`${navLinkBase} ${hoverEffect} hover:text-[#E71313]`}>TÚI VÀ PHỤ KIỆN</a>
+            
+            {/* Sale Off starts Black, turns Red #E71313 on hover */}
+            <a href="#" className={`${navLinkBase} ${hoverEffect} font-bold text-black hover:text-[#E71313]`}>SALE OFF</a>
+            
+            <a href="#" className={`${navLinkBase} ${hoverEffect} hover:text-[#E71313]`}>BỘ SƯU TẬP</a>
+            
+            {/* Changed to match other items: Starts Gray (inherited), turns Red #E71313 on hover */}
+            <a href="#" className={`${navLinkBase} ${hoverEffect} hover:text-[#E71313]`}>TRÌNH DIỄN THỜI TRANG</a>
           </nav>
 
           {/* Icons & Actions - Aligned Right */}
@@ -36,21 +47,13 @@ const Header: React.FC<HeaderProps> = ({ cartCount }) => {
               <MagnifyingGlassIcon className="w-5 h-5" />
             </button>
             
-            {/* Login / Register */}
-            <button className="hidden md:flex items-center gap-2 text-[13px] text-gray-600 hover:text-black font-sfu-book transition-colors">
-              <span className="w-5 h-5 border border-gray-800 rounded-full flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-                  </svg>
-              </span>
-              Đăng nhập
-            </button>
+            {/* Login button removed */}
 
             {/* Cart */}
             <button className="text-black hover:opacity-70 transition-opacity relative flex items-center">
               <ShoppingBagIcon className="w-5 h-5" />
               {cartCount > 0 && (
-                <span className="bg-red-500 text-white text-[10px] w-3.5 h-3.5 rounded-full flex items-center justify-center absolute -top-1 -right-1">
+                <span className="bg-[#E71313] text-white text-[10px] w-3.5 h-3.5 rounded-full flex items-center justify-center absolute -top-1 -right-1">
                   {cartCount}
                 </span>
               )}

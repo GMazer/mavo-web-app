@@ -63,8 +63,8 @@ const App: React.FC = () => {
                     <h1 className="text-2xl uppercase font-normal tracking-wide font-sfu-book">QUẦN ÁO</h1>
                 </div>
 
-                {/* Added xl:grid-cols-5 and 2xl:grid-cols-6 to handle full width gracefully */}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-5 gap-y-12">
+                {/* Grid limited to 4 columns max as requested, allowing images to scale up on large screens */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-12">
                     {PRODUCTS.map(product => (
                         <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
                     ))}
