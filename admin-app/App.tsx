@@ -28,8 +28,6 @@ const AdminApp: React.FC = () => {
       try {
           const res = await fetch(API_URL);
           const data = await res.json();
-          // The backend returns the raw product structure. 
-          // We map it to display structure if needed, but for now raw is fine.
           setProducts(data);
       } catch (err) {
           console.error("Failed to fetch products", err);
@@ -65,12 +63,17 @@ const AdminApp: React.FC = () => {
           
           if (!res.ok) throw new Error("Failed to update");
           
-          const updatedProduct = await res.json();
+          // Wait for the update to complete
+          await res.json();
           
-          // Update local list
-          setProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
-          setEditingProduct(null);
           alert("Cập nhật thành công!");
+          
+          // 1. Close the edit form FIRST
+          setEditingProduct(null);
+
+          // 2. Re-fetch the fresh list from server to ensure UI is in sync
+          await fetchProducts();
+          
       } catch (err) {
           console.error(err);
           alert("Cập nhật thất bại. Vui lòng kiểm tra console.");
@@ -138,12 +141,9 @@ const AdminApp: React.FC = () => {
         <div className="p-8">
           {activeTab === 'products' && (
              <div className="bg-white rounded-lg shadow border border-gray-200 min-h-[400px]">
-                {loading ? (
-                    <div className="flex items-center justify-center h-64 text-gray-500 gap-2">
-                        <Spinner /> Đang tải dữ liệu...
-                    </div>
-                ) : editingProduct ? (
-                    // Edit Form with Wiring
+                {/* Logic: If editing, show form. If NOT editing but loading, show spinner. Else show table. */}
+                {editingProduct ? (
+                    // Edit Form
                     <div className="p-6">
                         <div className="flex justify-between items-center mb-6 border-b pb-4">
                             <h3 className="text-lg font-bold">Chỉnh sửa: {editingProduct.name}</h3>
@@ -232,6 +232,10 @@ const AdminApp: React.FC = () => {
                                 </button>
                             </div>
                         </div>
+                    </div>
+                ) : loading ? (
+                    <div className="flex items-center justify-center h-64 text-gray-500 gap-2">
+                        <Spinner /> Đang tải dữ liệu...
                     </div>
                 ) : (
                     // Product List mapped from API Data
