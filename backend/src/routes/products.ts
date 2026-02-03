@@ -254,6 +254,39 @@ app.get('/:id', async (c) => {
     return c.json(response);
 });
 
+// POST /api/products (Create new product)
+app.post('/', async (c) => {
+    try {
+        const body = await c.req.json();
+        
+        // Generate a simple ID
+        const id = crypto.randomUUID();
+        
+        // Default values
+        const name = body.name || 'New Product';
+        const slug = body.slug || `product-${Date.now()}`;
+        const sku = body.sku || `SKU-${Date.now()}`;
+        const price = body.price || 0;
+        const originalPrice = body.originalPrice || null;
+        const category = body.category || 'Uncategorized';
+        const description = body.description || '';
+        
+        // Ensure arrays are stringified for SQLite
+        const images = JSON.stringify(body.images || []);
+        const colors = JSON.stringify(body.colors || []);
+
+        await c.env.DB.prepare(`
+            INSERT INTO Products (id, slug, name, sku, price, originalPrice, category, images, colors, description)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(id, slug, name, sku, price, originalPrice, category, images, colors, description).run();
+
+        const newProduct = await c.env.DB.prepare("SELECT * FROM Products WHERE id = ?").bind(id).first() as ProductRow;
+        return c.json(formatProduct(newProduct), 201);
+    } catch (e: any) {
+        return c.json({ error: e.message }, 500);
+    }
+});
+
 // PUT /api/products/:id (Update product)
 app.put('/:id', async (c) => {
     const id = c.req.param('id');
@@ -264,18 +297,28 @@ app.put('/:id', async (c) => {
     if (!existing) return c.json({ error: "Product not found" }, 404);
 
     // 2. Prepare update query dynamically
-    
     const name = updates.name !== undefined ? updates.name : existing.name;
     const price = updates.price !== undefined ? updates.price : existing.price;
     const originalPrice = updates.originalPrice !== undefined ? updates.originalPrice : existing.originalPrice;
     const description = updates.description !== undefined ? updates.description : existing.description;
     const sku = updates.sku !== undefined ? updates.sku : existing.sku;
+    
+    // Handle JSON arrays update
+    let images = existing.images;
+    if (updates.images !== undefined) {
+        images = JSON.stringify(updates.images);
+    }
+    
+    let colors = existing.colors;
+    if (updates.colors !== undefined) {
+        colors = JSON.stringify(updates.colors);
+    }
 
     await c.env.DB.prepare(`
         UPDATE Products 
-        SET name = ?, price = ?, originalPrice = ?, description = ?, sku = ?
+        SET name = ?, price = ?, originalPrice = ?, description = ?, sku = ?, images = ?, colors = ?
         WHERE id = ?
-    `).bind(name, price, originalPrice, description, sku, id).run();
+    `).bind(name, price, originalPrice, description, sku, images, colors, id).run();
 
     // 3. Return updated object (Simple format for internal/admin use)
     const updated = await c.env.DB.prepare("SELECT * FROM Products WHERE id = ?").bind(id).first() as ProductRow | null;

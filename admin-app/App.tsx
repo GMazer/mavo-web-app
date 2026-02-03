@@ -59,11 +59,25 @@ const AdminApp: React.FC = () => {
 
   const handleEditClick = (product: any) => {
       // Clone to avoid direct mutation
-      // Ensure images is an array
       setEditingProduct({ 
           ...product,
           images: product.images || (product.image ? [product.image] : [])
       });
+  };
+
+  const handleCreateClick = () => {
+      setEditingProduct({
+          id: '', // Indicates new product
+          name: '',
+          description: '',
+          price: 0,
+          originalPrice: 0,
+          sku: '',
+          images: [],
+          colors: [],
+          category: 'Quần áo'
+      });
+      setActiveTab('products');
   };
 
   const handleInputChange = (field: string, value: any) => {
@@ -93,16 +107,19 @@ const AdminApp: React.FC = () => {
           if (!presignRes.ok) throw new Error("Failed to get presigned URL");
           const { uploadUrl, publicUrl } = await presignRes.json();
 
-          // 2. Upload to R2 directly
+          // 2. Upload to R2 directly (Client-side upload)
           const uploadRes = await fetch(uploadUrl, {
               method: 'PUT',
-              headers: { 'Content-Type': file.type },
+              headers: { 
+                  'Content-Type': file.type 
+                  // No Authorization header here, as it's included in the signed URL query params
+              },
               body: file
           });
 
           if (!uploadRes.ok) throw new Error("Failed to upload file to R2");
 
-          // 3. Update State
+          // 3. Update State with the public URL
           setEditingProduct((prev: any) => ({
               ...prev,
               images: [...(prev.images || []), publicUrl]
@@ -111,7 +128,7 @@ const AdminApp: React.FC = () => {
           alert("Tải ảnh thành công!");
       } catch (err) {
           console.error("Upload error", err);
-          alert("Lỗi tải ảnh! Kiểm tra console và chắc chắn rằng R2 bucket đã cấu hình CORS.");
+          alert("Lỗi tải ảnh! Kiểm tra console và đảm bảo R2 bucket đã cấu hình CORS.");
       } finally {
           setUploading(false);
           // Reset input
@@ -130,34 +147,38 @@ const AdminApp: React.FC = () => {
   const handleSave = async () => {
       if (!editingProduct) return;
       setSaving(true);
+      
+      const isNew = !editingProduct.id;
+      const url = isNew ? API_URL : `${API_URL}/${editingProduct.id}`;
+      const method = isNew ? 'POST' : 'PUT';
+
       try {
-          const res = await fetch(`${API_URL}/${editingProduct.id}`, {
-              method: 'PUT',
+          const res = await fetch(url, {
+              method: method,
               headers: {
                   'Content-Type': 'application/json'
               },
               body: JSON.stringify(editingProduct)
           });
           
-          if (!res.ok) throw new Error("Failed to update");
+          if (!res.ok) throw new Error("Failed to save");
           
-          // CRITICAL FIX: Get the updated object directly from the response
-          const updatedProduct = await res.json();
+          const savedProduct = await res.json();
           
-          alert("Cập nhật thành công!");
+          alert(isNew ? "Tạo mới thành công!" : "Cập nhật thành công!");
           
-          // 1. Update the local list state IMMEDIATELY with the data from server
-          // This avoids the "Stale Read" issue where fetchProducts() might get old data from a replica
-          setProducts(prevProducts => 
-              prevProducts.map(p => p.id === updatedProduct.id ? updatedProduct : p)
-          );
+          // Update local state
+          if (isNew) {
+              setProducts(prev => [savedProduct, ...prev]);
+          } else {
+              setProducts(prev => prev.map(p => p.id === savedProduct.id ? savedProduct : p));
+          }
 
-          // 2. Close the edit form
           setEditingProduct(null);
           
       } catch (err) {
           console.error(err);
-          alert("Cập nhật thất bại. Vui lòng kiểm tra console.");
+          alert("Lưu thất bại. Vui lòng kiểm tra console.");
       } finally {
           setSaving(false);
       }
@@ -214,7 +235,10 @@ const AdminApp: React.FC = () => {
       <main className="flex-1 overflow-auto">
         <header className="h-16 bg-white shadow-sm flex items-center justify-between px-8">
             <h2 className="text-xl font-semibold text-gray-800 capitalize">{getTabTitle()}</h2>
-            <button className="bg-black text-white px-4 py-2 text-sm font-bold uppercase rounded hover:bg-gray-800">
+            <button 
+                onClick={handleCreateClick}
+                className="bg-black text-white px-4 py-2 text-sm font-bold uppercase rounded hover:bg-gray-800"
+            >
                 + Thêm mới
             </button>
         </header>
@@ -222,12 +246,13 @@ const AdminApp: React.FC = () => {
         <div className="p-8">
           {activeTab === 'products' && (
              <div className="bg-white rounded-lg shadow border border-gray-200 min-h-[400px]">
-                {/* Logic: If editing, show form. If NOT editing but loading, show spinner. Else show table. */}
                 {editingProduct ? (
-                    // Edit Form
+                    // Edit/Create Form
                     <div className="p-6">
                         <div className="flex justify-between items-center mb-6 border-b pb-4">
-                            <h3 className="text-lg font-bold">Chỉnh sửa: {editingProduct.name}</h3>
+                            <h3 className="text-lg font-bold">
+                                {editingProduct.id ? `Chỉnh sửa: ${editingProduct.name}` : 'Tạo sản phẩm mới'}
+                            </h3>
                             <button onClick={() => setEditingProduct(null)} className="text-sm text-gray-500 hover:text-black underline">Hủy bỏ</button>
                         </div>
                         
@@ -241,6 +266,7 @@ const AdminApp: React.FC = () => {
                                         value={editingProduct.name}
                                         onChange={(e) => handleInputChange('name', e.target.value)}
                                         className="w-full border border-gray-300 rounded-md p-2" 
+                                        placeholder="Nhập tên sản phẩm..."
                                     />
                                 </div>
                                 <div className="space-y-4">
@@ -249,6 +275,7 @@ const AdminApp: React.FC = () => {
                                         value={editingProduct.description || ''}
                                         onChange={(e) => handleInputChange('description', e.target.value)}
                                         className="w-full border border-gray-300 rounded-md p-2 h-32"
+                                        placeholder="Mô tả chi tiết sản phẩm..."
                                     ></textarea>
                                 </div>
                                 
@@ -268,12 +295,17 @@ const AdminApp: React.FC = () => {
                                                 </button>
                                             </div>
                                         ))}
+                                        {(!editingProduct.images || editingProduct.images.length === 0) && (
+                                            <div className="col-span-4 text-center text-sm text-gray-400 py-4 border-2 border-dashed border-gray-300 rounded">
+                                                Chưa có hình ảnh nào. Tải ảnh lên ngay.
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="flex items-center gap-4">
-                                        <label className="cursor-pointer flex items-center gap-2 bg-white border border-gray-300 px-4 py-2 rounded shadow-sm hover:bg-gray-50">
+                                        <label className={`cursor-pointer flex items-center gap-2 bg-white border border-gray-300 px-4 py-2 rounded shadow-sm hover:bg-gray-50 transition-colors ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                             {uploading ? <Spinner /> : <UploadIcon />}
-                                            <span className="text-sm font-medium text-gray-700">{uploading ? 'Đang tải...' : 'Tải ảnh lên'}</span>
+                                            <span className="text-sm font-medium text-gray-700">{uploading ? 'Đang tải lên...' : 'Tải ảnh lên'}</span>
                                             <input 
                                                 type="file" 
                                                 className="hidden" 
@@ -323,14 +355,32 @@ const AdminApp: React.FC = () => {
                                                 value={editingProduct.sku}
                                                 onChange={(e) => handleInputChange('sku', e.target.value)}
                                                 className="w-full border rounded p-2" 
+                                                placeholder="SKU-..."
                                             />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-gray-500">Danh mục</label>
+                                            <select 
+                                                value={editingProduct.category || 'Quần áo'}
+                                                onChange={(e) => handleInputChange('category', e.target.value)}
+                                                className="w-full border rounded p-2"
+                                            >
+                                                <option value="Quần áo">Quần áo</option>
+                                                <option value="Váy đầm">Váy đầm</option>
+                                                <option value="Áo">Áo</option>
+                                                <option value="Quần">Quần</option>
+                                                <option value="Chân váy">Chân váy</option>
+                                                <option value="Set">Set</option>
+                                                <option value="Jumpsuits">Jumpsuits</option>
+                                                <option value="Áo khoác">Áo khoác</option>
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
 
                                 <button 
                                     onClick={handleSave}
-                                    disabled={saving}
+                                    disabled={saving || uploading}
                                     className="w-full bg-blue-600 text-white py-2 rounded font-medium hover:bg-blue-700 disabled:opacity-50 flex justify-center items-center gap-2"
                                 >
                                     {saving && <Spinner />}
@@ -357,12 +407,21 @@ const AdminApp: React.FC = () => {
                         <tbody className="divide-y divide-gray-100">
                             {products.length === 0 && (
                                 <tr>
-                                    <td colSpan={4} className="px-6 py-8 text-center text-gray-500">Không có sản phẩm nào.</td>
+                                    <td colSpan={4} className="px-6 py-8 text-center text-gray-500">Không có sản phẩm nào. Nhấn "+ Thêm mới" để tạo.</td>
                                 </tr>
                             )}
                             {products.map(product => (
                                 <tr key={product.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-4 font-medium">{product.name}</td>
+                                    <td className="px-6 py-4 font-medium flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-gray-200 rounded overflow-hidden flex-shrink-0">
+                                            {product.thumbnailUrl ? (
+                                                <img src={product.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">N/A</div>
+                                            )}
+                                        </div>
+                                        {product.name}
+                                    </td>
                                     <td className="px-6 py-4 text-sm text-gray-500">{product.sku}</td>
                                     <td className="px-6 py-4">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}</td>
                                     <td className="px-6 py-4">
