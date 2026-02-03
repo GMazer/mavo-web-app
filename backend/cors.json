@@ -1,9 +1,9 @@
 {
   "rules": [
     {
-      "allowedOrigins": ["http://localhost:3001", "http://localhost:5173", "http://localhost:8080", "*"],
-      "allowedMethods": ["GET", "PUT", "POST", "HEAD", "DELETE", "OPTIONS"],
-      "allowedHeaders": ["Content-Type", "Authorization", "*"],
+      "allowedOrigins": ["*"],
+      "allowedMethods": ["GET", "PUT", "POST", "DELETE", "HEAD"],
+      "allowedHeaders": ["*"],
       "exposeHeaders": ["ETag", "Content-Length"],
       "maxAgeSeconds": 3000
     }
