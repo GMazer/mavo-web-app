@@ -37,15 +37,18 @@ const App: React.FC = () => {
         
         const data = await response.json();
         
+        // Handle both legacy (Array) and new (Object with items) API response formats
+        const items = Array.isArray(data) ? data : (data.items || []);
+        
         // Normalize data: Map new API structure to internal Product type
-        const normalizedData = data.items.map((item: any) => ({
+        const normalizedData = items.map((item: any) => ({
             id: item.id,
             name: item.name,
-            // Map structured pricing to flat fields
-            price: item.pricing?.price || 0,
-            originalPrice: item.pricing?.compareAtPrice,
-            // Map structured media
-            image: item.thumbnailUrl || '', 
+            // Map structured pricing to flat fields, with fallback to flat fields
+            price: item.pricing?.price ?? item.price ?? 0,
+            originalPrice: item.pricing?.compareAtPrice ?? item.originalPrice,
+            // Map structured media with fallbacks
+            image: item.thumbnailUrl || (item.images && item.images[0]) || item.image || '', 
             images: item.images || [], 
             // Map other fields
             category: item.category,

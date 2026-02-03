@@ -34,11 +34,15 @@ const AdminApp: React.FC = () => {
           // Fix Caching: Use timestamp query param only.
           const res = await fetch(`${API_URL}?_t=${Date.now()}`);
           const data = await res.json();
+          
+          // Handle both legacy (Array) and new (Object with items) API response formats
+          const items = Array.isArray(data) ? data : (data.items || []);
+
           // Flatten the nested structure for Admin Table
-          const flattenedData = data.items.map((item: any) => ({
+          const flattenedData = items.map((item: any) => ({
              ...item,
-             price: item.pricing?.price || 0,
-             originalPrice: item.pricing?.compareAtPrice
+             price: item.pricing?.price ?? item.price ?? 0,
+             originalPrice: item.pricing?.compareAtPrice ?? item.originalPrice
           }));
           setProducts(flattenedData);
       } catch (err) {
