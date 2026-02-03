@@ -87,7 +87,11 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onAddToCart, onR
 
           {/* Main Image */}
           <div className="flex-1">
-            <img src={activeImage} alt={product.name} className="w-full h-auto object-cover aspect-[3/4]" />
+            <img 
+              src={activeImage} 
+              alt={product.name} 
+              className="w-full max-w-[702px] h-auto object-cover" 
+            />
           </div>
         </div>
 
@@ -285,8 +289,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onAddToCart, onR
         </div>
       </div>
 
-      {/* Session 2: Tabs, Info & Reviews */}
-      <div className="mt-20">
+      {/* Session 2 Part A: Tabs & Info (Full Width with 260px padding) */}
+      <div className="mt-20 w-full px-6 lg:px-[260px]">
         
         {/* Tab Headers */}
         <div className="flex flex-wrap gap-8 border-b border-gray-200 mb-8">
@@ -357,8 +361,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onAddToCart, onR
                </div>
             )}
         </div>
+      </div>
 
-        {/* Reviews Section (Common) */}
+      {/* Session 2 Part B: Reviews Section (Centered max-w-6xl) */}
+      <div className="max-w-6xl mx-auto px-6 lg:px-10">
         <div className="border border-gray-200 p-6 lg:p-10 bg-white">
             <h3 className="text-sm font-bold uppercase mb-6">ĐÁNH GIÁ SẢN PHẨM</h3>
             <div className="flex flex-col md:flex-row gap-8 lg:gap-16">
@@ -395,7 +401,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onAddToCart, onR
                 </div>
             </div>
         </div>
-
       </div>
 
       <div className="mt-20">
