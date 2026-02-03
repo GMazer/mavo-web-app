@@ -1,10 +1,10 @@
 {
   "rules": [
     {
-      "allowedOrigins": ["*"],
-      "allowedMethods": ["GET", "PUT", "POST", "DELETE", "HEAD"],
-      "allowedHeaders": ["*"],
-      "maxAgeSeconds": 3600
+      "allowed": {
+        "origins": ["*"],
+        "methods": ["GET", "PUT", "POST", "DELETE"]
+      }
     }
   ]
 }
