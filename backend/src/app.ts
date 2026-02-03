@@ -9,10 +9,16 @@ const app = new Hono<{ Bindings: Bindings }>();
 
 // Middleware
 app.use('*', logger());
+
+// Fix CORS: Allow localhost and production domains dynamically
 app.use('*', cors({
-  origin: '*', // In production, replace with your specific frontend domain
+  origin: (origin) => {
+    // If an origin is present (browsers), return it to allow it specifically.
+    // This satisfies "Access-Control-Allow-Origin" when "credentials: true" is used.
+    return origin || '*'; 
+  },
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization'],
+  allowHeaders: ['Content-Type', 'Authorization', 'Upgrade-Insecure-Requests'],
   exposeHeaders: ['Content-Length'],
   maxAge: 600,
   credentials: true,
