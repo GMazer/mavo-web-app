@@ -7,7 +7,14 @@ const UserGroupIcon = () => <svg className="w-5 h-5" fill="none" stroke="current
 const PencilIcon = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>;
 const Spinner = () => <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>;
 
-const API_URL = 'http://localhost:8080/api/products';
+// CONFIGURATION
+const IS_LOCALHOST = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+// [IMPORTANT] Thay thế dòng dưới bằng URL thật bạn nhận được sau khi chạy 'npm run deploy'
+const PROD_API_URL = 'https://mavo-fashion-api.YOUR-SUBDOMAIN.workers.dev'; 
+
+const API_BASE = IS_LOCALHOST ? 'http://localhost:8080' : PROD_API_URL;
+const API_URL = `${API_BASE}/api/products`;
 
 const AdminApp: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'orders'>('products');
@@ -38,7 +45,7 @@ const AdminApp: React.FC = () => {
           setProducts(data);
       } catch (err) {
           console.error("Failed to fetch products", err);
-          alert("Lỗi kết nối Backend! Hãy chắc chắn bạn đã chạy 'npm run dev' trong thư mục backend.");
+          alert(`Lỗi kết nối Backend! \nĐang thử kết nối tới: ${API_URL}`);
       } finally {
           setLoading(false);
       }
