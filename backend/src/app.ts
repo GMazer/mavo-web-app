@@ -5,8 +5,8 @@ import healthRouter from './routes/health';
 const app: Express = express();
 const PORT = process.env.PORT || 8080;
 
-app.use(cors());
-app.use(express.json());
+app.use(cors() as any);
+app.use(express.json() as any);
 
 // API Routes
 app.use('/api/health', healthRouter);

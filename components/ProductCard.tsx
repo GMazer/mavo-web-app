@@ -4,11 +4,12 @@ import { Product } from '../types';
 interface ProductCardProps {
   product: Product;
   onAddToCart: (product: Product) => void;
+  onClick?: () => void; // Optional click handler for navigation
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, onClick }) => {
   return (
-    <div className="group cursor-pointer block">
+    <div className="group cursor-pointer block" onClick={onClick}>
       {/* Aspect Ratio 2/3 for tall fashion images */}
       <div className="relative aspect-[2/3] w-full overflow-hidden bg-gray-100">
         <img
@@ -35,7 +36,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
       {/* Details Section */}
       <div className="mt-4 flex flex-col gap-1.5">
         {/* Product Name: Clean, light/regular font, left aligned. Removed font-sfu-book. */}
-        <h3 className="text-sm text-gray-700 truncate leading-normal">
+        <h3 className="text-sm text-gray-700 truncate leading-normal hover:text-black transition-colors">
           {product.name}
         </h3>
 

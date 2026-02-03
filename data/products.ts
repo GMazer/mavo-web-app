@@ -8,6 +8,13 @@ export const PRODUCTS: Product[] = [
     originalPrice: 2399000,
     category: 'Set',
     image: 'https://images.unsplash.com/photo-1552874869-5c39ec9288dc?q=80&w=800&auto=format&fit=crop',
+    images: [
+        'https://images.unsplash.com/photo-1552874869-5c39ec9288dc?q=80&w=800&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1550614000-4b9519e02c97?q=80&w=800&auto=format&fit=crop', // Mock variations
+        'https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=800&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=800&auto=format&fit=crop',
+    ],
+    code: 'D82510002T6CB0261',
     colors: ['#8B4513'],
     description: 'Vest dệt kim tay dài màu nâu sang trọng.'
   },
@@ -18,6 +25,11 @@ export const PRODUCTS: Product[] = [
     originalPrice: 1399000,
     category: 'Chân váy',
     image: 'https://images.unsplash.com/photo-1582142407894-ec85f1260a46?q=80&w=800&auto=format&fit=crop',
+    images: [
+        'https://images.unsplash.com/photo-1582142407894-ec85f1260a46?q=80&w=800&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?q=80&w=800&auto=format&fit=crop'
+    ],
+    code: 'S99210002T6CB0261',
     colors: ['#8B4513'],
     description: 'Chân váy ngắn dệt kim đồng bộ.'
   },
@@ -28,6 +40,10 @@ export const PRODUCTS: Product[] = [
     originalPrice: 1199000,
     category: 'Áo',
     image: 'https://images.unsplash.com/photo-1598532163257-ae3c6b2524b6?q=80&w=800&auto=format&fit=crop',
+    images: [
+         'https://images.unsplash.com/photo-1598532163257-ae3c6b2524b6?q=80&w=800&auto=format&fit=crop',
+    ],
+    code: 'A12310002T6CB0261',
     colors: ['#FFFFFF'],
     description: 'Áo sơ mi trắng thêu họa tiết.'
   },
@@ -38,6 +54,8 @@ export const PRODUCTS: Product[] = [
     originalPrice: 1299000,
     category: 'Áo',
     image: 'https://images.unsplash.com/photo-1605763240004-7e93b172d754?q=80&w=800&auto=format&fit=crop',
+    images: ['https://images.unsplash.com/photo-1605763240004-7e93b172d754?q=80&w=800&auto=format&fit=crop'],
+    code: 'A45610002T6CB0261',
     colors: ['#696969'],
     description: 'Áo kiểu màu xám thanh lịch.'
   },
@@ -48,6 +66,8 @@ export const PRODUCTS: Product[] = [
     originalPrice: 2500000,
     category: 'Áo khoác',
     image: 'https://images.unsplash.com/photo-1539533018447-63fcce2678e3?q=80&w=800&auto=format&fit=crop',
+    images: ['https://images.unsplash.com/photo-1539533018447-63fcce2678e3?q=80&w=800&auto=format&fit=crop'],
+    code: 'K78910002T6CB0261',
     colors: ['#000000'],
     description: 'Áo khoác blazer đen cổ điển.'
   },
@@ -58,6 +78,8 @@ export const PRODUCTS: Product[] = [
     originalPrice: 890000,
     category: 'Chân váy',
     image: 'https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?q=80&w=800&auto=format&fit=crop',
+    images: ['https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?q=80&w=800&auto=format&fit=crop'],
+    code: 'S11110002T6CB0261',
     colors: ['#F5F5DC'],
     description: 'Chân váy xếp ly màu be.'
   },
@@ -68,6 +90,8 @@ export const PRODUCTS: Product[] = [
     originalPrice: 1599000,
     category: 'Jumpsuits',
     image: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?q=80&w=800&auto=format&fit=crop',
+    images: ['https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?q=80&w=800&auto=format&fit=crop'],
+    code: 'J22210002T6CB0261',
     colors: ['#000080'],
     description: 'Jumpsuit xanh navy thời thượng.'
   },
@@ -77,6 +101,8 @@ export const PRODUCTS: Product[] = [
     price: 2100000,
     category: 'Váy đầm',
     image: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=800&auto=format&fit=crop',
+    images: ['https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=800&auto=format&fit=crop'],
+    code: 'D33310002T6CB0261',
     colors: ['#800000'],
     description: 'Váy lụa dự tiệc sang trọng.'
   }
