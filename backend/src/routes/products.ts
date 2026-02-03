@@ -216,22 +216,18 @@ app.put('/:id', async (c) => {
     const id = c.req.param('id');
     const updates = await c.req.json();
 
-    // NOTE: This basic implementation updates specific fields. 
-    // In a production app, you might want to handle partial JSON updates more gracefully or strict validation.
-    
     // 1. Fetch existing
     const existing = await c.env.DB.prepare("SELECT * FROM Products WHERE id = ?").bind(id).first<ProductRow>();
     if (!existing) return c.json({ error: "Product not found" }, 404);
 
-    // 2. Prepare update query dynamically (simplified for this demo, usually we list allowed fields)
-    // We allow updating: name, price, originalPrice, description, sku
-    // Not updating arrays (images/colors) in this simple PUT for brevity, unless passed.
+    // 2. Prepare update query dynamically
+    // FIX: Check for undefined explicitly to allow updating values to 0 or empty string.
     
-    const name = updates.name || existing.name;
-    const price = updates.price || existing.price;
+    const name = updates.name !== undefined ? updates.name : existing.name;
+    const price = updates.price !== undefined ? updates.price : existing.price;
     const originalPrice = updates.originalPrice !== undefined ? updates.originalPrice : existing.originalPrice;
-    const description = updates.description || existing.description;
-    const sku = updates.sku || existing.sku;
+    const description = updates.description !== undefined ? updates.description : existing.description;
+    const sku = updates.sku !== undefined ? updates.sku : existing.sku;
 
     await c.env.DB.prepare(`
         UPDATE Products 

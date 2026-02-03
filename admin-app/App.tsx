@@ -32,7 +32,6 @@ const AdminApp: React.FC = () => {
       setLoading(true);
       try {
           // Fix Caching: Use timestamp query param only.
-          // Removed 'Cache-Control' headers to prevent CORS Preflight failure.
           const res = await fetch(`${API_URL}?_t=${Date.now()}`);
           const data = await res.json();
           setProducts(data);
@@ -70,16 +69,19 @@ const AdminApp: React.FC = () => {
           
           if (!res.ok) throw new Error("Failed to update");
           
-          // Wait for the update to complete
-          await res.json();
+          // CRITICAL FIX: Get the updated object directly from the response
+          const updatedProduct = await res.json();
           
           alert("Cập nhật thành công!");
           
-          // 1. Close the edit form FIRST
-          setEditingProduct(null);
+          // 1. Update the local list state IMMEDIATELY with the data from server
+          // This avoids the "Stale Read" issue where fetchProducts() might get old data from a replica
+          setProducts(prevProducts => 
+              prevProducts.map(p => p.id === updatedProduct.id ? updatedProduct : p)
+          );
 
-          // 2. Re-fetch the fresh list from server to ensure UI is in sync
-          await fetchProducts();
+          // 2. Close the edit form
+          setEditingProduct(null);
           
       } catch (err) {
           console.error(err);
