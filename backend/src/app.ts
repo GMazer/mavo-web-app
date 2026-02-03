@@ -1,29 +1,36 @@
-import express, { Express } from 'express';
-import cors from 'cors';
+import { Hono } from 'hono';
+import { cors } from 'hono/cors';
+import { logger } from 'hono/logger';
 import healthRouter from './routes/health';
 import productsRouter from './routes/products';
+import { Bindings } from './bindings';
 
-const app: Express = express();
-const PORT = process.env.PORT || 8080;
+const app = new Hono<{ Bindings: Bindings }>();
 
-app.use(cors() as any);
-app.use(express.json() as any);
+// Middleware
+app.use('*', logger());
+app.use('*', cors({
+  origin: '*', // In production, replace with your specific frontend domain
+  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowHeaders: ['Content-Type', 'Authorization'],
+  exposeHeaders: ['Content-Length'],
+  maxAge: 600,
+  credentials: true,
+}));
 
-// Logging Middleware: Helps see incoming requests in terminal
-app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-    next();
+// Routes
+app.route('/api/health', healthRouter);
+app.route('/api/products', productsRouter);
+
+// 404 Handler
+app.notFound((c) => {
+  return c.json({ message: 'Not Found', ok: false }, 404);
 });
 
-// Silence /favicon.ico 404 errors
-app.get('/favicon.ico', (req, res) => res.status(204).end());
-
-// API Routes
-app.use('/api/health', healthRouter);
-app.use('/api/products', productsRouter);
-
-app.listen(PORT, () => {
-  console.log(`Backend server is running on port ${PORT}`);
+// Error Handler
+app.onError((err, c) => {
+  console.error(`${err}`);
+  return c.json({ message: 'Internal Server Error', error: err.message }, 500);
 });
 
 export default app;

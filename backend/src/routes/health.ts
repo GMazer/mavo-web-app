@@ -1,13 +1,25 @@
-import { Router } from 'express';
+import { Hono } from 'hono';
+import { Bindings } from '../bindings';
 
-const router = Router();
+const app = new Hono<{ Bindings: Bindings }>();
 
-router.get('/', (req, res) => {
-  res.json({
+app.get('/', async (c) => {
+  let dbStatus = 'UNKNOWN';
+  try {
+    // Ping the database
+    await c.env.DB.prepare('SELECT 1').first();
+    dbStatus = 'CONNECTED';
+  } catch (e) {
+    dbStatus = 'DISCONNECTED';
+    console.error(e);
+  }
+
+  return c.json({
     status: 'UP',
+    database: dbStatus,
     timestamp: new Date().toISOString(),
-    uptime: (process as any).uptime()
+    environment: 'Cloudflare Worker'
   });
 });
 
-export default router;
+export default app;

@@ -1,50 +1,89 @@
-import { Router } from 'express';
-import { PRODUCTS_DB, REVIEWS } from '../data/mockStore';
+import { Hono } from 'hono';
+import { Bindings } from '../bindings';
 
-const router = Router();
+const app = new Hono<{ Bindings: Bindings }>();
 
-// --- Helper Types for API Spec ---
-interface ProductResponse {
-    product: any;
-    breadcrumbs: any[];
-    tabs: any;
-    reviewsSummary: any;
-    recommendations: any[];
-    reviews: any | null;
+// --- Types mapping to SQL Table Columns ---
+interface ProductRow {
+    id: string;
+    slug: string;
+    name: string;
+    sku: string;
+    price: number;
+    originalPrice: number | null;
+    category: string;
+    images: string; // JSON String
+    colors: string; // JSON String
+    description: string;
 }
 
-// GET /api/products (List all products for Admin)
-router.get('/', (req, res) => {
-    // In a real app, implement pagination here
-    res.json(PRODUCTS_DB);
+interface ReviewRow {
+    id: string;
+    productId: string;
+    stars: number;
+    content: string;
+    authorName: string;
+    createdAt: string;
+}
+
+// Helper to format Product Row (parse JSON fields)
+const formatProduct = (row: ProductRow) => ({
+    ...row,
+    images: JSON.parse(row.images),
+    colors: JSON.parse(row.colors)
+});
+
+// GET /api/products (List all products for Admin/Frontend)
+app.get('/', async (c) => {
+    try {
+        const { results } = await c.env.DB.prepare("SELECT * FROM Products ORDER BY name").all<ProductRow>();
+        const products = results.map(formatProduct);
+        return c.json(products);
+    } catch (e: any) {
+        return c.json({ error: e.message }, 500);
+    }
 });
 
 // GET /api/products/:id
-router.get('/:id', (req, res) => {
-    const { id } = req.params;
-    const includeReviews = req.query.includeReviews === 'true';
+app.get('/:id', async (c) => {
+    const id = c.req.param('id');
+    const includeReviews = c.req.query('includeReviews') === 'true';
 
-    // Find product (mock logic: search by ID or Slug)
-    const dbProduct = PRODUCTS_DB.find(p => p.id === id || p.slug === id);
+    // 1. Fetch Product
+    const productRow = await c.env.DB.prepare("SELECT * FROM Products WHERE id = ? OR slug = ?").bind(id, id).first<ProductRow>();
 
-    if (!dbProduct) {
-        return res.status(404).json({
+    if (!productRow) {
+        return c.json({
             error: {
                 code: "PRODUCT_NOT_FOUND",
                 message: "Product not found",
                 details: { id }
             }
-        });
+        }, 404);
     }
 
-    // Filter reviews for summary
-    const productReviews = REVIEWS.filter(r => r.productId === dbProduct.id);
-    const avgRating = productReviews.length > 0 
-        ? productReviews.reduce((acc, curr) => acc + curr.stars, 0) / productReviews.length 
+    const dbProduct = formatProduct(productRow);
+
+    // 2. Fetch Reviews (needed for rating summary)
+    const { results: reviews } = await c.env.DB.prepare("SELECT * FROM Reviews WHERE productId = ?").bind(dbProduct.id).all<ReviewRow>();
+    
+    const avgRating = reviews.length > 0 
+        ? reviews.reduce((acc, curr) => acc + curr.stars, 0) / reviews.length 
         : 0;
 
-    // Construct Response according to SPEC
-    const response: ProductResponse = {
+    // 3. Fetch Recommendations (Simple random or same category)
+    const { results: recommendationsRaw } = await c.env.DB.prepare("SELECT * FROM Products WHERE id != ? LIMIT 4").bind(dbProduct.id).all<ProductRow>();
+    const recommendations = recommendationsRaw.map(formatProduct).map(p => ({
+        id: p.id,
+        slug: p.slug,
+        name: p.name,
+        thumbnailUrl: p.images[0],
+        pricing: { currency: "VND", price: p.price, compareAtPrice: p.originalPrice },
+        rating: { avg: 4.5, count: 10 } // Mock rating for recs
+    }));
+
+    // 4. Construct Complex Response (Spec Compliant)
+    const response = {
         product: {
             id: dbProduct.id,
             slug: dbProduct.slug,
@@ -64,7 +103,7 @@ router.get('/:id', (req, res) => {
 
             rating: {
                 avg: parseFloat(avgRating.toFixed(1)),
-                count: productReviews.length
+                count: reviews.length
             },
 
             media: {
@@ -79,40 +118,23 @@ router.get('/:id', (req, res) => {
             },
 
             options: {
-                colors: [
-                    { id: "c_brown", name: "Màu Nâu", swatchHex: "#8B4513" }
-                ],
+                colors: dbProduct.colors.map((c: string, idx: number) => ({ 
+                    id: `c_${idx}`, name: c, swatchHex: c 
+                })),
                 sizes: ["S", "M", "L"]
             },
 
-            variants: [
-                {
-                    id: `${dbProduct.id}_S`,
-                    colorId: "c_brown",
-                    size: "S",
-                    sku: `${dbProduct.sku}-S`,
-                    priceOverride: null,
-                    stock: { status: "in_stock", qty: 10 }
-                },
-                {
-                    id: `${dbProduct.id}_M`,
-                    colorId: "c_brown",
-                    size: "M",
-                    sku: `${dbProduct.sku}-M`,
-                    priceOverride: null,
-                    stock: { status: "in_stock", qty: 5 }
-                }
-            ],
+            // Mocking Variants logic based on generic options
+            variants: ["S", "M", "L"].map(size => ({
+                id: `${dbProduct.id}_${size}`,
+                size: size,
+                priceOverride: null,
+                stock: { status: "in_stock", qty: 10 }
+            })),
 
             defaultSelection: {
-                colorId: "c_brown",
                 size: "M",
                 qty: 1
-            },
-
-            purchaseLimits: {
-                minQty: 1,
-                maxQty: 5
             },
 
             policiesPreview: {
@@ -169,74 +191,77 @@ router.get('/:id', (req, res) => {
 
         reviewsSummary: {
             avg: parseFloat(avgRating.toFixed(1)),
-            count: productReviews.length,
+            count: reviews.length,
             breakdown: [5,4,3,2,1].map(star => ({
                 stars: star,
-                count: productReviews.filter(r => r.stars === star).length
+                count: reviews.filter(r => r.stars === star).length
             }))
         },
 
-        recommendations: PRODUCTS_DB
-            .filter(p => p.id !== dbProduct.id)
-            .slice(0, 4)
-            .map(p => ({
-                id: p.id,
-                slug: p.slug,
-                name: p.name,
-                thumbnailUrl: p.images[0],
-                pricing: { currency: "VND", price: p.price, compareAtPrice: p.originalPrice },
-                rating: { avg: 4.5, count: 10 } // Mock
-            })),
+        recommendations: recommendations,
         
-        reviews: null
-    };
-
-    if (includeReviews) {
-        response.reviews = {
-            items: productReviews.slice(0, 5),
+        reviews: includeReviews ? {
+            items: reviews.slice(0, 5),
             page: 1,
             pageSize: 5,
-            total: productReviews.length
-        };
-    }
+            total: reviews.length
+        } : null
+    };
 
-    res.json(response);
+    return c.json(response);
 });
 
 // PUT /api/products/:id (Update product)
-router.put('/:id', (req, res) => {
-    const { id } = req.params;
-    const updates = req.body;
+app.put('/:id', async (c) => {
+    const id = c.req.param('id');
+    const updates = await c.req.json();
 
-    const index = PRODUCTS_DB.findIndex(p => p.id === id);
-    if (index === -1) {
-        return res.status(404).json({ error: "Product not found" });
-    }
+    // NOTE: This basic implementation updates specific fields. 
+    // In a production app, you might want to handle partial JSON updates more gracefully or strict validation.
+    
+    // 1. Fetch existing
+    const existing = await c.env.DB.prepare("SELECT * FROM Products WHERE id = ?").bind(id).first<ProductRow>();
+    if (!existing) return c.json({ error: "Product not found" }, 404);
 
-    // Update the product in memory
-    PRODUCTS_DB[index] = {
-        ...PRODUCTS_DB[index],
-        ...updates
-    };
+    // 2. Prepare update query dynamically (simplified for this demo, usually we list allowed fields)
+    // We allow updating: name, price, originalPrice, description, sku
+    // Not updating arrays (images/colors) in this simple PUT for brevity, unless passed.
+    
+    const name = updates.name || existing.name;
+    const price = updates.price || existing.price;
+    const originalPrice = updates.originalPrice !== undefined ? updates.originalPrice : existing.originalPrice;
+    const description = updates.description || existing.description;
+    const sku = updates.sku || existing.sku;
 
-    res.json(PRODUCTS_DB[index]);
+    await c.env.DB.prepare(`
+        UPDATE Products 
+        SET name = ?, price = ?, originalPrice = ?, description = ?, sku = ?
+        WHERE id = ?
+    `).bind(name, price, originalPrice, description, sku, id).run();
+
+    // 3. Return updated object
+    const updated = await c.env.DB.prepare("SELECT * FROM Products WHERE id = ?").bind(id).first<ProductRow>();
+    return c.json(formatProduct(updated!));
 });
 
 // GET /api/products/:id/reviews
-router.get('/:id/reviews', (req, res) => {
-    const { id } = req.params;
-    const page = parseInt(req.query.page as string) || 1;
-    const pageSize = parseInt(req.query.pageSize as string) || 10;
+app.get('/:id/reviews', async (c) => {
+    const id = c.req.param('id');
+    const page = parseInt(c.req.query('page') || '1');
+    const pageSize = parseInt(c.req.query('pageSize') || '10');
+    const offset = (page - 1) * pageSize;
 
-    const productReviews = REVIEWS.filter(r => r.productId === id);
-    const total = productReviews.length;
-    
-    const startIndex = (page - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    const items = productReviews.slice(startIndex, endIndex);
+    // Get Total
+    const totalResult = await c.env.DB.prepare("SELECT COUNT(*) as count FROM Reviews WHERE productId = ?").bind(id).first<{count: number}>();
+    const total = totalResult?.count || 0;
 
-    res.json({
-        items,
+    // Get Items
+    const { results } = await c.env.DB.prepare("SELECT * FROM Reviews WHERE productId = ? ORDER BY createdAt DESC LIMIT ? OFFSET ?")
+        .bind(id, pageSize, offset)
+        .all<ReviewRow>();
+
+    return c.json({
+        items: results,
         page,
         pageSize,
         total
@@ -244,30 +269,32 @@ router.get('/:id/reviews', (req, res) => {
 });
 
 // POST /api/products/:id/reviews
-router.post('/:id/reviews', (req, res) => {
-    const { id } = req.params;
-    const { stars, content, authorName } = req.body;
+app.post('/:id/reviews', async (c) => {
+    const id = c.req.param('id');
+    const body = await c.req.json();
+    const { stars, content, authorName } = body;
 
-    // Basic Validation
     if (!stars || stars < 1 || stars > 5) {
-        return res.status(400).json({ error: { message: "Stars must be between 1 and 5" } });
-    }
-    if (!content || content.length < 10) {
-        return res.status(400).json({ error: { message: "Content must be at least 10 characters" } });
+        return c.json({ error: { message: "Stars must be between 1 and 5" } }, 400);
     }
 
-    const newReview = {
-        id: `r_${Date.now()}`,
+    const reviewId = `r_${Date.now()}`;
+    const createdAt = new Date().toISOString();
+    const finalAuthor = authorName || "Khách hàng";
+
+    await c.env.DB.prepare(`
+        INSERT INTO Reviews (id, productId, stars, content, authorName, createdAt)
+        VALUES (?, ?, ?, ?, ?, ?)
+    `).bind(reviewId, id, stars, content, finalAuthor, createdAt).run();
+
+    return c.json({
+        id: reviewId,
         productId: id,
         stars,
         content,
-        authorName: authorName || "Khách hàng",
-        createdAt: new Date().toISOString()
-    };
-
-    REVIEWS.unshift(newReview); // Add to beginning
-
-    res.status(201).json(newReview);
+        authorName: finalAuthor,
+        createdAt
+    }, 201);
 });
 
-export default router;
+export default app;
