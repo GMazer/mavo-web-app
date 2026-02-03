@@ -51,7 +51,7 @@ Trước khi upload ảnh hoạt động, bạn cần cấu hình R2 theo các b
 5.  **Cấu hình CORS (Để upload ảnh từ trình duyệt)**:
     *   Chạy lệnh sau tại thư mục `backend` để áp dụng file `cors.json` cho bucket:
         ```bash
-        npx wrangler r2 bucket cors update mavo-assets --file cors.json
+        npx wrangler r2 bucket cors set mavo-assets --file cors.json
         ```
 
 ## Endpoints
