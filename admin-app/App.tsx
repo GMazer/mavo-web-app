@@ -11,7 +11,7 @@ const Spinner = () => <svg className="animate-spin h-5 w-5 text-white" xmlns="ht
 const IS_LOCALHOST = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
 // [IMPORTANT] Thay thế dòng dưới bằng URL thật bạn nhận được sau khi chạy 'npm run deploy'
-const PROD_API_URL = 'https://mavo-fashion-api.YOUR-SUBDOMAIN.workers.dev'; 
+const PROD_API_URL = 'https://mavo-fashion-api.mavo-web.workers.dev'; 
 
 const API_BASE = IS_LOCALHOST ? 'http://localhost:8080' : PROD_API_URL;
 const API_URL = `${API_BASE}/api/products`;
