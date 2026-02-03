@@ -48,7 +48,7 @@ const App: React.FC = () => {
                     <span className="mx-2 text-gray-300">/</span>
                     <span className="text-gray-400">{selectedProduct.category}</span>
                     <span className="mx-2 text-gray-300">/</span>
-                    <span className="text-black line-clamp-1 inline-block align-bottom max-w-[200px]">{selectedProduct.name}</span>
+                    <span className="text-black">{selectedProduct.name}</span>
                 </>
             )}
         </p>
