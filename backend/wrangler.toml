@@ -7,6 +7,6 @@ port = 8080
 [[d1_databases]]
 binding = "DB"
 database_name = "mavo-db"
-database_id = "user-must-run-wrangler-d1-create-to-get-this-id" 
+database_id = "bca53c51-52b5-4ed4-bb71-23aebe81b516" 
 # Run: npx wrangler d1 create mavo-db
 # Then replace the database_id above with the generated ID.

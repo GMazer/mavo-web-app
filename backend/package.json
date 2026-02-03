@@ -4,7 +4,10 @@
   "description": "Backend API for Mavo Fashion (Cloudflare Worker)",
   "scripts": {
     "dev": "wrangler dev src/app.ts",
-    "deploy": "wrangler deploy --minify src/app.ts"
+    "deploy": "wrangler deploy --minify src/app.ts",
+    "db:create": "wrangler d1 create mavo-db",
+    "db:setup": "wrangler d1 execute mavo-db --local --file=./schema.sql",
+    "db:setup:prod": "wrangler d1 execute mavo-db --remote --file=./schema.sql"
   },
   "dependencies": {
     "hono": "^4.1.0"
