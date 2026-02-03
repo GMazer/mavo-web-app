@@ -8,12 +8,10 @@ const PencilIcon = () => <svg className="w-4 h-4" fill="none" stroke="currentCol
 const Spinner = () => <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>;
 
 // CONFIGURATION
-const IS_LOCALHOST = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-
-// [IMPORTANT] Thay thế dòng dưới bằng URL thật bạn nhận được sau khi chạy 'npm run deploy'
 const PROD_API_URL = 'https://mavo-fashion-api.mavo-web.workers.dev'; 
 
-const API_BASE = IS_LOCALHOST ? 'http://localhost:8080' : PROD_API_URL;
+// Force using Production API even on localhost
+const API_BASE = PROD_API_URL;
 const API_URL = `${API_BASE}/api/products`;
 
 const AdminApp: React.FC = () => {
@@ -34,7 +32,6 @@ const AdminApp: React.FC = () => {
       setLoading(true);
       try {
           // Fix Caching: Add timestamp query param AND Cache-Control headers
-          // This ensures browser always requests fresh data from server
           const res = await fetch(`${API_URL}?_t=${Date.now()}`, {
               headers: { 
                   'Cache-Control': 'no-cache',
@@ -45,7 +42,7 @@ const AdminApp: React.FC = () => {
           setProducts(data);
       } catch (err) {
           console.error("Failed to fetch products", err);
-          alert(`Lỗi kết nối Backend! \nĐang thử kết nối tới: ${API_URL}`);
+          alert(`Lỗi kết nối tới: ${API_URL}\nKiểm tra lại đường truyền internet hoặc URL API.`);
       } finally {
           setLoading(false);
       }
