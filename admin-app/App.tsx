@@ -1,21 +1,83 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 // Icons
 const ChartBarIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>;
 const ShoppingBagIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>;
 const UserGroupIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>;
 const PencilIcon = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>;
+const Spinner = () => <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>;
 
-// Mock Data for Admin List
-const MOCK_PRODUCTS = [
-  { id: "1", name: "Brown Long Sleeves Woven Vest", sku: "D82510002T6CB0261", price: 999000, stock: 15, status: "Đang bán" },
-  { id: "2", name: "Brown Woven Mini Skirt", sku: "S99210002T6CB0261", price: 599000, stock: 8, status: "Đang bán" },
-  { id: "3", name: "White Mavo Embroidered Shirt", sku: "A12310002T6CB0261", price: 599500, stock: 0, status: "Hết hàng" },
-];
+const API_URL = 'http://localhost:8080/api/products';
 
 const AdminApp: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'orders'>('products');
-  const [editingProduct, setEditingProduct] = useState<string | null>(null);
+  const [products, setProducts] = useState<any[]>([]);
+  const [editingProduct, setEditingProduct] = useState<any | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Fetch products on load
+  useEffect(() => {
+    if (activeTab === 'products') {
+        fetchProducts();
+    }
+  }, [activeTab]);
+
+  const fetchProducts = async () => {
+      setLoading(true);
+      try {
+          const res = await fetch(API_URL);
+          const data = await res.json();
+          // The backend returns the raw product structure. 
+          // We map it to display structure if needed, but for now raw is fine.
+          setProducts(data);
+      } catch (err) {
+          console.error("Failed to fetch products", err);
+          alert("Lỗi kết nối Backend! Hãy chắc chắn bạn đã chạy 'npm run dev' trong thư mục backend.");
+      } finally {
+          setLoading(false);
+      }
+  };
+
+  const handleEditClick = (product: any) => {
+      // Clone to avoid direct mutation
+      setEditingProduct({ ...product });
+  };
+
+  const handleInputChange = (field: string, value: any) => {
+      setEditingProduct((prev: any) => ({
+          ...prev,
+          [field]: value
+      }));
+  };
+
+  const handleSave = async () => {
+      if (!editingProduct) return;
+      setSaving(true);
+      try {
+          const res = await fetch(`${API_URL}/${editingProduct.id}`, {
+              method: 'PUT',
+              headers: {
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(editingProduct)
+          });
+          
+          if (!res.ok) throw new Error("Failed to update");
+          
+          const updatedProduct = await res.json();
+          
+          // Update local list
+          setProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
+          setEditingProduct(null);
+          alert("Cập nhật thành công!");
+      } catch (err) {
+          console.error(err);
+          alert("Cập nhật thất bại. Vui lòng kiểm tra console.");
+      } finally {
+          setSaving(false);
+      }
+  };
 
   const getTabTitle = () => {
       switch(activeTab) {
@@ -75,12 +137,16 @@ const AdminApp: React.FC = () => {
 
         <div className="p-8">
           {activeTab === 'products' && (
-             <div className="bg-white rounded-lg shadow border border-gray-200">
-                {editingProduct ? (
-                    // Edit Form (Visualizing API Spec Structure)
+             <div className="bg-white rounded-lg shadow border border-gray-200 min-h-[400px]">
+                {loading ? (
+                    <div className="flex items-center justify-center h-64 text-gray-500 gap-2">
+                        <Spinner /> Đang tải dữ liệu...
+                    </div>
+                ) : editingProduct ? (
+                    // Edit Form with Wiring
                     <div className="p-6">
                         <div className="flex justify-between items-center mb-6 border-b pb-4">
-                            <h3 className="text-lg font-bold">Chỉnh sửa: {MOCK_PRODUCTS.find(p => p.id === editingProduct)?.name}</h3>
+                            <h3 className="text-lg font-bold">Chỉnh sửa: {editingProduct.name}</h3>
                             <button onClick={() => setEditingProduct(null)} className="text-sm text-gray-500 hover:text-black underline">Hủy bỏ</button>
                         </div>
                         
@@ -89,20 +155,28 @@ const AdminApp: React.FC = () => {
                             <div className="lg:col-span-2 space-y-6">
                                 <div className="space-y-4">
                                     <label className="block text-sm font-medium text-gray-700">Tên sản phẩm</label>
-                                    <input type="text" defaultValue={MOCK_PRODUCTS.find(p => p.id === editingProduct)?.name} className="w-full border border-gray-300 rounded-md p-2" />
+                                    <input 
+                                        type="text" 
+                                        value={editingProduct.name}
+                                        onChange={(e) => handleInputChange('name', e.target.value)}
+                                        className="w-full border border-gray-300 rounded-md p-2" 
+                                    />
                                 </div>
                                 <div className="space-y-4">
                                     <label className="block text-sm font-medium text-gray-700">Mô tả</label>
-                                    <textarea className="w-full border border-gray-300 rounded-md p-2 h-32"></textarea>
+                                    <textarea 
+                                        value={editingProduct.description || ''}
+                                        onChange={(e) => handleInputChange('description', e.target.value)}
+                                        className="w-full border border-gray-300 rounded-md p-2 h-32"
+                                    ></textarea>
                                 </div>
                                 
-                                {/* Tabs Section from Spec */}
+                                {/* Tabs Section Placeholder */}
                                 <div className="border p-4 rounded-md bg-gray-50">
                                     <h4 className="font-bold text-sm mb-3 uppercase text-gray-500">Cấu hình Tabs (Thông tin)</h4>
                                     <div className="space-y-3">
                                         <input type="text" placeholder="Tiêu đề thông tin..." className="w-full border p-2 text-sm" />
                                         <input type="text" placeholder="Nội dung hướng dẫn bảo quản..." className="w-full border p-2 text-sm" />
-                                        <input type="text" placeholder="Nội dung chính sách đổi trả..." className="w-full border p-2 text-sm" />
                                     </div>
                                 </div>
                             </div>
@@ -114,11 +188,21 @@ const AdminApp: React.FC = () => {
                                     <div className="space-y-3">
                                         <div>
                                             <label className="text-xs text-gray-500">Giá niêm yết</label>
-                                            <input type="number" defaultValue={MOCK_PRODUCTS.find(p => p.id === editingProduct)?.price} className="w-full border rounded p-2" />
+                                            <input 
+                                                type="number" 
+                                                value={editingProduct.price}
+                                                onChange={(e) => handleInputChange('price', Number(e.target.value))}
+                                                className="w-full border rounded p-2" 
+                                            />
                                         </div>
                                         <div>
                                             <label className="text-xs text-gray-500">Giá gốc (Gạch)</label>
-                                            <input type="number" className="w-full border rounded p-2" />
+                                            <input 
+                                                type="number" 
+                                                value={editingProduct.originalPrice || ''}
+                                                onChange={(e) => handleInputChange('originalPrice', Number(e.target.value))}
+                                                className="w-full border rounded p-2" 
+                                            />
                                         </div>
                                     </div>
                                 </div>
@@ -128,51 +212,52 @@ const AdminApp: React.FC = () => {
                                     <div className="space-y-3">
                                         <div>
                                             <label className="text-xs text-gray-500">Mã SKU</label>
-                                            <input type="text" defaultValue={MOCK_PRODUCTS.find(p => p.id === editingProduct)?.sku} className="w-full border rounded p-2" />
-                                        </div>
-                                        <div>
-                                            <label className="text-xs text-gray-500">Trạng thái kho</label>
-                                            <select className="w-full border rounded p-2">
-                                                <option>Còn hàng (In Stock)</option>
-                                                <option>Hết hàng (Out of Stock)</option>
-                                                <option>Đặt trước (Preorder)</option>
-                                            </select>
+                                            <input 
+                                                type="text" 
+                                                value={editingProduct.sku}
+                                                onChange={(e) => handleInputChange('sku', e.target.value)}
+                                                className="w-full border rounded p-2" 
+                                            />
                                         </div>
                                     </div>
                                 </div>
 
-                                <button className="w-full bg-blue-600 text-white py-2 rounded font-medium hover:bg-blue-700">Lưu thay đổi</button>
+                                <button 
+                                    onClick={handleSave}
+                                    disabled={saving}
+                                    className="w-full bg-blue-600 text-white py-2 rounded font-medium hover:bg-blue-700 disabled:opacity-50 flex justify-center items-center gap-2"
+                                >
+                                    {saving && <Spinner />}
+                                    {saving ? 'Đang lưu...' : 'Lưu thay đổi'}
+                                </button>
                             </div>
                         </div>
                     </div>
                 ) : (
-                    // Product List
+                    // Product List mapped from API Data
                     <table className="w-full text-left">
                         <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
                             <tr>
                                 <th className="px-6 py-4">Tên sản phẩm</th>
                                 <th className="px-6 py-4">Mã SKU</th>
                                 <th className="px-6 py-4">Giá</th>
-                                <th className="px-6 py-4">Tồn kho</th>
-                                <th className="px-6 py-4">Trạng thái</th>
-                                <th className="px-6 py-4 text-right">Hành động</th>
+                                <th className="px-6 py-4">Hành động</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            {MOCK_PRODUCTS.map(product => (
+                            {products.length === 0 && (
+                                <tr>
+                                    <td colSpan={4} className="px-6 py-8 text-center text-gray-500">Không có sản phẩm nào.</td>
+                                </tr>
+                            )}
+                            {products.map(product => (
                                 <tr key={product.id} className="hover:bg-gray-50 transition-colors">
                                     <td className="px-6 py-4 font-medium">{product.name}</td>
                                     <td className="px-6 py-4 text-sm text-gray-500">{product.sku}</td>
                                     <td className="px-6 py-4">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}</td>
-                                    <td className="px-6 py-4 text-sm">{product.stock}</td>
                                     <td className="px-6 py-4">
-                                        <span className={`px-2 py-1 text-xs rounded-full ${product.status === 'Đang bán' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                            {product.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
                                         <button 
-                                            onClick={() => setEditingProduct(product.id)}
+                                            onClick={() => handleEditClick(product)}
                                             className="text-gray-400 hover:text-blue-600"
                                         >
                                             <PencilIcon />
@@ -192,16 +277,6 @@ const AdminApp: React.FC = () => {
                       <h3 className="text-gray-500 text-sm font-medium uppercase">Tổng doanh thu</h3>
                       <p className="text-3xl font-bold mt-2">12,500,000₫</p>
                       <span className="text-green-500 text-sm font-medium mt-1 inline-block">+12% so với tuần trước</span>
-                  </div>
-                  <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                      <h3 className="text-gray-500 text-sm font-medium uppercase">Tổng đơn hàng</h3>
-                      <p className="text-3xl font-bold mt-2">45</p>
-                      <span className="text-green-500 text-sm font-medium mt-1 inline-block">+5% so với tuần trước</span>
-                  </div>
-                   <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                      <h3 className="text-gray-500 text-sm font-medium uppercase">Tổng sản phẩm</h3>
-                      <p className="text-3xl font-bold mt-2">8</p>
-                      <span className="text-gray-400 text-sm font-medium mt-1 inline-block">Kho hàng ổn định</span>
                   </div>
               </div>
           )}

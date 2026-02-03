@@ -13,6 +13,12 @@ interface ProductResponse {
     reviews: any | null;
 }
 
+// GET /api/products (List all products for Admin)
+router.get('/', (req, res) => {
+    // In a real app, implement pagination here
+    res.json(PRODUCTS_DB);
+});
+
 // GET /api/products/:id
 router.get('/:id', (req, res) => {
     const { id } = req.params;
@@ -195,6 +201,25 @@ router.get('/:id', (req, res) => {
     }
 
     res.json(response);
+});
+
+// PUT /api/products/:id (Update product)
+router.put('/:id', (req, res) => {
+    const { id } = req.params;
+    const updates = req.body;
+
+    const index = PRODUCTS_DB.findIndex(p => p.id === id);
+    if (index === -1) {
+        return res.status(404).json({ error: "Product not found" });
+    }
+
+    // Update the product in memory
+    PRODUCTS_DB[index] = {
+        ...PRODUCTS_DB[index],
+        ...updates
+    };
+
+    res.json(PRODUCTS_DB[index]);
 });
 
 // GET /api/products/:id/reviews
