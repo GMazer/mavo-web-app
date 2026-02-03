@@ -10,15 +10,12 @@ const app = new Hono<{ Bindings: Bindings }>();
 // Middleware
 app.use('*', logger());
 
-// Fix CORS: Allow localhost and production domains dynamically
+// Fix CORS: Reflect origin and allow standard cache-control headers
 app.use('*', cors({
-  origin: (origin) => {
-    // If an origin is present (browsers), return it to allow it specifically.
-    // This satisfies "Access-Control-Allow-Origin" when "credentials: true" is used.
-    return origin || '*'; 
-  },
+  origin: (origin) => origin, // Reflects the request origin to allow localhost:3001, etc.
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization', 'Upgrade-Insecure-Requests'],
+  // Add 'Cache-Control' and 'Pragma' to allowed headers
+  allowHeaders: ['Content-Type', 'Authorization', 'Upgrade-Insecure-Requests', 'Cache-Control', 'Pragma'], 
   exposeHeaders: ['Content-Length'],
   maxAge: 600,
   credentials: true,

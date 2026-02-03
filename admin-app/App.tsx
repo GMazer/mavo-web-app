@@ -31,13 +31,9 @@ const AdminApp: React.FC = () => {
   const fetchProducts = async () => {
       setLoading(true);
       try {
-          // Fix Caching: Add timestamp query param AND Cache-Control headers
-          const res = await fetch(`${API_URL}?_t=${Date.now()}`, {
-              headers: { 
-                  'Cache-Control': 'no-cache',
-                  'Pragma': 'no-cache'
-              }
-          });
+          // Fix Caching: Use timestamp query param only.
+          // Removed 'Cache-Control' headers to prevent CORS Preflight failure.
+          const res = await fetch(`${API_URL}?_t=${Date.now()}`);
           const data = await res.json();
           setProducts(data);
       } catch (err) {
