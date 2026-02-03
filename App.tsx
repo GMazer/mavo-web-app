@@ -1,23 +1,60 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import ProductCard from './components/ProductCard';
 import ProductDetail from './components/ProductDetail';
 import Footer from './components/Footer';
 import CartSidebar from './components/CartSidebar';
 import Checkout from './components/Checkout';
-import { PRODUCTS } from './data/products';
+// REMOVED: import { PRODUCTS } from './data/products';
 import { Product, CartItem } from './types';
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
 
 type ViewState = 'home' | 'product' | 'checkout';
 
+// API URL
+const API_URL = 'https://mavo-fashion-api.mavo-web.workers.dev/api/products';
+
 const App: React.FC = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   
+  // Data State
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
   // Navigation State
   const [currentView, setCurrentView] = useState<ViewState>('home');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  // FETCH DATA FROM SERVER
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        // Add timestamp to prevent caching issues
+        const response = await fetch(`${API_URL}?_t=${Date.now()}`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        
+        const data = await response.json();
+        
+        // Normalize data: Ensure 'image' property exists for compatibility with existing UI
+        // The API returns 'images' (array), but frontend components might expect 'image' (string)
+        const normalizedData = data.map((item: any) => ({
+            ...item,
+            image: item.images && item.images.length > 0 ? item.images[0] : '', // Fallback for main image
+            originalPrice: item.originalPrice || undefined // Clean up nulls
+        }));
+
+        setProducts(normalizedData);
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   // Improved addToCart to handle grouping
   const addToCart = (product: Product, quantity = 1, size = 'M') => {
@@ -91,6 +128,18 @@ const App: React.FC = () => {
       "Váy đầm", "Áo", "Quần", "Chân váy", "Set", "Jumpsuits", "Áo khoác"
   ];
 
+  // Loading Screen
+  if (loading) {
+      return (
+          <div className="min-h-screen flex items-center justify-center bg-white">
+              <div className="flex flex-col items-center gap-4">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
+                  <p className="text-gray-500 text-sm tracking-wider uppercase">Đang tải dữ liệu...</p>
+              </div>
+          </div>
+      );
+  }
+
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900 flex flex-col">
       <Header 
@@ -145,7 +194,8 @@ const App: React.FC = () => {
         ) : currentView === 'product' && selectedProduct ? (
              <div className="px-6 lg:px-10 pb-20">
                 <ProductDetail 
-                    product={selectedProduct} 
+                    product={selectedProduct}
+                    allProducts={products} // Pass full list for recommendations
                     onAddToCart={addToCart}
                     onBuyNow={handleBuyNow}
                     onRelatedClick={handleProductClick}
@@ -183,17 +233,22 @@ const App: React.FC = () => {
                             <h1 className="text-[26px] uppercase font-normal tracking-wide">QUẦN ÁO</h1>
                         </div>
 
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-12">
-                            {PRODUCTS.map(product => (
-                                <ProductCard 
-                                    key={product.id} 
-                                    product={product} 
-                                    // Default add to cart behavior from card is 1 item, Size M (or handled inside)
-                                    onAddToCart={(p) => addToCart(p, 1, 'M')} 
-                                    onClick={() => handleProductClick(product)}
-                                />
-                            ))}
-                        </div>
+                        {products.length === 0 ? (
+                            <div className="py-20 text-center text-gray-500">
+                                Không tìm thấy sản phẩm nào.
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-12">
+                                {products.map(product => (
+                                    <ProductCard 
+                                        key={product.id} 
+                                        product={product} 
+                                        onAddToCart={(p) => addToCart(p, 1, 'M')} 
+                                        onClick={() => handleProductClick(product)}
+                                    />
+                                ))}
+                            </div>
+                        )}
                         
                         {/* Pagination */}
                         <div className="mt-20 flex justify-center gap-2">

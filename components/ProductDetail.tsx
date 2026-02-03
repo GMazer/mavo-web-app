@@ -9,16 +9,17 @@ import {
     ChevronDownIcon
 } from '@heroicons/react/24/outline';
 import ProductCard from './ProductCard';
-import { PRODUCTS } from '../data/products';
+// REMOVED: import { PRODUCTS } from '../data/products';
 
 interface ProductDetailProps {
   product: Product;
+  allProducts: Product[]; // New prop to receive full list
   onAddToCart: (product: Product, quantity: number, size: string) => void;
   onBuyNow: (product: Product, quantity: number, size: string) => void;
   onRelatedClick: (product: Product) => void;
 }
 
-const ProductDetail: React.FC<ProductDetailProps> = ({ product, onAddToCart, onBuyNow, onRelatedClick }) => {
+const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, onAddToCart, onBuyNow, onRelatedClick }) => {
   // Determine images to show (fallback to single image if array is missing)
   const images = product.images && product.images.length > 0 ? product.images : [product.image];
   
@@ -75,11 +76,11 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onAddToCart, onB
     onBuyNow(product, quantity, selectedSize);
   };
 
-  // Mock "Related Products" for "Có thể bạn sẽ thích"
-  const relatedProducts = PRODUCTS.filter(p => p.id !== product.id).slice(0, 4);
+  // Logic for "Related Products" (Simple filter: everything except current one)
+  const relatedProducts = allProducts.filter(p => p.id !== product.id).slice(0, 4);
   
-  // Mock "Bought Together" products
-  const boughtTogetherProducts = PRODUCTS.filter(p => p.id !== product.id).slice(4, 8);
+  // Logic for "Bought Together" (Next 4 items)
+  const boughtTogetherProducts = allProducts.filter(p => p.id !== product.id).slice(4, 8);
 
   return (
     <div className="w-full">
@@ -152,7 +153,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onAddToCart, onB
           {/* Color Selection */}
           <div className="mb-6">
             {/* Changed: 'Màu sắc' is normal, 'Màu Nâu' is bold */}
-            <p className="text-sm mb-2">Màu sắc: <span className="font-bold">Màu Nâu</span></p>
+            <p className="text-sm mb-2">Màu sắc: <span className="font-bold">Mặc định</span></p>
             <div className="flex gap-3">
                 {product.colors?.map((color, idx) => (
                     <div key={idx} className={`w-8 h-8 rounded-full border-2 ${idx === 0 ? 'border-black' : 'border-transparent'} p-0.5 cursor-pointer`}>
@@ -299,15 +300,20 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onAddToCart, onB
                 <ChevronDownIcon className={`w-4 h-4 transition-transform duration-200 ${expandBoughtTogether ? 'rotate-180' : ''}`} />
              </button>
              <div className={`overflow-hidden transition-all duration-300 ${expandBoughtTogether ? 'max-h-96 mt-4' : 'max-h-0'}`}>
-                  <div className="flex gap-3 overflow-x-auto pb-2">
-                    {boughtTogetherProducts.map(p => (
-                        <div key={p.id} className="w-20 flex-shrink-0 cursor-pointer group" onClick={() => onRelatedClick(p)}>
-                            <img src={p.image} className="w-full aspect-[2/3] object-cover mb-2 border border-transparent group-hover:border-black" />
-                            <p className="text-[10px] line-clamp-2 leading-tight">{p.name}</p>
-                            <p className="text-[10px] font-bold mt-1">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p.price).replace('₫', '')}₫</p>
-                        </div>
-                    ))}
-                  </div>
+                  {boughtTogetherProducts.length > 0 ? (
+                      <div className="flex gap-3 overflow-x-auto pb-2">
+                        {boughtTogetherProducts.map(p => (
+                            <div key={p.id} className="w-20 flex-shrink-0 cursor-pointer group" onClick={() => onRelatedClick(p)}>
+                                {/* Use p.image here because in App.tsx we normalized images[0] into p.image */}
+                                <img src={p.image} className="w-full aspect-[2/3] object-cover mb-2 border border-transparent group-hover:border-black" />
+                                <p className="text-[10px] line-clamp-2 leading-tight">{p.name}</p>
+                                <p className="text-[10px] font-bold mt-1">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p.price).replace('₫', '')}₫</p>
+                            </div>
+                        ))}
+                      </div>
+                  ) : (
+                      <p className="text-xs text-gray-400 py-2">Chưa có sản phẩm gợi ý.</p>
+                  )}
              </div>
           </div>
 
@@ -430,16 +436,20 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onAddToCart, onB
 
       <div className="mt-20">
         <h3 className="text-base font-normal uppercase mb-6 tracking-wide">CÓ THỂ BẠN SẼ THÍCH</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-x-5 gap-y-8">
-            {relatedProducts.map(rp => (
-                <ProductCard 
-                    key={rp.id} 
-                    product={rp} 
-                    onAddToCart={(p) => onAddToCart(p, 1, 'M')} 
-                    onClick={() => onRelatedClick(rp)}
-                />
-            ))}
-        </div>
+        {relatedProducts.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-x-5 gap-y-8">
+                {relatedProducts.map(rp => (
+                    <ProductCard 
+                        key={rp.id} 
+                        product={rp} 
+                        onAddToCart={(p) => onAddToCart(p, 1, 'M')} 
+                        onClick={() => onRelatedClick(rp)}
+                    />
+                ))}
+            </div>
+        ) : (
+            <p className="text-center text-gray-400">Không có sản phẩm liên quan.</p>
+        )}
       </div>
     </div>
   );

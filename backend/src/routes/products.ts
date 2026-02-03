@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { Bindings } from '../bindings';
+import { Bindings, D1Result } from '../bindings';
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -36,7 +36,7 @@ const formatProduct = (row: ProductRow) => ({
 // GET /api/products (List all products for Admin/Frontend)
 app.get('/', async (c) => {
     try {
-        const { results } = await c.env.DB.prepare("SELECT * FROM Products ORDER BY name").all<ProductRow>();
+        const { results } = await c.env.DB.prepare("SELECT * FROM Products ORDER BY name").all() as D1Result<ProductRow>;
         const products = results.map(formatProduct);
         return c.json(products);
     } catch (e: any) {
@@ -50,7 +50,7 @@ app.get('/:id', async (c) => {
     const includeReviews = c.req.query('includeReviews') === 'true';
 
     // 1. Fetch Product
-    const productRow = await c.env.DB.prepare("SELECT * FROM Products WHERE id = ? OR slug = ?").bind(id, id).first<ProductRow>();
+    const productRow = await c.env.DB.prepare("SELECT * FROM Products WHERE id = ? OR slug = ?").bind(id, id).first() as ProductRow | null;
 
     if (!productRow) {
         return c.json({
@@ -65,14 +65,14 @@ app.get('/:id', async (c) => {
     const dbProduct = formatProduct(productRow);
 
     // 2. Fetch Reviews (needed for rating summary)
-    const { results: reviews } = await c.env.DB.prepare("SELECT * FROM Reviews WHERE productId = ?").bind(dbProduct.id).all<ReviewRow>();
+    const { results: reviews } = await c.env.DB.prepare("SELECT * FROM Reviews WHERE productId = ?").bind(dbProduct.id).all() as D1Result<ReviewRow>;
     
     const avgRating = reviews.length > 0 
         ? reviews.reduce((acc, curr) => acc + curr.stars, 0) / reviews.length 
         : 0;
 
     // 3. Fetch Recommendations (Simple random or same category)
-    const { results: recommendationsRaw } = await c.env.DB.prepare("SELECT * FROM Products WHERE id != ? LIMIT 4").bind(dbProduct.id).all<ProductRow>();
+    const { results: recommendationsRaw } = await c.env.DB.prepare("SELECT * FROM Products WHERE id != ? LIMIT 4").bind(dbProduct.id).all() as D1Result<ProductRow>;
     const recommendations = recommendationsRaw.map(formatProduct).map(p => ({
         id: p.id,
         slug: p.slug,
@@ -217,7 +217,7 @@ app.put('/:id', async (c) => {
     const updates = await c.req.json();
 
     // 1. Fetch existing
-    const existing = await c.env.DB.prepare("SELECT * FROM Products WHERE id = ?").bind(id).first<ProductRow>();
+    const existing = await c.env.DB.prepare("SELECT * FROM Products WHERE id = ?").bind(id).first() as ProductRow | null;
     if (!existing) return c.json({ error: "Product not found" }, 404);
 
     // 2. Prepare update query dynamically
@@ -236,7 +236,7 @@ app.put('/:id', async (c) => {
     `).bind(name, price, originalPrice, description, sku, id).run();
 
     // 3. Return updated object
-    const updated = await c.env.DB.prepare("SELECT * FROM Products WHERE id = ?").bind(id).first<ProductRow>();
+    const updated = await c.env.DB.prepare("SELECT * FROM Products WHERE id = ?").bind(id).first() as ProductRow | null;
     return c.json(formatProduct(updated!));
 });
 
@@ -248,13 +248,13 @@ app.get('/:id/reviews', async (c) => {
     const offset = (page - 1) * pageSize;
 
     // Get Total
-    const totalResult = await c.env.DB.prepare("SELECT COUNT(*) as count FROM Reviews WHERE productId = ?").bind(id).first<{count: number}>();
+    const totalResult = await c.env.DB.prepare("SELECT COUNT(*) as count FROM Reviews WHERE productId = ?").bind(id).first() as {count: number} | null;
     const total = totalResult?.count || 0;
 
     // Get Items
     const { results } = await c.env.DB.prepare("SELECT * FROM Reviews WHERE productId = ? ORDER BY createdAt DESC LIMIT ? OFFSET ?")
         .bind(id, pageSize, offset)
-        .all<ReviewRow>();
+        .all() as D1Result<ReviewRow>;
 
     return c.json({
         items: results,
