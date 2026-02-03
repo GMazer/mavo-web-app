@@ -11,13 +11,27 @@ const app = new Hono<{ Bindings: Bindings }>();
 // Middleware
 app.use('*', logger());
 
-// Fix CORS: Reflect origin and allow standard cache-control headers
+// Fix CORS: Allow specific origins including localhost:3001
 app.use('*', cors({
-  origin: (origin) => origin, // Reflects the request origin to allow localhost:3001, etc.
+  origin: (origin) => {
+    // Allow standard development ports and production domains
+    const allowedOrigins = [
+      'http://localhost:3001', 
+      'http://localhost:5173', 
+      'http://localhost:8080',
+      'http://127.0.0.1:3001'
+    ];
+    // If origin is in the allowed list, return it.
+    // Also allow if origin is undefined (e.g. server-to-server or non-browser tools)
+    if (!origin || allowedOrigins.includes(origin)) {
+      return origin;
+    }
+    // Fallback: Reflect origin for development convenience (or return null to block)
+    return origin; 
+  },
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  // Add 'Cache-Control' and 'Pragma' to allowed headers
   allowHeaders: ['Content-Type', 'Authorization', 'Upgrade-Insecure-Requests', 'Cache-Control', 'Pragma'], 
-  exposeHeaders: ['Content-Length'],
+  exposeHeaders: ['Content-Length', 'ETag'],
   maxAge: 600,
   credentials: true,
 }));
