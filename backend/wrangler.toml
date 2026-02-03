@@ -8,5 +8,12 @@ port = 8080
 binding = "DB"
 database_name = "mavo-db"
 database_id = "bca53c51-52b5-4ed4-bb71-23aebe81b516" 
-# Run: npx wrangler d1 create mavo-db
-# Then replace the database_id above with the generated ID.
+
+# R2 Environment Variables
+# IMPORTANT: For security, use `wrangler secret put R2_SECRET_ACCESS_KEY` for the secret.
+[vars]
+R2_ACCOUNT_ID = "your_account_id_here"
+R2_ACCESS_KEY_ID = "your_access_key_id_here"
+R2_BUCKET_NAME = "mavo-images"
+R2_PUBLIC_DOMAIN = "https://your-r2-public-domain.com"
+# R2_SECRET_ACCESS_KEY should be set via secrets

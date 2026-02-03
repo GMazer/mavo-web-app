@@ -10,7 +10,8 @@
     "db:setup:prod": "wrangler d1 execute mavo-db --remote --file=./schema.sql"
   },
   "dependencies": {
-    "hono": "^4.1.0"
+    "hono": "^4.1.0",
+    "aws4fetch": "^1.0.17"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240222.0",
