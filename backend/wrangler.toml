@@ -17,8 +17,9 @@ bucket_name = "mavo-assets"
 # R2 Environment Variables for aws4fetch (S3 Compatibility Layer)
 # IMPORTANT: For security, use `wrangler secret put R2_SECRET_ACCESS_KEY` for the secret.
 [vars]
-R2_ACCOUNT_ID = "your_account_id_here"
-R2_ACCESS_KEY_ID = "your_access_key_id_here"
+R2_ACCOUNT_ID = "77e0abb126f355125bca64acf191fb32"
+R2_ACCESS_KEY_ID = "c012bd78d6930b4907513dea2d12f657"
 R2_BUCKET_NAME = "mavo-assets"
-R2_PUBLIC_DOMAIN = "https://your-r2-public-domain.com"
+# Thay thế URL dưới đây bằng URL bạn vừa copy từ mục Public Access > R2.dev subdomain
+R2_PUBLIC_DOMAIN = "https://pub-eefc56436dc543eba8d1308b894ee6f4.r2.dev"
 # R2_SECRET_ACCESS_KEY should be set via secrets
