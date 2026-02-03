@@ -3,9 +3,10 @@ import { ShoppingBagIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outlin
 
 interface HeaderProps {
   cartCount: number;
+  onOpenCart: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ cartCount }) => {
+const Header: React.FC<HeaderProps> = ({ cartCount, onOpenCart }) => {
   // Base style for nav links
   const navLinkBase = "relative py-2 transition-colors duration-300 inline-block";
   
@@ -46,7 +47,10 @@ const Header: React.FC<HeaderProps> = ({ cartCount }) => {
             </button>
             
             {/* Cart */}
-            <button className="text-black hover:opacity-70 transition-opacity relative flex items-center">
+            <button 
+                className="text-black hover:opacity-70 transition-opacity relative flex items-center"
+                onClick={onOpenCart}
+            >
               <ShoppingBagIcon className="w-5 h-5" />
               {cartCount > 0 && (
                 <span className="bg-[#E71313] text-white text-[10px] w-3.5 h-3.5 rounded-full flex items-center justify-center absolute -top-1 -right-1">

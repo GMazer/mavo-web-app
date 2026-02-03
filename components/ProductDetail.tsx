@@ -14,14 +14,18 @@ import { PRODUCTS } from '../data/products';
 interface ProductDetailProps {
   product: Product;
   onAddToCart: (product: Product, quantity: number, size: string) => void;
+  onBuyNow: (product: Product, quantity: number, size: string) => void;
   onRelatedClick: (product: Product) => void;
 }
 
-const ProductDetail: React.FC<ProductDetailProps> = ({ product, onAddToCart, onRelatedClick }) => {
+const ProductDetail: React.FC<ProductDetailProps> = ({ product, onAddToCart, onBuyNow, onRelatedClick }) => {
   // Determine images to show (fallback to single image if array is missing)
   const images = product.images && product.images.length > 0 ? product.images : [product.image];
   
-  const [activeImage, setActiveImage] = useState(images[0]);
+  // State for carousel
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isHovering, setIsHovering] = useState(false);
+  
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   
@@ -32,9 +36,21 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onAddToCart, onR
   const [expandHighlights, setExpandHighlights] = useState(false);
   const [expandBoughtTogether, setExpandBoughtTogether] = useState(false);
 
+  // Auto-rotate carousel effect
+  useEffect(() => {
+    // Only auto-rotate if there is more than 1 image and user is not hovering
+    if (images.length <= 1 || isHovering) return;
+
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
+    }, 3000); // Change image every 3 seconds
+
+    return () => clearInterval(interval);
+  }, [images.length, isHovering]);
+
   // Reset state when product changes
   useEffect(() => {
-    setActiveImage(images[0]);
+    setCurrentImageIndex(0);
     setQuantity(1);
     setSelectedSize(null);
     setActiveTab('info');
@@ -56,8 +72,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onAddToCart, onR
         alert("Vui lòng chọn kích thước!");
         return;
     }
-    onAddToCart(product, quantity, selectedSize);
-    alert("Đang chuyển đến trang thanh toán...");
+    onBuyNow(product, quantity, selectedSize);
   };
 
   // Mock "Related Products" for "Có thể bạn sẽ thích"
@@ -77,21 +92,31 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onAddToCart, onR
             {images.map((img, idx) => (
               <div 
                 key={idx} 
-                className={`cursor-pointer border ${activeImage === img ? 'border-black' : 'border-transparent hover:border-gray-300'}`}
-                onMouseEnter={() => setActiveImage(img)}
+                className={`cursor-pointer border transition-all duration-300 ${currentImageIndex === idx ? 'border-black opacity-100' : 'border-transparent hover:border-gray-300 opacity-60 hover:opacity-100'}`}
+                onMouseEnter={() => setCurrentImageIndex(idx)}
+                onClick={() => setCurrentImageIndex(idx)}
               >
                 <img src={img} alt={`Thumbnail ${idx}`} className="w-full aspect-[3/4] object-cover" />
               </div>
             ))}
           </div>
 
-          {/* Main Image */}
-          <div className="flex-1">
-            <img 
-              src={activeImage} 
-              alt={product.name} 
-              className="w-full max-w-[702px] h-auto object-cover" 
-            />
+          {/* Main Image Carousel */}
+          <div 
+            className="flex-1 relative aspect-[3/4] overflow-hidden bg-gray-100"
+            onMouseEnter={() => setIsHovering(true)}
+            onMouseLeave={() => setIsHovering(false)}
+          >
+            {images.map((img, idx) => (
+              <img 
+                key={idx}
+                src={img} 
+                alt={`${product.name} - View ${idx + 1}`} 
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ease-in-out ${
+                  idx === currentImageIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                }`}
+              />
+            ))}
           </div>
         </div>
 
