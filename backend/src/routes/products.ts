@@ -33,12 +33,55 @@ const formatProduct = (row: ProductRow) => ({
     colors: JSON.parse(row.colors)
 });
 
-// GET /api/products (List all products for Admin/Frontend)
+// GET /api/products (List all products with Pagination & Structured Response)
 app.get('/', async (c) => {
     try {
-        const { results } = await c.env.DB.prepare("SELECT * FROM Products ORDER BY name").all() as D1Result<ProductRow>;
-        const products = results.map(formatProduct);
-        return c.json(products);
+        const page = parseInt(c.req.query('page') || '1');
+        const pageSize = parseInt(c.req.query('pageSize') || '12');
+        const offset = (page - 1) * pageSize;
+
+        // 1. Get Total Count
+        const totalResult = await c.env.DB.prepare("SELECT COUNT(*) as count FROM Products").first() as { count: number };
+        const total = totalResult?.count || 0;
+
+        // 2. Get Paginated Results
+        const { results } = await c.env.DB.prepare("SELECT * FROM Products ORDER BY name LIMIT ? OFFSET ?")
+            .bind(pageSize, offset)
+            .all() as D1Result<ProductRow>;
+
+        // 3. Format Response
+        const items = results.map(row => {
+            const parsedImages = JSON.parse(row.images);
+            const parsedColors = JSON.parse(row.colors);
+            return {
+                id: row.id,
+                slug: row.slug,
+                name: row.name,
+                sku: row.sku,
+                // Include standard fields needed for frontend logic
+                category: row.category,
+                description: row.description,
+                colors: parsedColors,
+                images: parsedImages,
+                
+                // Structured Pricing
+                pricing: {
+                    price: row.price,
+                    compareAtPrice: row.originalPrice,
+                    currency: "VND"
+                },
+                
+                thumbnailUrl: parsedImages.length > 0 ? parsedImages[0] : "",
+                rating: { avg: 0, count: 0 } // Default or implement aggregation
+            };
+        });
+
+        return c.json({
+            items,
+            page,
+            pageSize,
+            total
+        });
     } catch (e: any) {
         return c.json({ error: e.message }, 500);
     }
@@ -221,7 +264,6 @@ app.put('/:id', async (c) => {
     if (!existing) return c.json({ error: "Product not found" }, 404);
 
     // 2. Prepare update query dynamically
-    // FIX: Check for undefined explicitly to allow updating values to 0 or empty string.
     
     const name = updates.name !== undefined ? updates.name : existing.name;
     const price = updates.price !== undefined ? updates.price : existing.price;
@@ -235,7 +277,7 @@ app.put('/:id', async (c) => {
         WHERE id = ?
     `).bind(name, price, originalPrice, description, sku, id).run();
 
-    // 3. Return updated object
+    // 3. Return updated object (Simple format for internal/admin use)
     const updated = await c.env.DB.prepare("SELECT * FROM Products WHERE id = ?").bind(id).first() as ProductRow | null;
     return c.json(formatProduct(updated!));
 });

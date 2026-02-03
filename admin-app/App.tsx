@@ -34,7 +34,13 @@ const AdminApp: React.FC = () => {
           // Fix Caching: Use timestamp query param only.
           const res = await fetch(`${API_URL}?_t=${Date.now()}`);
           const data = await res.json();
-          setProducts(data);
+          // Flatten the nested structure for Admin Table
+          const flattenedData = data.items.map((item: any) => ({
+             ...item,
+             price: item.pricing?.price || 0,
+             originalPrice: item.pricing?.compareAtPrice
+          }));
+          setProducts(flattenedData);
       } catch (err) {
           console.error("Failed to fetch products", err);
           alert(`Lỗi kết nối tới: ${API_URL}\nKiểm tra lại đường truyền internet hoặc URL API.`);

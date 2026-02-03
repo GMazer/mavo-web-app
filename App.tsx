@@ -37,12 +37,21 @@ const App: React.FC = () => {
         
         const data = await response.json();
         
-        // Normalize data: Ensure 'image' property exists for compatibility with existing UI
-        // The API returns 'images' (array), but frontend components might expect 'image' (string)
-        const normalizedData = data.map((item: any) => ({
-            ...item,
-            image: item.images && item.images.length > 0 ? item.images[0] : '', // Fallback for main image
-            originalPrice: item.originalPrice || undefined // Clean up nulls
+        // Normalize data: Map new API structure to internal Product type
+        const normalizedData = data.items.map((item: any) => ({
+            id: item.id,
+            name: item.name,
+            // Map structured pricing to flat fields
+            price: item.pricing?.price || 0,
+            originalPrice: item.pricing?.compareAtPrice,
+            // Map structured media
+            image: item.thumbnailUrl || '', 
+            images: item.images || [], 
+            // Map other fields
+            category: item.category,
+            code: item.sku,
+            colors: item.colors,
+            description: item.description
         }));
 
         setProducts(normalizedData);
