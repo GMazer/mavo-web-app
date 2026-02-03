@@ -26,7 +26,14 @@ const AdminApp: React.FC = () => {
   const fetchProducts = async () => {
       setLoading(true);
       try {
-          const res = await fetch(API_URL);
+          // Fix Caching: Add timestamp query param AND Cache-Control headers
+          // This ensures browser always requests fresh data from server
+          const res = await fetch(`${API_URL}?_t=${Date.now()}`, {
+              headers: { 
+                  'Cache-Control': 'no-cache',
+                  'Pragma': 'no-cache'
+              }
+          });
           const data = await res.json();
           setProducts(data);
       } catch (err) {

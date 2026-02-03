@@ -9,6 +9,15 @@ const PORT = process.env.PORT || 8080;
 app.use(cors() as any);
 app.use(express.json() as any);
 
+// Logging Middleware: Helps see incoming requests in terminal
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
+});
+
+// Silence /favicon.ico 404 errors
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
 // API Routes
 app.use('/api/health', healthRouter);
 app.use('/api/products', productsRouter);
