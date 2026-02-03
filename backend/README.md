@@ -1,12 +1,29 @@
 # Backend API
 
-## Purpose
-This directory will contain the server-side logic and database connectivity.
+## Structure
+- `src/app.ts`: Main entry point.
+- `src/routes/`: API route definitions.
 
-## Setup (Pending Milestone B)
-Once the technology stack is chosen (e.g., Node.js, Python/Django, Go), initialize the project here.
+## Setup & Run
 
-## Standards
-- API Prefix: `/api`
-- Port: TBD (Default 8080 or 8000)
-- Auth: TBD (Pending Decision)
+1.  **Install dependencies**:
+    ```bash
+    cd backend
+    npm install
+    ```
+
+2.  **Development**:
+    ```bash
+    npm run dev
+    ```
+    Server runs on http://localhost:8080.
+
+3.  **Build & Start**:
+    ```bash
+    npm run build
+    npm start
+    ```
+
+## Endpoints
+
+-   `GET /api/health`: Health check.

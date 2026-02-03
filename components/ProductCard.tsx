@@ -17,17 +17,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
           className="h-full w-full object-cover object-center"
         />
         
-        {/* Sale tag hidden to match Image 2 reference style perfectly. 
-            Uncomment below to restore.
-        */}
-        {/* 
-        {product.originalPrice && (
-            <div className="absolute top-0 right-0 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 z-10">
-                -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
-            </div>
-        )} 
-        */}
-        
         {/* MUA NGAY Button - Slides up on hover */}
         <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 ease-out z-20">
             <button 
@@ -35,7 +24,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
                     e.stopPropagation();
                     onAddToCart(product);
                 }}
-                className="w-full bg-white text-black font-bold text-[11px] py-3 uppercase tracking-wider hover:bg-gray-50 shadow-md font-sfu-book border border-transparent hover:border-gray-200"
+                /* Removed font-sfu-book */
+                className="w-full bg-white text-black font-bold text-[11px] py-3 uppercase tracking-wider hover:bg-gray-50 shadow-md border border-transparent hover:border-gray-200"
             >
                 Mua ngay
             </button>
@@ -44,18 +34,20 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
 
       {/* Details Section */}
       <div className="mt-4 flex flex-col gap-1.5">
-        {/* Product Name: Clean, light/regular font, left aligned */}
-        <h3 className="text-sm font-sfu-book text-gray-700 truncate leading-normal">
+        {/* Product Name: Clean, light/regular font, left aligned. Removed font-sfu-book. */}
+        <h3 className="text-sm text-gray-700 truncate leading-normal">
           {product.name}
         </h3>
 
         {/* Price Section */}
         <div className="flex items-baseline gap-2">
-          <p className="text-sm font-sfu-book text-black font-normal">
+          {/* Removed font-sfu-book */}
+          <p className="text-sm text-black font-normal">
             {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price).replace('₫', '')} ₫
           </p>
           {product.originalPrice && (
-            <p className="text-sm text-gray-400 line-through decoration-gray-400 font-sfu-book font-light">
+            /* Removed font-sfu-book */
+            <p className="text-sm text-gray-400 line-through decoration-gray-400 font-light">
               {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.originalPrice).replace('₫', '')} ₫
             </p>
           )}

@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mavo Fashion</title>
     
-    <!-- Add Google Fonts (Jost) as a high-quality fallback for SFU Futura -->
+    <!-- Add Google Fonts - Be Vietnam Pro (Primary) & Jost (Fallback/Legacy) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <!-- Importing full weight range for Be Vietnam Pro to support font-light, font-bold, font-black etc. -->
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100&family=Jost:wght@300;400;500;700;800&display=swap" rel="stylesheet">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -20,11 +21,8 @@
               secondary: '#4a4a4a',
             },
             fontFamily: {
-              // Priority: SFU Local -> Jost (Google) -> System Sans
-              sans: ['SFUFuturaBook', 'Jost', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
-              'sfu-light': ['SFUFuturaLight', 'Jost', 'sans-serif'],
-              'sfu-book': ['SFUFuturaBook', 'Jost', 'sans-serif'],
-              'sfu-heavy': ['SFUFuturaHeavy', 'Jost', 'sans-serif'],
+              // Set Be Vietnam Pro as the default sans stack
+              sans: ['"Be Vietnam Pro"', 'Jost', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
             }
           }
         }
@@ -32,36 +30,33 @@
     </script>
     <style>
       /* 
-         Using ./assets ensures paths work even if served from a sub-folder.
-         If these files are missing, the browser will gracefully fall back to 'Jost'.
+         Legacy font-face declarations kept for assets reference, 
+         but global style is now overridden below.
       */
       @font-face {
         font-family: 'SFUFuturaLight';
         src: url('./assets/fonts/SFUFuturaLight.ttf') format('truetype');
         font-weight: 300;
-        font-style: normal;
         font-display: swap;
       }
       @font-face {
         font-family: 'SFUFuturaBook';
         src: url('./assets/fonts/SFUFuturaBook.ttf') format('truetype');
-        font-weight: 400; /* Map to normal weight */
-        font-style: normal;
+        font-weight: 400;
         font-display: swap;
       }
       @font-face {
         font-family: 'SFUFuturaHeavy';
         src: url('./assets/fonts/SFUFuturaHeavy.ttf') format('truetype');
-        font-weight: 800; /* Map to extra bold/heavy weight */
-        font-style: normal;
+        font-weight: 800;
         font-display: swap;
       }
 
       body {
         background-color: #ffffff;
         color: #1a1a1a;
-        /* Force application of the font stack */
-        font-family: 'SFUFuturaBook', 'Jost', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        /* Globally apply Be Vietnam Pro */
+        font-family: 'Be Vietnam Pro', 'Jost', sans-serif;
       }
       
       /* Custom scrollbar */
@@ -85,7 +80,9 @@
     "react": "https://esm.sh/react@^19.2.4",
     "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
     "react/": "https://esm.sh/react@^19.2.4/",
-    "@heroicons/react/": "https://esm.sh/@heroicons/react@^2.2.0/"
+    "@heroicons/react/": "https://esm.sh/@heroicons/react@^2.2.0/",
+    "express": "https://esm.sh/express@^5.2.1",
+    "cors": "https://esm.sh/cors@^2.8.6"
   }
 }
 </script>
