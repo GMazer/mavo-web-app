@@ -1,9 +1,11 @@
-[
-  {
-    "AllowedOrigins": ["http://localhost:3001", "http://localhost:5173", "http://localhost:8080", "*"],
-    "AllowedMethods": ["GET", "PUT", "POST", "HEAD", "DELETE", "OPTIONS"],
-    "AllowedHeaders": ["Content-Type", "Authorization", "*"],
-    "ExposeHeaders": ["ETag", "Content-Length"],
-    "MaxAgeSeconds": 3000
-  }
-]
+{
+  "rules": [
+    {
+      "allowedOrigins": ["http://localhost:3001", "http://localhost:5173", "http://localhost:8080", "*"],
+      "allowedMethods": ["GET", "PUT", "POST", "HEAD", "DELETE", "OPTIONS"],
+      "allowedHeaders": ["Content-Type", "Authorization", "*"],
+      "exposeHeaders": ["ETag", "Content-Length"],
+      "maxAgeSeconds": 3000
+    }
+  ]
+}
