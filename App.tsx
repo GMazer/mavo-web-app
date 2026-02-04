@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import ProductCard from './components/ProductCard';
@@ -5,14 +6,15 @@ import ProductDetail from './components/ProductDetail';
 import Footer from './components/Footer';
 import CartSidebar from './components/CartSidebar';
 import Checkout from './components/Checkout';
-// REMOVED: import { PRODUCTS } from './data/products';
-import { Product, CartItem } from './types';
+import { Product, CartItem, AppSettings } from './types';
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
 
 type ViewState = 'home' | 'product' | 'checkout';
 
 // API URL
-const API_URL = 'https://mavo-fashion-api.mavo-web.workers.dev/api/products';
+const API_BASE = 'https://mavo-fashion-api.mavo-web.workers.dev/api';
+const API_PRODUCTS = `${API_BASE}/products`;
+const API_SETTINGS = `${API_BASE}/settings`;
 
 const App: React.FC = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -21,6 +23,13 @@ const App: React.FC = () => {
   // Data State
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [appSettings, setAppSettings] = useState<AppSettings>({
+      hotline: '1800 6525',
+      email: 'CSKH@MAVOFASHION.COM',
+      zalo: '',
+      sizeGuideDefault: '',
+      careGuideDefault: ''
+  });
 
   // Navigation State
   const [currentView, setCurrentView] = useState<ViewState>('home');
@@ -28,44 +37,49 @@ const App: React.FC = () => {
 
   // FETCH DATA FROM SERVER
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        // Add timestamp to prevent caching issues
-        const response = await fetch(`${API_URL}?_t=${Date.now()}`);
-        if (!response.ok) throw new Error('Network response was not ok');
         
-        const data = await response.json();
-        
-        // Handle both legacy (Array) and new (Object with items) API response formats
-        const items = Array.isArray(data) ? data : (data.items || []);
-        
-        // Normalize data: Map new API structure to internal Product type
-        const normalizedData = items.map((item: any) => ({
-            id: item.id,
-            name: item.name,
-            // Map structured pricing to flat fields, with fallback to flat fields
-            price: item.pricing?.price ?? item.price ?? 0,
-            originalPrice: item.pricing?.compareAtPrice ?? item.originalPrice,
-            // Map structured media with fallbacks
-            image: item.thumbnailUrl || (item.images && item.images[0]) || item.image || '', 
-            images: item.images || [], 
-            // Map other fields
-            category: item.category,
-            code: item.sku,
-            colors: item.colors,
-            description: item.description
-        }));
+        // Parallel Fetch: Products + Settings
+        const [prodRes, settRes] = await Promise.all([
+            fetch(`${API_PRODUCTS}?_t=${Date.now()}`),
+            fetch(`${API_SETTINGS}?_t=${Date.now()}`)
+        ]);
 
-        setProducts(normalizedData);
+        if (prodRes.ok) {
+            const data = await prodRes.json();
+            const items = Array.isArray(data) ? data : (data.items || []);
+            
+            const normalizedData = items.map((item: any) => ({
+                id: item.id,
+                name: item.name,
+                price: item.pricing?.price ?? item.price ?? 0,
+                originalPrice: item.pricing?.compareAtPrice ?? item.originalPrice,
+                image: item.thumbnailUrl || (item.images && item.images[0]) || item.image || '', 
+                images: item.images || [], 
+                category: item.category,
+                code: item.sku,
+                colors: item.colors,
+                description: item.description,
+                customSizeGuide: item.customSizeGuide
+            }));
+            setProducts(normalizedData);
+        }
+
+        if (settRes.ok) {
+            const settingsData = await settRes.json();
+            setAppSettings(prev => ({ ...prev, ...settingsData }));
+        }
+
       } catch (error) {
-        console.error("Failed to fetch products:", error);
+        console.error("Failed to fetch data:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProducts();
+    fetchData();
   }, []);
 
   // Improved addToCart to handle grouping
@@ -207,7 +221,8 @@ const App: React.FC = () => {
              <div className="px-6 lg:px-10 pb-20">
                 <ProductDetail 
                     product={selectedProduct}
-                    allProducts={products} // Pass full list for recommendations
+                    allProducts={products}
+                    settings={appSettings} // Pass settings
                     onAddToCart={addToCart}
                     onBuyNow={handleBuyNow}
                     onRelatedClick={handleProductClick}
@@ -274,7 +289,7 @@ const App: React.FC = () => {
         )}
       </main>
 
-      <Footer />
+      <Footer settings={appSettings} />
     </div>
   );
 };

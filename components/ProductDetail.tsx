@@ -1,5 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
-import { Product } from '../types';
+import { Product, AppSettings } from '../types';
+import ProductCard from './ProductCard';
 import { StarIcon } from '@heroicons/react/20/solid';
 import { 
     TruckIcon, 
@@ -8,48 +10,42 @@ import {
     ArrowPathIcon,
     ChevronDownIcon
 } from '@heroicons/react/24/outline';
-import ProductCard from './ProductCard';
-// REMOVED: import { PRODUCTS } from '../data/products';
 
 interface ProductDetailProps {
   product: Product;
-  allProducts: Product[]; // New prop to receive full list
+  allProducts: Product[];
+  settings: AppSettings;
   onAddToCart: (product: Product, quantity: number, size: string) => void;
   onBuyNow: (product: Product, quantity: number, size: string) => void;
   onRelatedClick: (product: Product) => void;
 }
 
-const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, onAddToCart, onBuyNow, onRelatedClick }) => {
-  // Determine images to show (fallback to single image if array is missing)
+const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, settings, onAddToCart, onBuyNow, onRelatedClick }) => {
   const images = product.images && product.images.length > 0 ? product.images : [product.image];
   
-  // State for carousel
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
-  
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
-  
-  // Tab state: 'info' | 'care' | 'policy'
   const [activeTab, setActiveTab] = useState<'info' | 'care' | 'policy'>('info');
-
-  // Accordion state for Right Column
   const [expandHighlights, setExpandHighlights] = useState(false);
   const [expandBoughtTogether, setExpandBoughtTogether] = useState(false);
 
-  // Auto-rotate carousel effect
-  useEffect(() => {
-    // Only auto-rotate if there is more than 1 image and user is not hovering
-    if (images.length <= 1 || isHovering) return;
+  // Determine Size Guide Image
+  // Priority: Product Custom Guide -> Global Default -> Fallback Placeholder
+  const sizeGuideImage = product.customSizeGuide || settings.sizeGuideDefault || 'https://via.placeholder.com/800x500?text=Size+Guide+Pending';
+  
+  // Determine Care Guide Image
+  const careGuideImage = settings.careGuideDefault || 'https://via.placeholder.com/800x500?text=Care+Guide+Pending';
 
+  useEffect(() => {
+    if (images.length <= 1 || isHovering) return;
     const interval = setInterval(() => {
       setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
-    }, 3000); // Change image every 3 seconds
-
+    }, 3000); 
     return () => clearInterval(interval);
   }, [images.length, isHovering]);
 
-  // Reset state when product changes
   useEffect(() => {
     setCurrentImageIndex(0);
     setQuantity(1);
@@ -76,10 +72,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, onA
     onBuyNow(product, quantity, selectedSize);
   };
 
-  // Logic for "Related Products" (Simple filter: everything except current one)
   const relatedProducts = allProducts.filter(p => p.id !== product.id).slice(0, 4);
-  
-  // Logic for "Bought Together" (Next 4 items)
   const boughtTogetherProducts = allProducts.filter(p => p.id !== product.id).slice(4, 8);
 
   return (
@@ -88,7 +81,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, onA
         
         {/* Left Column: Image Gallery */}
         <div className="w-full lg:w-3/5 flex gap-4">
-          {/* Thumbnail Strip (Left side) */}
           <div className="hidden md:flex flex-col gap-3 w-20 flex-shrink-0">
             {images.map((img, idx) => (
               <div 
@@ -102,7 +94,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, onA
             ))}
           </div>
 
-          {/* Main Image Carousel */}
           <div 
             className="flex-1 relative aspect-[3/4] overflow-hidden bg-gray-100"
             onMouseEnter={() => setIsHovering(true)}
@@ -123,14 +114,12 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, onA
 
         {/* Right Column: Details */}
         <div className="w-full lg:w-2/5 flex flex-col">
-          {/* Product Name */}
           <h1 className="text-2xl lg:text-[28px] font-normal mb-2 truncate" title={product.name}>{product.name}</h1>
           
           <div className="flex items-center gap-4 mb-4 text-sm text-gray-500">
             <span>Mã sản phẩm: {product.code || 'N/A'}</span>
           </div>
 
-          {/* Rating */}
           <div className="flex items-center gap-1 mb-6">
             {[0, 1, 2, 3, 4].map((star) => (
                <StarIcon key={star} className="w-4 h-4 text-gray-200" />
@@ -138,7 +127,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, onA
             <span className="text-sm text-gray-400 ml-1">(0)</span>
           </div>
 
-          {/* Price */}
           <div className="flex items-baseline gap-3 mb-8">
              <span className="text-2xl font-bold">
                 {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price).replace('₫', '')} ₫
@@ -150,9 +138,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, onA
              )}
           </div>
 
-          {/* Color Selection */}
           <div className="mb-6">
-            {/* Changed: 'Màu sắc' is normal, 'Màu Nâu' is bold */}
             <p className="text-sm mb-2">Màu sắc: <span className="font-bold">Mặc định</span></p>
             <div className="flex gap-3">
                 {product.colors?.map((color, idx) => (
@@ -163,7 +149,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, onA
             </div>
           </div>
 
-          {/* Size Selection */}
           <div className="mb-6">
             <p className="text-sm mb-2">Kích thước:</p>
             <div className="flex gap-2">
@@ -183,9 +168,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, onA
             </div>
           </div>
 
-          {/* Quantity & Actions */}
           <div className="flex flex-col sm:flex-row gap-3 mb-4">
-             {/* Quantity Input */}
              <div className="flex items-center border border-gray-300 w-32 h-12 flex-shrink-0 bg-white">
                 <button 
                     className="w-10 h-full flex items-center justify-center text-gray-500 hover:text-black transition-colors"
@@ -207,7 +190,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, onA
                 </button>
              </div>
 
-             {/* Buttons Container */}
              <div className="flex-1 flex gap-2">
                  <button 
                     onClick={handleAddToCart}
@@ -224,13 +206,11 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, onA
              </div>
           </div>
 
-          {/* Chat Support */}
           <a href="#" className="flex items-center gap-2 text-[#0084FF] text-sm mb-8 hover:underline">
              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Facebook_Messenger_logo_2018.svg/2048px-Facebook_Messenger_logo_2018.svg.png" className="w-5 h-5" alt="Messenger" />
              Chat để được MAVO tư vấn ngay (08:30 - 17:00)
           </a>
 
-          {/* Service Info Grid */}
           <div className="grid grid-cols-2 gap-y-6 gap-x-4 bg-gray-50 p-6 rounded-sm mb-6">
              <div className="flex items-start gap-3">
                 <TruckIcon className="w-6 h-6 flex-shrink-0 stroke-1" />
@@ -262,7 +242,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, onA
              <div className="flex items-start gap-3">
                 <PhoneIcon className="w-6 h-6 flex-shrink-0 stroke-1" />
                 <div className="text-xs">
-                    <p className="font-light mb-1">Hotline <span className="font-extrabold">1800 6525</span> hỗ trợ hành chính từ 8h30 - 17h mỗi ngày (T2-CN)</p>
+                    <p className="font-light mb-1">Hotline <span className="font-extrabold">{settings.hotline}</span> hỗ trợ hành chính từ 8h30 - 17h mỗi ngày (T2-CN)</p>
                 </div>
              </div>
              <div className="flex items-start gap-3">
@@ -275,7 +255,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, onA
              </div>
           </div>
 
-          {/* Additional Sections in Session 1 */}
           <div className="border-t border-gray-200 py-4">
              <button 
                 className="flex w-full justify-between items-center text-sm font-medium uppercase hover:text-gray-600 transition-colors"
@@ -304,7 +283,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, onA
                       <div className="flex gap-3 overflow-x-auto pb-2">
                         {boughtTogetherProducts.map(p => (
                             <div key={p.id} className="w-20 flex-shrink-0 cursor-pointer group" onClick={() => onRelatedClick(p)}>
-                                {/* Use p.image here because in App.tsx we normalized images[0] into p.image */}
                                 <img src={p.image} className="w-full aspect-[2/3] object-cover mb-2 border border-transparent group-hover:border-black" />
                                 <p className="text-[10px] line-clamp-2 leading-tight">{p.name}</p>
                                 <p className="text-[10px] font-bold mt-1">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p.price).replace('₫', '')}₫</p>
@@ -320,10 +298,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, onA
         </div>
       </div>
 
-      {/* Session 2 Part A: Tabs & Info (Full Width with 260px padding) */}
       <div className="mt-20 w-full px-6 lg:px-[260px]">
-        
-        {/* Tab Headers */}
         <div className="flex flex-wrap gap-8 border-b border-gray-200 mb-8">
             <button 
                 onClick={() => setActiveTab('info')}
@@ -345,7 +320,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, onA
             </button>
         </div>
 
-        {/* Tab Content */}
         <div className="mb-16">
             {activeTab === 'info' && (
                 <div className="animate-fade-in">
@@ -359,12 +333,15 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, onA
                             MAVO By DO MANH CUONG
                         </p>
                     </div>
-                    {/* Size Guide Image */}
-                    <div className="w-full bg-white p-4 flex justify-center">
+                    {/* Size Guide */}
+                    <div className="w-full bg-white p-4 flex justify-center border border-gray-100 rounded">
                         <img 
-                            src="https://product.hstatic.net/200000182297/product/bang-size-nu_c9205164d96a461b97b0a3c20c085026_master.jpg" 
+                            src={sizeGuideImage} 
                             alt="Bang size ao" 
-                            className="max-w-full h-auto object-contain"
+                            className="max-w-full h-auto object-contain max-h-[600px]"
+                            onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/800x500?text=Size+Guide+Not+Available';
+                            }}
                         />
                     </div>
                 </div>
@@ -372,18 +349,19 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, onA
 
             {activeTab === 'care' && (
                 <div className="animate-fade-in flex justify-center py-10">
-                     {/* Placeholder Image for Care Instructions */}
                      <img 
-                        src="https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=800&auto=format&fit=crop" 
+                        src={careGuideImage} 
                         alt="Huong dan bao quan"
-                        className="max-w-[600px] w-full h-auto grayscale opacity-80"
+                        className="max-w-[800px] w-full h-auto"
+                        onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/800x500?text=Care+Guide+Not+Available';
+                        }}
                      />
                 </div>
             )}
 
             {activeTab === 'policy' && (
                  <div className="animate-fade-in flex justify-center py-10">
-                    {/* Placeholder Image for Policy */}
                     <img 
                        src="https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?q=80&w=800&auto=format&fit=crop" 
                        alt="Chinh sach doi hang"
@@ -394,13 +372,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, onA
         </div>
       </div>
 
-      {/* Session 2 Part B: Reviews Section (Centered max-w-6xl) */}
       <div className="max-w-6xl mx-auto px-6 lg:px-10">
         <div className="border border-gray-200 p-6 lg:p-10 bg-white">
             <h3 className="text-sm font-bold uppercase mb-6">ĐÁNH GIÁ SẢN PHẨM</h3>
             <div className="flex flex-col md:flex-row gap-8 lg:gap-16">
-                
-                {/* Score Left */}
                 <div className="flex flex-col items-center justify-center min-w-[150px]">
                     <span className="text-6xl font-light">0</span>
                     <div className="flex gap-1 my-2">
@@ -408,8 +383,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, onA
                     </div>
                     <span className="text-gray-400 text-sm">Chưa có đánh giá nào</span>
                 </div>
-
-                {/* Form Right */}
                 <div className="flex-1 w-full">
                     <div className="mb-4">
                         <label className="block text-sm text-gray-500 mb-1">Đánh giá của bạn:</label>
@@ -417,7 +390,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, onA
                              {[1,2,3,4,5].map(s => <StarIcon key={s} className="w-5 h-5 text-gray-200 cursor-pointer hover:text-yellow-400 transition-colors" />)}
                         </div>
                     </div>
-                    
                     <div className="mb-4">
                          <label className="block text-sm text-gray-500 mb-2">Nhận xét của bạn:</label>
                          <textarea 
@@ -425,7 +397,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, onA
                             placeholder="Chia sẻ cảm nhận của bạn về sản phẩm..."
                          ></textarea>
                     </div>
-
                     <button className="bg-[#333] text-white text-xs font-bold uppercase px-6 py-3 hover:bg-black transition-colors">
                         GỬI ĐÁNH GIÁ
                     </button>

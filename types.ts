@@ -1,3 +1,4 @@
+
 export interface Product {
   id: string;
   name: string;
@@ -9,9 +10,18 @@ export interface Product {
   code?: string;     // Product code (e.g., D825...)
   colors?: string[];
   description?: string;
+  customSizeGuide?: string | null; // Optional override for size guide
 }
 
 export interface CartItem extends Product {
   quantity: number;
   selectedSize?: string;
+}
+
+export interface AppSettings {
+  hotline: string;
+  email: string;
+  zalo: string;
+  sizeGuideDefault: string;
+  careGuideDefault: string;
 }
