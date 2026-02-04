@@ -1,9 +1,10 @@
-[
-  {
-    "AllowedOrigins": ["http://localhost:3001"],
-    "AllowedMethods": ["PUT", "GET", "HEAD", "DELETE"],
-    "AllowedHeaders": ["Content-Type", "x-amz-*", "*"],
-    "ExposeHeaders": ["ETag"],
-    "MaxAgeSeconds": 3600
-  }
-]
+{
+  "rules": [
+    {
+      "allowed": {
+        "origins": ["http://localhost:3001"],
+        "methods": ["GET", "PUT", "POST", "DELETE", "HEAD"]
+      }
+    }
+  ]
+}
