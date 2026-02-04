@@ -23,7 +23,7 @@ const Settings: React.FC = () => {
                 const data = await fetchSettingsApi();
                 setSettings(prev => ({ ...prev, ...data }));
             } catch (err) {
-                console.error("Failed to load settings", err);
+                console.error("Failed to load settings (Normal if first time/no DB table):", err);
             } finally {
                 setLoading(false);
             }
@@ -40,9 +40,9 @@ const Settings: React.FC = () => {
         try {
             await saveSettingsApi(settings);
             alert("Đã lưu cấu hình thành công!");
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            alert("Lỗi khi lưu cấu hình.");
+            alert(`Lỗi khi lưu cấu hình: ${err.message}`);
         } finally {
             setSaving(false);
         }
@@ -68,7 +68,7 @@ const Settings: React.FC = () => {
     if (loading) return <div className="text-center py-10">Đang tải...</div>;
 
     return (
-        <div className="max-w-4xl mx-auto space-y-8">
+        <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
             {/* Contact Info */}
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <h3 className="text-lg font-bold mb-4 border-b pb-2">Thông tin liên hệ</h3>

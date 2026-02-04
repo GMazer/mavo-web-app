@@ -43,7 +43,7 @@ export const saveProductApi = async (product: Product): Promise<Product> => {
     
     if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        console.error("Save API Error:", errData);
+        console.error("Save Product API Error:", errData);
         throw new Error(errData.error || errData.message || "Failed to save product");
     }
 
@@ -58,7 +58,10 @@ export const saveProductApi = async (product: Product): Promise<Product> => {
 
 export const fetchSettingsApi = async (): Promise<AppSettings> => {
     const res = await fetch(`${SETTINGS_URL}?_t=${Date.now()}`);
-    if (!res.ok) throw new Error("Failed to fetch settings");
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || err.error || "Failed to fetch settings");
+    }
     return await res.json();
 };
 
@@ -68,7 +71,11 @@ export const saveSettingsApi = async (settings: Partial<AppSettings>): Promise<v
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings)
     });
-    if (!res.ok) throw new Error("Failed to save settings");
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error("Save Settings API Error:", err);
+        throw new Error(err.error || err.message || "Failed to save settings");
+    }
 };
 
 // --- Uploads ---

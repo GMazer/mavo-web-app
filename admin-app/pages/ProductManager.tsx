@@ -67,11 +67,11 @@ const ProductManager: React.FC<{ onCreateTrigger: (trigger: () => void) => void 
         try {
             // Call API silently
             await saveProductApi(updatedProduct);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to toggle visibility", error);
             // Revert if failed
             setProducts(prev => prev.map(p => p.id === product.id ? product : p));
-            alert("Không thể cập nhật trạng thái. Vui lòng thử lại.");
+            alert(`Không thể cập nhật trạng thái: ${error.message}`);
         }
     };
 

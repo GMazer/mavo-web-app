@@ -17,6 +17,7 @@ app.get('/', async (c) => {
 
         return c.json(settings);
     } catch (e: any) {
+        console.error("Get Settings Error:", e);
         return c.json({ error: e.message }, 500);
     }
 });
@@ -26,20 +27,26 @@ app.post('/', async (c) => {
     try {
         const body = await c.req.json();
         
-        // Use a transaction or batch if possible, but simple loop is fine for small config
+        if (!body || Object.keys(body).length === 0) {
+            return c.json({ success: true, updated: [] });
+        }
+        
+        // Use a transaction or batch if possible
+        // Quoting "key" and "value" to be safe with SQL reserved words
         const stmt = c.env.DB.prepare(`
-            INSERT INTO Settings (key, value) VALUES (?, ?)
-            ON CONFLICT(key) DO UPDATE SET value = excluded.value
+            INSERT INTO Settings ("key", "value") VALUES (?, ?)
+            ON CONFLICT("key") DO UPDATE SET "value" = excluded."value"
         `);
 
         const updates = Object.entries(body).map(([key, value]) => 
-            stmt.bind(key, String(value))
+            stmt.bind(key, String(value || '')) // Ensure value is string
         );
 
         await c.env.DB.batch(updates);
 
         return c.json({ success: true, updated: Object.keys(body) });
     } catch (e: any) {
+        console.error("Save Settings Error:", e);
         return c.json({ error: e.message }, 500);
     }
 });
