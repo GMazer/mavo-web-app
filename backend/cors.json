@@ -1,10 +1,21 @@
-{
-  "rules": [
-    {
-      "allowed": {
-        "origins": ["*"],
-        "methods": ["GET", "PUT", "POST", "DELETE"]
-      }
-    }
-  ]
-}
+[
+  {
+    "origins": [
+      "*"
+    ],
+    "methods": [
+      "GET",
+      "PUT",
+      "POST",
+      "DELETE",
+      "HEAD"
+    ],
+    "allowedHeaders": [
+      "*"
+    ],
+    "exposeHeaders": [
+      "ETag"
+    ],
+    "maxAgeSeconds": 3600
+  }
+]

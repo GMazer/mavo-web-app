@@ -11,11 +11,12 @@ const app = new Hono<{ Bindings: Bindings }>();
 // Middleware
 app.use('*', logger());
 
-// Fix CORS: Allow specific origins including localhost:3001
+// Fix CORS: Allow specific origins including localhost:3001 and localhost:3000
 app.use('*', cors({
   origin: (origin) => {
     // Allow standard development ports and production domains
     const allowedOrigins = [
+      'http://localhost:3000',
       'http://localhost:3001', 
       'http://localhost:5173', 
       'http://localhost:8080',
