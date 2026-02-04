@@ -17,6 +17,89 @@ const API_BASE = PROD_API_URL;
 const API_URL = `${API_BASE}/api/products`;
 const UPLOAD_URL = `${API_BASE}/api/uploads/presign`;
 
+// --- IMAGE COMPRESSION LOGIC ---
+const compressImage = async (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            img.src = e.target?.result as string;
+        };
+        reader.onerror = (e) => reject(e);
+
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            if (!ctx) {
+                reject(new Error('Canvas context not available'));
+                return;
+            }
+
+            // 1. Resize Logic (Max 1600px)
+            const MAX_DIMENSION = 1600;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+                if (width > MAX_DIMENSION) {
+                    height *= MAX_DIMENSION / width;
+                    width = MAX_DIMENSION;
+                }
+            } else {
+                if (height > MAX_DIMENSION) {
+                    width *= MAX_DIMENSION / height;
+                    height = MAX_DIMENSION;
+                }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+
+            // Draw image on canvas
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // 2. Compression Logic (Target < 0.6MB, Quality ~0.8)
+            const MAX_SIZE_BYTES = 0.6 * 1024 * 1024; // 0.6 MB
+            const MIN_QUALITY = 0.5;
+            let currentQuality = 0.8; // Start at 0.8
+
+            const attemptCompression = (q: number) => {
+                canvas.toBlob(
+                    (blob) => {
+                        if (!blob) {
+                            reject(new Error('Compression failed'));
+                            return;
+                        }
+
+                        // If blob is valid and (size is small enough OR quality is at minimum)
+                        if (blob.size <= MAX_SIZE_BYTES || q <= MIN_QUALITY) {
+                            // Create new file with .webp extension
+                            const newName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
+                            const newFile = new File([blob], newName, {
+                                type: 'image/webp',
+                                lastModified: Date.now(),
+                            });
+                            console.log(`Compressed: ${file.size/1024}KB -> ${newFile.size/1024}KB (Q: ${q})`);
+                            resolve(newFile);
+                        } else {
+                            // Retry with lower quality
+                            attemptCompression(q - 0.1); // Decrease by 0.1 step
+                        }
+                    },
+                    'image/webp',
+                    q
+                );
+            };
+
+            attemptCompression(currentQuality);
+        };
+
+        reader.readAsDataURL(file);
+    });
+};
+
 const AdminApp: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'orders'>('products');
   const [products, setProducts] = useState<any[]>([]);
@@ -90,17 +173,20 @@ const AdminApp: React.FC = () => {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
       if (!e.target.files || e.target.files.length === 0 || !editingProduct) return;
       
-      const file = e.target.files[0];
+      const originalFile = e.target.files[0];
       setUploading(true);
 
       try {
+          // 0. Compress Image
+          const compressedFile = await compressImage(originalFile);
+
           // 1. Get Presigned URL
           const presignRes = await fetch(UPLOAD_URL, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                  filename: file.name,
-                  contentType: file.type
+                  filename: compressedFile.name,
+                  contentType: compressedFile.type
               })
           });
 
@@ -111,10 +197,10 @@ const AdminApp: React.FC = () => {
           const uploadRes = await fetch(uploadUrl, {
               method: 'PUT',
               headers: { 
-                  'Content-Type': file.type 
+                  'Content-Type': compressedFile.type 
                   // No Authorization header here, as it's included in the signed URL query params
               },
-              body: file
+              body: compressedFile
           });
 
           if (!uploadRes.ok) throw new Error("Failed to upload file to R2");
@@ -125,10 +211,10 @@ const AdminApp: React.FC = () => {
               images: [...(prev.images || []), publicUrl]
           }));
           
-          alert("Tải ảnh thành công!");
+          alert("Tải và nén ảnh thành công!");
       } catch (err) {
           console.error("Upload error", err);
-          alert("Lỗi tải ảnh! Kiểm tra console và đảm bảo R2 bucket đã cấu hình CORS.");
+          alert("Lỗi tải ảnh! Kiểm tra console.");
       } finally {
           setUploading(false);
           // Reset input
@@ -305,7 +391,7 @@ const AdminApp: React.FC = () => {
                                     <div className="flex items-center gap-4">
                                         <label className={`cursor-pointer flex items-center gap-2 bg-white border border-gray-300 px-4 py-2 rounded shadow-sm hover:bg-gray-50 transition-colors ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                             {uploading ? <Spinner /> : <UploadIcon />}
-                                            <span className="text-sm font-medium text-gray-700">{uploading ? 'Đang tải lên...' : 'Tải ảnh lên'}</span>
+                                            <span className="text-sm font-medium text-gray-700">{uploading ? 'Đang nén & tải lên...' : 'Tải ảnh lên'}</span>
                                             <input 
                                                 type="file" 
                                                 className="hidden" 
@@ -314,7 +400,7 @@ const AdminApp: React.FC = () => {
                                                 disabled={uploading}
                                             />
                                         </label>
-                                        <span className="text-xs text-gray-500">Hỗ trợ JPG, PNG (Max 5MB)</span>
+                                        <span className="text-xs text-gray-500">Hỗ trợ JPG, PNG (Max 5MB). Tự động nén sang WebP.</span>
                                     </div>
                                 </div>
                             </div>

@@ -1,22 +1,14 @@
 [
   {
     "AllowedOrigins": [
+      "http://localhost:3000",
       "http://localhost:3001",
+      "http://127.0.0.1:3000",
       "http://127.0.0.1:3001"
     ],
-    "AllowedMethods": [
-      "GET",
-      "HEAD",
-      "PUT",
-      "POST",
-      "DELETE"
-    ],
-    "AllowedHeaders": [
-      "*"
-    ],
-    "ExposeHeaders": [
-      "ETag"
-    ],
+    "AllowedMethods": ["GET", "HEAD", "PUT", "POST", "DELETE"],
+    "AllowedHeaders": ["*"],
+    "ExposeHeaders": ["ETag"],
     "MaxAgeSeconds": 86400
   }
 ]
