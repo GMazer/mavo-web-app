@@ -37,8 +37,8 @@ const compressImage = async (file: File): Promise<File> => {
                 return;
             }
 
-            // 1. Resize Logic (Max 1600px)
-            const MAX_DIMENSION = 1600;
+            // 1. Resize Logic (Increased to 2048px for better quality)
+            const MAX_DIMENSION = 2048; 
             let width = img.width;
             let height = img.height;
 
@@ -63,9 +63,9 @@ const compressImage = async (file: File): Promise<File> => {
             ctx.drawImage(img, 0, 0, width, height);
 
             // 2. Compression Logic
-            // Goal: Highest Quality possible as long as it is under 0.6MB
-            const MAX_SIZE_BYTES = 0.6 * 1024 * 1024; // 0.6 MB
-            const MIN_QUALITY = 0.1; // Safety floor
+            // Goal: Highest Quality possible as long as it is under 1.0MB (Increased from 0.6)
+            const MAX_SIZE_BYTES = 1.0 * 1024 * 1024; // 1.0 MB
+            const MIN_QUALITY = 0.5; // Increased floor to 0.5 to prevent too low quality
             let currentQuality = 1.0; // Start at MAX Quality (100%)
 
             const attemptCompression = (q: number) => {
@@ -90,8 +90,7 @@ const compressImage = async (file: File): Promise<File> => {
                             console.log(`Compressed: ${(file.size/1024/1024).toFixed(2)}MB -> ${(newFile.size/1024).toFixed(2)}KB (Q: ${q.toFixed(2)})`);
                             resolve(newFile);
                         } else {
-                            // Retry with lower quality (fine steps for better control)
-                            // If > 0.6MB, reduce by 0.05
+                            // Retry with lower quality
                             attemptCompression(q - 0.05); 
                         }
                     },
@@ -229,8 +228,6 @@ const AdminApp: React.FC = () => {
               images: [...(prev.images || []), ...uploadedUrls]
           }));
           
-          // Only alert if multiple files, otherwise it's too noisy? No, keep it simple.
-          // alert("Tải và nén ảnh thành công!");
       } catch (err) {
           console.error("Upload error", err);
           alert("Lỗi tải ảnh! Kiểm tra console.");
@@ -306,10 +303,10 @@ const AdminApp: React.FC = () => {
           
           alert(isNew ? "Tạo mới thành công!" : "Cập nhật thành công!");
           
-          // Normalize the saved product's images to be an array for local state update
+          // FIX: API already returns JSON object with parsed images array. Do not JSON.parse() again.
           const normalizedSavedProduct = {
              ...savedProduct,
-             images: JSON.parse(savedProduct.images || '[]')
+             images: savedProduct.images || []
           };
           
           // Update local state
