@@ -1,9 +1,9 @@
 
-import React, { useState } from 'react';
-import { Product } from '../../types';
+import React, { useState, useEffect } from 'react';
+import { Product, Category } from '../../types';
 import { Spinner, UploadIcon, TrashIcon } from '../ui/Icons';
 import ProductImageGallery from './ProductImageGallery';
-import { saveProductApi, uploadImagesApi } from '../../services/api';
+import { saveProductApi, uploadImagesApi, fetchCategoriesApi } from '../../services/api';
 
 interface ProductFormProps {
     initialProduct: Product;
@@ -16,6 +16,21 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialProduct, onCancel, onS
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [uploadingSize, setUploadingSize] = useState(false);
+    
+    // Categories
+    const [categories, setCategories] = useState<Category[]>([]);
+
+    useEffect(() => {
+        const loadCategories = async () => {
+            try {
+                const data = await fetchCategoriesApi();
+                setCategories(data);
+            } catch (e) {
+                console.error("Failed to load categories for select", e);
+            }
+        };
+        loadCategories();
+    }, []);
 
     const handleChange = (field: keyof Product, value: any) => {
         setProduct(prev => ({ ...prev, [field]: value }));
@@ -200,14 +215,13 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialProduct, onCancel, onS
                                     onChange={(e) => handleChange('category', e.target.value)}
                                     className="w-full border rounded p-2"
                                 >
-                                    <option value="Quần áo">Quần áo</option>
-                                    <option value="Váy đầm">Váy đầm</option>
-                                    <option value="Áo">Áo</option>
-                                    <option value="Quần">Quần</option>
-                                    <option value="Chân váy">Chân váy</option>
-                                    <option value="Set">Set</option>
-                                    <option value="Jumpsuits">Jumpsuits</option>
-                                    <option value="Áo khoác">Áo khoác</option>
+                                    {categories.length > 0 ? (
+                                        categories.map(cat => (
+                                            <option key={cat.id} value={cat.name}>{cat.name}</option>
+                                        ))
+                                    ) : (
+                                        <option value="Quần áo">Quần áo (Mặc định)</option>
+                                    )}
                                 </select>
                             </div>
                         </div>

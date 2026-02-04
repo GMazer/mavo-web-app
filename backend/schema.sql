@@ -2,6 +2,14 @@
 DROP TABLE IF EXISTS Reviews;
 DROP TABLE IF EXISTS Products;
 DROP TABLE IF EXISTS Settings;
+DROP TABLE IF EXISTS Categories;
+
+CREATE TABLE Categories (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    slug TEXT UNIQUE,
+    description TEXT
+);
 
 CREATE TABLE Products (
     id TEXT PRIMARY KEY,
@@ -10,7 +18,7 @@ CREATE TABLE Products (
     sku TEXT,
     price INTEGER,
     originalPrice INTEGER,
-    category TEXT,
+    category TEXT, -- Stores Category Name or Slug
     images TEXT, -- JSON Array
     colors TEXT, -- JSON Array
     description TEXT, -- Main Product Info content
@@ -35,6 +43,16 @@ CREATE TABLE Settings (
     key TEXT PRIMARY KEY,
     value TEXT
 );
+
+-- SEED DATA CATEGORIES
+INSERT INTO Categories (id, name, slug, description) VALUES
+('c1', 'Váy đầm', 'vay-dam', 'Các mẫu váy đầm thời thượng'),
+('c2', 'Áo', 'ao', 'Áo sơ mi, áo kiểu, áo thun'),
+('c3', 'Quần', 'quan', 'Quần tây, quần jeans, quần short'),
+('c4', 'Chân váy', 'chan-vay', 'Chân váy ngắn, dài, xếp ly'),
+('c5', 'Set', 'set', 'Set bộ phối sẵn'),
+('c6', 'Jumpsuits', 'jumpsuits', 'Đồ bay, áo liền quần'),
+('c7', 'Áo khoác', 'ao-khoac', 'Blazer, Vest, áo khoác ngoài');
 
 -- SEED DATA PRODUCTS
 INSERT INTO Products (id, slug, name, sku, price, originalPrice, category, images, colors, description, highlights, material, gender, isVisible, customSizeGuide) VALUES 

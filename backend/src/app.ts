@@ -6,6 +6,7 @@ import healthRouter from './routes/health';
 import productsRouter from './routes/products';
 import uploadRouter from './routes/upload';
 import settingsRouter from './routes/settings';
+import categoriesRouter from './routes/categories';
 import { Bindings } from './bindings';
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -44,6 +45,7 @@ app.route('/api/health', healthRouter);
 app.route('/api/products', productsRouter);
 app.route('/api/uploads', uploadRouter);
 app.route('/api/settings', settingsRouter);
+app.route('/api/categories', categoriesRouter);
 
 // 404 Handler
 app.notFound((c) => {

@@ -1,11 +1,12 @@
 
-import { Product, AppSettings } from "../types";
+import { Product, AppSettings, Category } from "../types";
 import { compressImage } from "../utils/helpers";
 
 const PROD_API_URL = 'https://mavo-fashion-api.mavo-web.workers.dev'; 
 const API_BASE = PROD_API_URL;
 const API_URL = `${API_BASE}/api/products`;
 const SETTINGS_URL = `${API_BASE}/api/settings`;
+const CATEGORIES_URL = `${API_BASE}/api/categories`;
 const UPLOAD_URL = `${API_BASE}/api/uploads/presign`;
 
 // --- Products ---
@@ -64,6 +65,43 @@ export const deleteProductApi = async (id: string): Promise<void> => {
         throw new Error(errData.error || "Failed to delete product");
     }
 };
+
+// --- Categories ---
+
+export const fetchCategoriesApi = async (): Promise<Category[]> => {
+    const res = await fetch(`${CATEGORIES_URL}?_t=${Date.now()}`);
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Failed to fetch categories");
+    }
+    return await res.json();
+};
+
+export const saveCategoryApi = async (category: Category): Promise<Category> => {
+    const isNew = !category.id;
+    const url = isNew ? CATEGORIES_URL : `${CATEGORIES_URL}/${category.id}`;
+    const method = isNew ? 'POST' : 'PUT';
+
+    const res = await fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(category)
+    });
+
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Failed to save category");
+    }
+    return await res.json();
+};
+
+export const deleteCategoryApi = async (id: string): Promise<void> => {
+    const res = await fetch(`${CATEGORIES_URL}/${id}`, {
+        method: 'DELETE'
+    });
+    if (!res.ok) throw new Error("Failed to delete category");
+};
+
 
 // --- Settings ---
 

@@ -26,6 +26,13 @@ export interface AppSettings {
     returnPolicyDefault: string; // New field
 }
 
+export interface Category {
+    id: string;
+    name: string;
+    slug: string;
+    description?: string;
+}
+
 export interface DragState {
     from: number | null;
     over: number | null;

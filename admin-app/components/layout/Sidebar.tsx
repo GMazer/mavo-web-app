@@ -1,10 +1,10 @@
 
 import React from 'react';
-import { ChartBarIcon, ShoppingBagIcon, UserGroupIcon, CogIcon } from '../ui/Icons';
+import { ChartBarIcon, ShoppingBagIcon, UserGroupIcon, CogIcon, TagIcon } from '../ui/Icons';
 
 interface SidebarProps {
-    activeTab: 'dashboard' | 'products' | 'orders' | 'settings';
-    onTabChange: (tab: 'dashboard' | 'products' | 'orders' | 'settings') => void;
+    activeTab: 'dashboard' | 'products' | 'categories' | 'orders' | 'settings';
+    onTabChange: (tab: 'dashboard' | 'products' | 'categories' | 'orders' | 'settings') => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
@@ -22,6 +22,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
                 </button>
                 <button onClick={() => onTabChange('products')} className={navItemClass('products')}>
                     <ShoppingBagIcon /> Sản phẩm
+                </button>
+                <button onClick={() => onTabChange('categories')} className={navItemClass('categories')}>
+                    <TagIcon /> Danh mục
                 </button>
                 <button onClick={() => onTabChange('orders')} className={navItemClass('orders')}>
                     <UserGroupIcon /> Đơn hàng

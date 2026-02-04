@@ -29,3 +29,10 @@ export interface AppSettings {
   careGuideDefault: string;
   returnPolicyDefault: string; // New field
 }
+
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+}

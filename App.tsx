@@ -6,7 +6,7 @@ import ProductDetail from './components/ProductDetail';
 import Footer from './components/Footer';
 import CartSidebar from './components/CartSidebar';
 import Checkout from './components/Checkout';
-import { Product, CartItem, AppSettings } from './types';
+import { Product, CartItem, AppSettings, Category } from './types';
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
 
 type ViewState = 'home' | 'product' | 'checkout';
@@ -15,6 +15,7 @@ type ViewState = 'home' | 'product' | 'checkout';
 const API_BASE = 'https://mavo-fashion-api.mavo-web.workers.dev/api';
 const API_PRODUCTS = `${API_BASE}/products`;
 const API_SETTINGS = `${API_BASE}/settings`;
+const API_CATEGORIES = `${API_BASE}/categories`;
 
 const App: React.FC = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -22,6 +23,7 @@ const App: React.FC = () => {
   
   // Data State
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [appSettings, setAppSettings] = useState<AppSettings>({
       hotline: '1800 6525',
@@ -42,10 +44,11 @@ const App: React.FC = () => {
       try {
         setLoading(true);
         
-        // Parallel Fetch: Products + Settings
-        const [prodRes, settRes] = await Promise.all([
+        // Parallel Fetch: Products + Settings + Categories
+        const [prodRes, settRes, catRes] = await Promise.all([
             fetch(`${API_PRODUCTS}?_t=${Date.now()}`),
-            fetch(`${API_SETTINGS}?_t=${Date.now()}`)
+            fetch(`${API_SETTINGS}?_t=${Date.now()}`),
+            fetch(`${API_CATEGORIES}?_t=${Date.now()}`)
         ]);
 
         if (prodRes.ok) {
@@ -74,6 +77,11 @@ const App: React.FC = () => {
         if (settRes.ok) {
             const settingsData = await settRes.json();
             setAppSettings(prev => ({ ...prev, ...settingsData }));
+        }
+
+        if (catRes.ok) {
+            const catData = await catRes.json();
+            setCategories(catData);
         }
 
       } catch (error) {
@@ -154,9 +162,8 @@ const App: React.FC = () => {
   // Calculate total count for header badge
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  const categories = [
-      "Váy đầm", "Áo", "Quần", "Chân váy", "Set", "Jumpsuits", "Áo khoác"
-  ];
+  // Fallback categories if fetch fails, but preferred from DB
+  const displayCategories = categories.length > 0 ? categories.map(c => c.name) : ["Váy đầm", "Áo", "Quần", "Chân váy", "Set", "Jumpsuits", "Áo khoác"];
 
   // Loading Screen
   if (loading) {
@@ -247,7 +254,7 @@ const App: React.FC = () => {
                             <div className="w-full border-t border-gray-200 mb-4"></div>
                             
                             <ul className="space-y-3 pl-1">
-                                {categories.map((cat, idx) => (
+                                {displayCategories.map((cat, idx) => (
                                     <li key={idx}>
                                         <a href="#" className="text-sm text-gray-600 hover:text-black transition-colors block py-0.5">
                                             {cat}

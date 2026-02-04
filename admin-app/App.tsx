@@ -3,10 +3,11 @@ import React, { useState, useRef } from 'react';
 import Sidebar from './components/layout/Sidebar';
 import Dashboard from './pages/Dashboard';
 import ProductManager from './pages/ProductManager';
+import CategoryManager from './pages/CategoryManager';
 import Settings from './pages/Settings';
 
 const AdminApp: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'orders' | 'settings'>('products');
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'categories' | 'orders' | 'settings'>('products');
     
     // Ref to hold the create function from ProductManager
     const createProductTrigger = useRef<(() => void) | null>(null);
@@ -15,6 +16,7 @@ const AdminApp: React.FC = () => {
         switch(activeTab) {
             case 'dashboard': return 'Tổng quan';
             case 'products': return 'Sản phẩm';
+            case 'categories': return 'Danh mục sản phẩm';
             case 'orders': return 'Đơn hàng';
             case 'settings': return 'Cấu hình chung';
             default: return '';
@@ -44,6 +46,8 @@ const AdminApp: React.FC = () => {
                     <div style={{ display: activeTab === 'products' ? 'block' : 'none' }}>
                         <ProductManager onCreateTrigger={(fn) => createProductTrigger.current = fn} />
                     </div>
+
+                    {activeTab === 'categories' && <CategoryManager />}
 
                     {activeTab === 'settings' && <Settings />}
 
