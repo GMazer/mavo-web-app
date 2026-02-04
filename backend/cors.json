@@ -1,21 +1,23 @@
-[
-  {
-    "origins": [
-      "*"
-    ],
-    "methods": [
-      "GET",
-      "PUT",
-      "POST",
-      "DELETE",
-      "HEAD"
-    ],
-    "allowedHeaders": [
-      "*"
-    ],
-    "exposeHeaders": [
-      "ETag"
-    ],
-    "maxAgeSeconds": 3600
-  }
-]
+{
+  "rules": [
+    {
+      "origins": [
+        "*"
+      ],
+      "methods": [
+        "GET",
+        "PUT",
+        "POST",
+        "DELETE",
+        "HEAD"
+      ],
+      "allowedHeaders": [
+        "*"
+      ],
+      "exposeHeaders": [
+        "ETag"
+      ],
+      "maxAgeSeconds": 3600
+    }
+  ]
+}
