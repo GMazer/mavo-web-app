@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import ProductList from '../components/products/ProductList';
 import ProductForm from '../components/products/ProductForm';
 import { Product } from '../types';
-import { fetchProductsApi } from '../services/api';
+import { fetchProductsApi, saveProductApi } from '../services/api';
 
 const ProductManager: React.FC<{ onCreateTrigger: (trigger: () => void) => void }> = ({ onCreateTrigger }) => {
     const [products, setProducts] = useState<Product[]>([]);
@@ -42,7 +43,8 @@ const ProductManager: React.FC<{ onCreateTrigger: (trigger: () => void) => void 
             sku: '',
             images: [],
             colors: [],
-            category: 'Quần áo'
+            category: 'Quần áo',
+            isVisible: true // Default visible
         });
     };
 
@@ -53,6 +55,24 @@ const ProductManager: React.FC<{ onCreateTrigger: (trigger: () => void) => void 
             setProducts(prev => prev.map(p => p.id === savedProduct.id ? savedProduct : p));
         }
         setEditingProduct(null);
+    };
+
+    const handleToggleVisibility = async (product: Product) => {
+        // Optimistic Update: Switch UI immediately
+        const newStatus = !(product.isVisible !== false);
+        const updatedProduct = { ...product, isVisible: newStatus };
+        
+        setProducts(prev => prev.map(p => p.id === product.id ? updatedProduct : p));
+
+        try {
+            // Call API silently
+            await saveProductApi(updatedProduct);
+        } catch (error) {
+            console.error("Failed to toggle visibility", error);
+            // Revert if failed
+            setProducts(prev => prev.map(p => p.id === product.id ? product : p));
+            alert("Không thể cập nhật trạng thái. Vui lòng thử lại.");
+        }
     };
 
     return (
@@ -68,6 +88,7 @@ const ProductManager: React.FC<{ onCreateTrigger: (trigger: () => void) => void 
                     products={products} 
                     loading={loading} 
                     onEdit={setEditingProduct} 
+                    onToggleVisibility={handleToggleVisibility}
                 />
             )}
         </div>

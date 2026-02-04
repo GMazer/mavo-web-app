@@ -1,3 +1,4 @@
+
 import { Hono } from 'hono';
 import { Bindings, D1Result } from '../bindings';
 
@@ -15,6 +16,7 @@ interface ProductRow {
     images: string; // JSON String
     colors: string; // JSON String
     description: string;
+    isVisible: number; // SQLite 0 or 1
 }
 
 interface ReviewRow {
@@ -30,7 +32,8 @@ interface ReviewRow {
 const formatProduct = (row: ProductRow) => ({
     ...row,
     images: JSON.parse(row.images),
-    colors: JSON.parse(row.colors)
+    colors: JSON.parse(row.colors),
+    isVisible: row.isVisible === 1 // Convert Integer to Boolean
 });
 
 // GET /api/products (List all products with Pagination & Structured Response)
@@ -63,6 +66,7 @@ app.get('/', async (c) => {
                 description: row.description,
                 colors: parsedColors,
                 images: parsedImages,
+                isVisible: row.isVisible === 1,
                 
                 // Structured Pricing
                 pricing: {
@@ -132,6 +136,7 @@ app.get('/:id', async (c) => {
             slug: dbProduct.slug,
             name: dbProduct.name,
             sku: dbProduct.sku,
+            isVisible: dbProduct.isVisible,
             brand: "MAVO",
             categoryPath: ["Quần áo", dbProduct.category],
             
@@ -270,15 +275,16 @@ app.post('/', async (c) => {
         const originalPrice = body.originalPrice || null;
         const category = body.category || 'Uncategorized';
         const description = body.description || '';
+        const isVisible = body.isVisible === false ? 0 : 1; // Default true
         
         // Ensure arrays are stringified for SQLite
         const images = JSON.stringify(body.images || []);
         const colors = JSON.stringify(body.colors || []);
 
         await c.env.DB.prepare(`
-            INSERT INTO Products (id, slug, name, sku, price, originalPrice, category, images, colors, description)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).bind(id, slug, name, sku, price, originalPrice, category, images, colors, description).run();
+            INSERT INTO Products (id, slug, name, sku, price, originalPrice, category, images, colors, description, isVisible)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(id, slug, name, sku, price, originalPrice, category, images, colors, description, isVisible).run();
 
         const newProduct = await c.env.DB.prepare("SELECT * FROM Products WHERE id = ?").bind(id).first() as ProductRow;
         return c.json(formatProduct(newProduct), 201);
@@ -303,6 +309,12 @@ app.put('/:id', async (c) => {
     const description = updates.description !== undefined ? updates.description : existing.description;
     const sku = updates.sku !== undefined ? updates.sku : existing.sku;
     
+    // Convert boolean to 0/1 for SQLite
+    let isVisible = existing.isVisible;
+    if (updates.isVisible !== undefined) {
+        isVisible = updates.isVisible === true ? 1 : 0;
+    }
+    
     // Handle JSON arrays update
     let images = existing.images;
     if (updates.images !== undefined) {
@@ -316,9 +328,9 @@ app.put('/:id', async (c) => {
 
     await c.env.DB.prepare(`
         UPDATE Products 
-        SET name = ?, price = ?, originalPrice = ?, description = ?, sku = ?, images = ?, colors = ?
+        SET name = ?, price = ?, originalPrice = ?, description = ?, sku = ?, images = ?, colors = ?, isVisible = ?
         WHERE id = ?
-    `).bind(name, price, originalPrice, description, sku, images, colors, id).run();
+    `).bind(name, price, originalPrice, description, sku, images, colors, isVisible, id).run();
 
     // 3. Return updated object (Simple format for internal/admin use)
     const updated = await c.env.DB.prepare("SELECT * FROM Products WHERE id = ?").bind(id).first() as ProductRow | null;

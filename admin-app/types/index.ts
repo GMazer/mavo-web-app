@@ -1,3 +1,4 @@
+
 export interface Product {
     id: string;
     name: string;
@@ -9,6 +10,7 @@ export interface Product {
     images: string[];
     colors?: string[];
     thumbnailUrl?: string;
+    isVisible?: boolean; // New field for status toggle
 }
 
 export interface DragState {

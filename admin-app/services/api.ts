@@ -1,3 +1,4 @@
+
 import { Product } from "../types";
 import { compressImage } from "../utils/helpers";
 
@@ -18,7 +19,9 @@ export const fetchProductsApi = async (): Promise<Product[]> => {
         ...item,
         price: item.pricing?.price ?? item.price ?? 0,
         originalPrice: item.pricing?.compareAtPrice ?? item.originalPrice,
-        images: item.images || (item.image ? [item.image] : [])
+        images: item.images || (item.image ? [item.image] : []),
+        // Ensure isVisible is boolean. API sends true/false now, but fallback to true if undefined.
+        isVisible: item.isVisible !== undefined ? item.isVisible : true
     }));
 };
 
