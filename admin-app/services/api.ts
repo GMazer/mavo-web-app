@@ -54,6 +54,17 @@ export const saveProductApi = async (product: Product): Promise<Product> => {
     };
 };
 
+export const deleteProductApi = async (id: string): Promise<void> => {
+    const res = await fetch(`${API_URL}/${id}`, {
+        method: 'DELETE'
+    });
+    
+    if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to delete product");
+    }
+};
+
 // --- Settings ---
 
 export const fetchSettingsApi = async (): Promise<AppSettings> => {

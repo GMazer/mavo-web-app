@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Product } from '../../types';
-import { PencilIcon } from '../ui/Icons';
+import { PencilIcon, TrashIcon } from '../ui/Icons';
 import { formatCurrency } from '../../utils/helpers';
 
 interface ProductListProps {
@@ -9,9 +9,10 @@ interface ProductListProps {
     loading: boolean;
     onEdit: (product: Product) => void;
     onToggleVisibility: (product: Product) => void;
+    onDelete: (product: Product) => void;
 }
 
-const ProductList: React.FC<ProductListProps> = ({ products, loading, onEdit, onToggleVisibility }) => {
+const ProductList: React.FC<ProductListProps> = ({ products, loading, onEdit, onToggleVisibility, onDelete }) => {
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64 text-gray-500 gap-2">
@@ -23,7 +24,7 @@ const ProductList: React.FC<ProductListProps> = ({ products, loading, onEdit, on
     if (products.length === 0) {
         return (
             <div className="text-center text-gray-500 py-20">
-                Không có sản phẩm nào.
+                Không tìm thấy sản phẩm nào.
             </div>
         );
     }
@@ -84,9 +85,14 @@ const ProductList: React.FC<ProductListProps> = ({ products, loading, onEdit, on
                             </td>
 
                             <td className="px-6 py-4">
-                                <button onClick={() => onEdit(product)} className="text-gray-400 hover:text-blue-600">
-                                    <PencilIcon />
-                                </button>
+                                <div className="flex items-center gap-3">
+                                    <button onClick={() => onEdit(product)} className="text-gray-400 hover:text-blue-600" title="Chỉnh sửa">
+                                        <PencilIcon />
+                                    </button>
+                                    <button onClick={() => onDelete(product)} className="text-gray-400 hover:text-red-600" title="Xóa">
+                                        <TrashIcon />
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     );

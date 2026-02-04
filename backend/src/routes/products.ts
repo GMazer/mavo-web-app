@@ -63,54 +63,15 @@ const formatProduct = (row: ProductRow) => {
 // GET /api/products (List all products with Pagination & Structured Response)
 app.get('/', async (c) => {
     try {
-        const page = parseInt(c.req.query('page') || '1');
-        const pageSize = parseInt(c.req.query('pageSize') || '12');
-        const offset = (page - 1) * pageSize;
+        // Simple list retrieval for now, pagination logic exists but we fetch all for admin simplicity in filtering
+        // In a real app, search should be backend-side for large datasets
+        const { results } = await c.env.DB.prepare("SELECT * FROM Products ORDER BY name DESC").all() as D1Result<ProductRow>;
 
-        // 1. Get Total Count
-        const totalResult = await c.env.DB.prepare("SELECT COUNT(*) as count FROM Products").first() as { count: number };
-        const total = totalResult?.count || 0;
-
-        // 2. Get Paginated Results
-        const { results } = await c.env.DB.prepare("SELECT * FROM Products ORDER BY name LIMIT ? OFFSET ?")
-            .bind(pageSize, offset)
-            .all() as D1Result<ProductRow>;
-
-        // 3. Format Response
-        const items = results.map(row => {
-            const formatted = formatProduct(row);
-            return {
-                id: formatted.id,
-                slug: formatted.slug,
-                name: formatted.name,
-                sku: formatted.sku,
-                category: formatted.category,
-                description: formatted.description,
-                highlights: formatted.highlights,
-                material: formatted.material,
-                gender: formatted.gender,
-                colors: formatted.colors,
-                images: formatted.images,
-                isVisible: formatted.isVisible,
-                customSizeGuide: formatted.customSizeGuide,
-                
-                // Structured Pricing
-                pricing: {
-                    price: formatted.price,
-                    compareAtPrice: formatted.originalPrice,
-                    currency: "VND"
-                },
-                
-                thumbnailUrl: formatted.images.length > 0 ? formatted.images[0] : "",
-                rating: { avg: 0, count: 0 } 
-            };
-        });
+        const items = results.map(formatProduct);
 
         return c.json({
             items,
-            page,
-            pageSize,
-            total
+            total: items.length
         });
     } catch (e: any) {
         return c.json({ error: e.message }, 500);
@@ -335,6 +296,22 @@ app.put('/:id', async (c) => {
     } catch (e: any) {
         console.error("Update error:", e);
         return c.json({ error: e.message, code: "UPDATE_FAILED" }, 500);
+    }
+});
+
+// DELETE /api/products/:id (Delete product)
+app.delete('/:id', async (c) => {
+    const id = c.req.param('id');
+    try {
+        const res = await c.env.DB.prepare("DELETE FROM Products WHERE id = ?").bind(id).run();
+        
+        if (res.meta.changes === 0) {
+            return c.json({ error: "Product not found or already deleted" }, 404);
+        }
+
+        return c.json({ success: true, id });
+    } catch (e: any) {
+        return c.json({ error: e.message }, 500);
     }
 });
 
