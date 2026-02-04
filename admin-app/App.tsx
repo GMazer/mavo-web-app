@@ -57,13 +57,16 @@ const compressImage = async (file: File): Promise<File> => {
             canvas.width = width;
             canvas.height = height;
 
-            // Draw image on canvas
+            // Draw image on canvas with high quality
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
             ctx.drawImage(img, 0, 0, width, height);
 
-            // 2. Compression Logic (Target < 0.6MB, Quality ~0.8)
+            // 2. Compression Logic
+            // Goal: Highest Quality possible as long as it is under 0.6MB
             const MAX_SIZE_BYTES = 0.6 * 1024 * 1024; // 0.6 MB
-            const MIN_QUALITY = 0.5;
-            let currentQuality = 0.8; // Start at 0.8
+            const MIN_QUALITY = 0.1; // Safety floor
+            let currentQuality = 1.0; // Start at MAX Quality (100%)
 
             const attemptCompression = (q: number) => {
                 canvas.toBlob(
@@ -73,7 +76,10 @@ const compressImage = async (file: File): Promise<File> => {
                             return;
                         }
 
-                        // If blob is valid and (size is small enough OR quality is at minimum)
+                        // Logic:
+                        // If Blob size <= Limit OR we hit Minimum Quality -> Resolve.
+                        // If Blob size > Limit -> Decrease quality and retry.
+                        
                         if (blob.size <= MAX_SIZE_BYTES || q <= MIN_QUALITY) {
                             // Create new file with .webp extension
                             const newName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
@@ -81,11 +87,12 @@ const compressImage = async (file: File): Promise<File> => {
                                 type: 'image/webp',
                                 lastModified: Date.now(),
                             });
-                            console.log(`Compressed: ${file.size/1024}KB -> ${newFile.size/1024}KB (Q: ${q})`);
+                            console.log(`Compressed: ${(file.size/1024/1024).toFixed(2)}MB -> ${(newFile.size/1024).toFixed(2)}KB (Q: ${q.toFixed(2)})`);
                             resolve(newFile);
                         } else {
-                            // Retry with lower quality
-                            attemptCompression(q - 0.1); // Decrease by 0.1 step
+                            // Retry with lower quality (fine steps for better control)
+                            // If > 0.6MB, reduce by 0.05
+                            attemptCompression(q - 0.05); 
                         }
                     },
                     'image/webp',
