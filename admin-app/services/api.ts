@@ -9,7 +9,10 @@ const UPLOAD_URL = `${API_BASE}/api/uploads/presign`;
 
 export const fetchProductsApi = async (): Promise<Product[]> => {
     const res = await fetch(`${API_URL}?_t=${Date.now()}`);
-    if (!res.ok) throw new Error("Failed to fetch products");
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || err.error || "Failed to fetch products");
+    }
     const data = await res.json();
     
     const items = Array.isArray(data) ? data : (data.items || []);
@@ -36,7 +39,13 @@ export const saveProductApi = async (product: Product): Promise<Product> => {
         body: JSON.stringify(product)
     });
     
-    if (!res.ok) throw new Error("Failed to save product");
+    if (!res.ok) {
+        // Extract exact error message from backend (e.g., "no such column: isVisible")
+        const errData = await res.json().catch(() => ({}));
+        console.error("Save API Error:", errData);
+        throw new Error(errData.error || errData.message || "Failed to save product");
+    }
+
     const saved = await res.json();
     return {
         ...saved,

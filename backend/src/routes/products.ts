@@ -28,13 +28,29 @@ interface ReviewRow {
     createdAt: string;
 }
 
-// Helper to format Product Row (parse JSON fields)
-const formatProduct = (row: ProductRow) => ({
-    ...row,
-    images: JSON.parse(row.images),
-    colors: JSON.parse(row.colors),
-    isVisible: row.isVisible === 1 // Convert Integer to Boolean
-});
+// Helper to format Product Row (parse JSON fields safely)
+const formatProduct = (row: ProductRow) => {
+    let images = [];
+    try {
+        images = row.images ? JSON.parse(row.images) : [];
+    } catch (e) {
+        images = []; // Fallback if JSON is corrupt
+    }
+
+    let colors = [];
+    try {
+        colors = row.colors ? JSON.parse(row.colors) : [];
+    } catch (e) {
+        colors = [];
+    }
+
+    return {
+        ...row,
+        images,
+        colors,
+        isVisible: row.isVisible === 1 // Convert Integer to Boolean
+    };
+};
 
 // GET /api/products (List all products with Pagination & Structured Response)
 app.get('/', async (c) => {
@@ -54,29 +70,27 @@ app.get('/', async (c) => {
 
         // 3. Format Response
         const items = results.map(row => {
-            const parsedImages = JSON.parse(row.images);
-            const parsedColors = JSON.parse(row.colors);
+            const formatted = formatProduct(row);
             return {
-                id: row.id,
-                slug: row.slug,
-                name: row.name,
-                sku: row.sku,
-                // Include standard fields needed for frontend logic
-                category: row.category,
-                description: row.description,
-                colors: parsedColors,
-                images: parsedImages,
-                isVisible: row.isVisible === 1,
+                id: formatted.id,
+                slug: formatted.slug,
+                name: formatted.name,
+                sku: formatted.sku,
+                category: formatted.category,
+                description: formatted.description,
+                colors: formatted.colors,
+                images: formatted.images,
+                isVisible: formatted.isVisible,
                 
                 // Structured Pricing
                 pricing: {
-                    price: row.price,
-                    compareAtPrice: row.originalPrice,
+                    price: formatted.price,
+                    compareAtPrice: formatted.originalPrice,
                     currency: "VND"
                 },
                 
-                thumbnailUrl: parsedImages.length > 0 ? parsedImages[0] : "",
-                rating: { avg: 0, count: 0 } // Default or implement aggregation
+                thumbnailUrl: formatted.images.length > 0 ? formatted.images[0] : "",
+                rating: { avg: 0, count: 0 } 
             };
         });
 
@@ -118,7 +132,7 @@ app.get('/:id', async (c) => {
         ? reviews.reduce((acc, curr) => acc + curr.stars, 0) / reviews.length 
         : 0;
 
-    // 3. Fetch Recommendations (Simple random or same category)
+    // 3. Fetch Recommendations
     const { results: recommendationsRaw } = await c.env.DB.prepare("SELECT * FROM Products WHERE id != ? LIMIT 4").bind(dbProduct.id).all() as D1Result<ProductRow>;
     const recommendations = recommendationsRaw.map(formatProduct).map(p => ({
         id: p.id,
@@ -126,7 +140,7 @@ app.get('/:id', async (c) => {
         name: p.name,
         thumbnailUrl: p.images[0],
         pricing: { currency: "VND", price: p.price, compareAtPrice: p.originalPrice },
-        rating: { avg: 4.5, count: 10 } // Mock rating for recs
+        rating: { avg: 4.5, count: 10 } 
     }));
 
     // 4. Construct Complex Response (Spec Compliant)
@@ -171,39 +185,29 @@ app.get('/:id', async (c) => {
                 })),
                 sizes: ["S", "M", "L"]
             },
-
-            // Mocking Variants logic based on generic options
+            
+            // ... (Rest of structure remains same) ...
             variants: ["S", "M", "L"].map(size => ({
                 id: `${dbProduct.id}_${size}`,
                 size: size,
                 priceOverride: null,
                 stock: { status: "in_stock", qty: 10 }
             })),
-
-            defaultSelection: {
-                size: "M",
-                qty: 1
-            },
-
+            defaultSelection: { size: "M", qty: 1 },
             policiesPreview: {
                 shippingText: "Giao hoả tốc toàn quốc đồng giá ship 30.000đ",
                 supportHours: "08:30 - 17:00",
                 hotline: "1800 6525",
                 returnText: "Đổi hàng 15 ngày, hoàn tiền 5 ngày",
-                deliveryNotes: [
-                    "Nội thành Hà Nội nhận hàng trong 1-2 ngày",
-                    "Khu vực tỉnh thành nhận hàng từ 3-5 ngày"
-                ]
+                deliveryNotes: ["Nội thành Hà Nội nhận hàng trong 1-2 ngày", "Khu vực tỉnh thành nhận hàng từ 3-5 ngày"]
             }
         },
-
         breadcrumbs: [
             { label: "HOME", href: "/" },
             { label: "Quần áo", href: "#" },
             { label: dbProduct.category, href: "#" },
             { label: dbProduct.name, href: "#" }
         ],
-
         tabs: {
             productInfo: {
                 highlightsTitle: "THÔNG TIN SẢN PHẨM",
@@ -213,47 +217,18 @@ app.get('/:id', async (c) => {
                     { label: "Dòng sản phẩm", value: "FEMALE" }
                 ],
                 description: dbProduct.description,
-                sizeGuide: {
-                    imageUrl: "https://product.hstatic.net/200000182297/product/bang-size-nu_c9205164d96a461b97b0a3c20c085026_master.jpg",
-                    alt: "Bảng thông số áo",
-                    unit: "cm"
-                }
+                sizeGuide: { imageUrl: "https://product.hstatic.net/200000182297/product/bang-size-nu_c9205164d96a461b97b0a3c20c085026_master.jpg", alt: "Bảng thông số áo", unit: "cm" }
             },
-            careGuide: {
-                title: "HƯỚNG DẪN BẢO QUẢN",
-                content: [
-                    "Giặt tay hoặc giặt máy chế độ nhẹ",
-                    "Không dùng chất tẩy mạnh",
-                    "Phơi nơi thoáng mát"
-                ]
-            },
-            returnPolicy: {
-                title: "CHÍNH SÁCH ĐỔI HÀNG",
-                content: [
-                    "Đổi hàng trong 15 ngày",
-                    "Hoàn tiền trong 5 ngày làm việc",
-                    "Sản phẩm phải còn tem/mác"
-                ]
-            }
+            careGuide: { title: "HƯỚNG DẪN BẢO QUẢN", content: ["Giặt tay hoặc giặt máy chế độ nhẹ", "Không dùng chất tẩy mạnh", "Phơi nơi thoáng mát"] },
+            returnPolicy: { title: "CHÍNH SÁCH ĐỔI HÀNG", content: ["Đổi hàng trong 15 ngày", "Hoàn tiền trong 5 ngày làm việc", "Sản phẩm phải còn tem/mác"] }
         },
-
         reviewsSummary: {
             avg: parseFloat(avgRating.toFixed(1)),
             count: reviews.length,
-            breakdown: [5,4,3,2,1].map(star => ({
-                stars: star,
-                count: reviews.filter(r => r.stars === star).length
-            }))
+            breakdown: [5,4,3,2,1].map(star => ({ stars: star, count: reviews.filter(r => r.stars === star).length }))
         },
-
         recommendations: recommendations,
-        
-        reviews: includeReviews ? {
-            items: reviews.slice(0, 5),
-            page: 1,
-            pageSize: 5,
-            total: reviews.length
-        } : null
+        reviews: includeReviews ? { items: reviews.slice(0, 5), page: 1, pageSize: 5, total: reviews.length } : null
     };
 
     return c.json(response);
@@ -263,11 +238,8 @@ app.get('/:id', async (c) => {
 app.post('/', async (c) => {
     try {
         const body = await c.req.json();
-        
-        // Generate a simple ID
         const id = crypto.randomUUID();
         
-        // Default values
         const name = body.name || 'New Product';
         const slug = body.slug || `product-${Date.now()}`;
         const sku = body.sku || `SKU-${Date.now()}`;
@@ -275,9 +247,8 @@ app.post('/', async (c) => {
         const originalPrice = body.originalPrice || null;
         const category = body.category || 'Uncategorized';
         const description = body.description || '';
-        const isVisible = body.isVisible === false ? 0 : 1; // Default true
+        const isVisible = body.isVisible === false ? 0 : 1; 
         
-        // Ensure arrays are stringified for SQLite
         const images = JSON.stringify(body.images || []);
         const colors = JSON.stringify(body.colors || []);
 
@@ -299,12 +270,9 @@ app.put('/:id', async (c) => {
     try {
         const updates = await c.req.json();
 
-        // 1. Fetch existing
         const existing = await c.env.DB.prepare("SELECT * FROM Products WHERE id = ?").bind(id).first() as ProductRow | null;
         if (!existing) return c.json({ error: "Product not found" }, 404);
 
-        // 2. Prepare update query dynamically
-        // Using explicit checks for undefined to allow setting values to null/0/empty string
         const name = updates.name !== undefined ? updates.name : existing.name;
         const price = updates.price !== undefined ? updates.price : existing.price;
         const originalPrice = updates.originalPrice !== undefined ? updates.originalPrice : existing.originalPrice;
@@ -312,13 +280,11 @@ app.put('/:id', async (c) => {
         const sku = updates.sku !== undefined ? updates.sku : existing.sku;
         const category = updates.category !== undefined ? updates.category : existing.category;
         
-        // Convert boolean to 0/1 for SQLite
         let isVisible = existing.isVisible;
         if (updates.isVisible !== undefined) {
             isVisible = updates.isVisible === true ? 1 : 0;
         }
         
-        // Handle JSON arrays update
         let images = existing.images;
         if (updates.images !== undefined) {
             images = JSON.stringify(updates.images);
@@ -329,18 +295,19 @@ app.put('/:id', async (c) => {
             colors = JSON.stringify(updates.colors);
         }
 
+        // IMPORTANT: Ensure DB schema matches this query (isVisible, category columns must exist)
         await c.env.DB.prepare(`
             UPDATE Products 
             SET name = ?, price = ?, originalPrice = ?, description = ?, sku = ?, images = ?, colors = ?, isVisible = ?, category = ?
             WHERE id = ?
         `).bind(name, price, originalPrice, description, sku, images, colors, isVisible, category, id).run();
 
-        // 3. Return updated object (Simple format for internal/admin use)
         const updated = await c.env.DB.prepare("SELECT * FROM Products WHERE id = ?").bind(id).first() as ProductRow | null;
         return c.json(formatProduct(updated!));
     } catch (e: any) {
         console.error("Update error:", e);
-        return c.json({ error: e.message }, 500);
+        // Return actual error message for debugging (e.g. "no such column: isVisible")
+        return c.json({ error: e.message, code: "UPDATE_FAILED" }, 500);
     }
 });
 
@@ -351,21 +318,14 @@ app.get('/:id/reviews', async (c) => {
     const pageSize = parseInt(c.req.query('pageSize') || '10');
     const offset = (page - 1) * pageSize;
 
-    // Get Total
     const totalResult = await c.env.DB.prepare("SELECT COUNT(*) as count FROM Reviews WHERE productId = ?").bind(id).first() as {count: number} | null;
     const total = totalResult?.count || 0;
 
-    // Get Items
     const { results } = await c.env.DB.prepare("SELECT * FROM Reviews WHERE productId = ? ORDER BY createdAt DESC LIMIT ? OFFSET ?")
         .bind(id, pageSize, offset)
         .all() as D1Result<ReviewRow>;
 
-    return c.json({
-        items: results,
-        page,
-        pageSize,
-        total
-    });
+    return c.json({ items: results, page, pageSize, total });
 });
 
 // POST /api/products/:id/reviews
