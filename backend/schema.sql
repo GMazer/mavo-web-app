@@ -90,4 +90,5 @@ INSERT INTO Settings (key, value) VALUES
 ('email', 'cskh@mavofashion.com'),
 ('zalo', '0912345678'),
 ('sizeGuideDefault', 'https://product.hstatic.net/200000182297/product/bang-size-nu_c9205164d96a461b97b0a3c20c085026_master.jpg'),
-('careGuideDefault', 'https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=800&auto=format&fit=crop');
+('careGuideDefault', 'https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=800&auto=format&fit=crop'),
+('returnPolicyDefault', 'https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?q=80&w=800&auto=format&fit=crop');

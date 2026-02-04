@@ -38,6 +38,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
   // Determine Care Guide Image
   const careGuideImage = settings.careGuideDefault || 'https://via.placeholder.com/800x500?text=Care+Guide+Pending';
 
+  // Determine Return Policy Image
+  const returnPolicyImage = settings.returnPolicyDefault || 'https://via.placeholder.com/800x500?text=Policy+Pending';
+
   useEffect(() => {
     if (images.length <= 1 || isHovering) return;
     const interval = setInterval(() => {
@@ -366,9 +369,12 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
             {activeTab === 'policy' && (
                  <div className="animate-fade-in flex justify-center py-10">
                     <img 
-                       src="https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?q=80&w=800&auto=format&fit=crop" 
+                       src={returnPolicyImage} 
                        alt="Chinh sach doi hang"
-                       className="max-w-[600px] w-full h-auto grayscale opacity-80"
+                       className="max-w-[800px] w-full h-auto"
+                        onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/800x500?text=Policy+Not+Available';
+                        }}
                     />
                </div>
             )}

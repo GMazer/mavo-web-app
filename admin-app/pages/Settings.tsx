@@ -10,12 +10,14 @@ const Settings: React.FC = () => {
         email: '',
         zalo: '',
         sizeGuideDefault: '',
-        careGuideDefault: ''
+        careGuideDefault: '',
+        returnPolicyDefault: ''
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [uploadingSize, setUploadingSize] = useState(false);
     const [uploadingCare, setUploadingCare] = useState(false);
+    const [uploadingReturn, setUploadingReturn] = useState(false);
 
     useEffect(() => {
         const loadSettings = async () => {
@@ -48,7 +50,11 @@ const Settings: React.FC = () => {
         }
     };
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, key: 'sizeGuideDefault' | 'careGuideDefault', setLoadingState: (s: boolean) => void) => {
+    const handleImageUpload = async (
+        e: React.ChangeEvent<HTMLInputElement>, 
+        key: 'sizeGuideDefault' | 'careGuideDefault' | 'returnPolicyDefault', 
+        setLoadingState: (s: boolean) => void
+    ) => {
         if (!e.target.files || e.target.files.length === 0) return;
         setLoadingState(true);
         try {
@@ -68,7 +74,7 @@ const Settings: React.FC = () => {
     if (loading) return <div className="text-center py-10">Đang tải...</div>;
 
     return (
-        <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
+        <div className="max-w-6xl mx-auto space-y-8 animate-fade-in pb-10">
             {/* Contact Info */}
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <h3 className="text-lg font-bold mb-4 border-b pb-2">Thông tin liên hệ</h3>
@@ -104,9 +110,11 @@ const Settings: React.FC = () => {
             </div>
 
             {/* Global Images */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <h3 className="text-lg font-bold mb-2">Hình ảnh hệ thống</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {/* Size Guide */}
                 <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                    <h3 className="text-lg font-bold mb-4 border-b pb-2">Bảng Size Chung</h3>
+                    <h4 className="font-bold mb-4 border-b pb-2">Bảng Size Chung</h4>
                     <div className="aspect-[3/2] bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center relative overflow-hidden">
                         {settings.sizeGuideDefault ? (
                             <img src={settings.sizeGuideDefault} alt="Size Guide" className="w-full h-full object-contain" />
@@ -115,17 +123,18 @@ const Settings: React.FC = () => {
                         )}
                     </div>
                     <div className="mt-4">
-                        <label className="cursor-pointer inline-flex items-center gap-2 bg-white border border-gray-300 px-4 py-2 rounded shadow-sm hover:bg-gray-50">
+                        <label className="cursor-pointer inline-flex items-center gap-2 bg-white border border-gray-300 px-4 py-2 rounded shadow-sm hover:bg-gray-50 w-full justify-center">
                             {uploadingSize ? <Spinner /> : <UploadIcon />}
                             <span className="text-sm font-medium">{uploadingSize ? 'Đang tải...' : 'Thay đổi ảnh'}</span>
                             <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'sizeGuideDefault', setUploadingSize)} />
                         </label>
                     </div>
-                    <p className="text-xs text-gray-500 mt-2">Bảng size này sẽ hiển thị mặc định nếu sản phẩm không có bảng size riêng.</p>
+                    <p className="text-xs text-gray-500 mt-2">Hiển thị khi sản phẩm không có bảng size riêng.</p>
                 </div>
 
+                {/* Care Guide */}
                 <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                    <h3 className="text-lg font-bold mb-4 border-b pb-2">Hướng dẫn bảo quản</h3>
+                    <h4 className="font-bold mb-4 border-b pb-2">Hướng dẫn bảo quản</h4>
                     <div className="aspect-[3/2] bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center relative overflow-hidden">
                         {settings.careGuideDefault ? (
                             <img src={settings.careGuideDefault} alt="Care Guide" className="w-full h-full object-contain" />
@@ -134,13 +143,33 @@ const Settings: React.FC = () => {
                         )}
                     </div>
                     <div className="mt-4">
-                        <label className="cursor-pointer inline-flex items-center gap-2 bg-white border border-gray-300 px-4 py-2 rounded shadow-sm hover:bg-gray-50">
+                        <label className="cursor-pointer inline-flex items-center gap-2 bg-white border border-gray-300 px-4 py-2 rounded shadow-sm hover:bg-gray-50 w-full justify-center">
                             {uploadingCare ? <Spinner /> : <UploadIcon />}
                             <span className="text-sm font-medium">{uploadingCare ? 'Đang tải...' : 'Thay đổi ảnh'}</span>
                             <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'careGuideDefault', setUploadingCare)} />
                         </label>
                     </div>
-                    <p className="text-xs text-gray-500 mt-2">Hình ảnh hiển thị trong tab "Hướng dẫn bảo quản".</p>
+                    <p className="text-xs text-gray-500 mt-2">Hiển thị trong tab "Hướng dẫn bảo quản".</p>
+                </div>
+
+                {/* Return Policy */}
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <h4 className="font-bold mb-4 border-b pb-2">Chính sách đổi hàng</h4>
+                    <div className="aspect-[3/2] bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center relative overflow-hidden">
+                        {settings.returnPolicyDefault ? (
+                            <img src={settings.returnPolicyDefault} alt="Return Policy" className="w-full h-full object-contain" />
+                        ) : (
+                            <span className="text-gray-400 text-sm">Chưa có hình ảnh</span>
+                        )}
+                    </div>
+                    <div className="mt-4">
+                        <label className="cursor-pointer inline-flex items-center gap-2 bg-white border border-gray-300 px-4 py-2 rounded shadow-sm hover:bg-gray-50 w-full justify-center">
+                            {uploadingReturn ? <Spinner /> : <UploadIcon />}
+                            <span className="text-sm font-medium">{uploadingReturn ? 'Đang tải...' : 'Thay đổi ảnh'}</span>
+                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'returnPolicyDefault', setUploadingReturn)} />
+                        </label>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">Hiển thị trong tab "Chính sách đổi hàng".</p>
                 </div>
             </div>
 

@@ -27,4 +27,5 @@ export interface AppSettings {
   zalo: string;
   sizeGuideDefault: string;
   careGuideDefault: string;
+  returnPolicyDefault: string; // New field
 }

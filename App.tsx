@@ -28,7 +28,8 @@ const App: React.FC = () => {
       email: 'CSKH@MAVOFASHION.COM',
       zalo: '',
       sizeGuideDefault: '',
-      careGuideDefault: ''
+      careGuideDefault: '',
+      returnPolicyDefault: ''
   });
 
   // Navigation State
