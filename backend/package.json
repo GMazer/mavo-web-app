@@ -1,3 +1,4 @@
+
 {
   "name": "lumina-backend-worker",
   "version": "1.0.0",
@@ -7,7 +8,9 @@
     "deploy": "wrangler deploy --minify src/app.ts",
     "db:create": "wrangler d1 create mavo-db",
     "db:setup": "wrangler d1 execute mavo-db --local --file=./schema.sql",
-    "db:setup:prod": "wrangler d1 execute mavo-db --remote --file=./schema.sql"
+    "db:setup:prod": "wrangler d1 execute mavo-db --remote --file=./schema.sql",
+    "db:update": "wrangler d1 execute mavo-db --local --file=./safe_migration.sql",
+    "db:update:prod": "wrangler d1 execute mavo-db --remote --file=./safe_migration.sql"
   },
   "dependencies": {
     "hono": "^4.1.0",
