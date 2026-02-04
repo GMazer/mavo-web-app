@@ -116,7 +116,6 @@ const AdminApp: React.FC = () => {
   
   // Drag and Drop state
   const dragItem = useRef<number | null>(null);
-  const dragOverItem = useRef<number | null>(null);
 
   // Fetch products on load
   useEffect(() => {
@@ -246,39 +245,47 @@ const AdminApp: React.FC = () => {
       }));
   }
 
-  // --- Drag and Drop Handlers ---
+  // --- Real-time Drag and Drop Handlers (The "Slide" Effect) ---
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, position: number) => {
       dragItem.current = position;
+      // Fade the element being dragged
+      e.currentTarget.classList.add('opacity-40');
+      // Set effect to move
+      e.dataTransfer.effectAllowed = "move";
   };
 
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>, position: number) => {
-      dragOverItem.current = position;
+      e.preventDefault(); // Necessary to allow dropping
+      
+      // If we are not dragging, or dragging over the same item, ignore
+      if (dragItem.current === null || dragItem.current === position) return;
+
+      // Real-time SWAP logic:
+      // We modify the array immediately as we hover over other items.
+      // This creates the visual effect of items sliding out of the way.
+      const newList = [...editingProduct.images];
+      const draggedItemContent = newList[dragItem.current];
+      
+      // Remove from old index
+      newList.splice(dragItem.current, 1);
+      // Insert at new index
+      newList.splice(position, 0, draggedItemContent);
+      
+      // Update state immediately
+      setEditingProduct((prev: any) => ({
+          ...prev,
+          images: newList
+      }));
+
+      // Update our reference to the new position of the dragged item
+      dragItem.current = position;
   };
 
   const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
-      if (dragItem.current === null || dragOverItem.current === null || !editingProduct) {
-          dragItem.current = null;
-          dragOverItem.current = null;
-          return;
-      }
-      
-      const copyListItems = [...editingProduct.images];
-      const dragItemContent = copyListItems[dragItem.current];
-      
-      // Remove item from old position
-      copyListItems.splice(dragItem.current, 1);
-      // Insert item at new position
-      copyListItems.splice(dragOverItem.current, 0, dragItemContent);
-      
-      setEditingProduct((prev: any) => ({
-          ...prev,
-          images: copyListItems
-      }));
-
+      // Remove the fade effect
+      e.currentTarget.classList.remove('opacity-40');
       dragItem.current = null;
-      dragOverItem.current = null;
   };
-
 
   const handleSave = async () => {
       if (!editingProduct) return;
@@ -431,15 +438,15 @@ const AdminApp: React.FC = () => {
                                     <div className="grid grid-cols-4 gap-4 mb-4">
                                         {editingProduct.images && editingProduct.images.map((img: string, idx: number) => (
                                             <div 
-                                                key={idx} 
-                                                className="relative group aspect-[3/4] bg-gray-200 cursor-move border-2 border-transparent hover:border-blue-400 transition-colors"
+                                                key={img} // Using img URL as key helps React identify elements better during reorder
+                                                className="relative group aspect-[3/4] bg-gray-200 cursor-move border-2 border-transparent hover:border-blue-400 transition-all duration-300 ease-in-out"
                                                 draggable
                                                 onDragStart={(e) => handleDragStart(e, idx)}
                                                 onDragEnter={(e) => handleDragEnter(e, idx)}
                                                 onDragEnd={handleDragEnd}
                                                 onDragOver={(e) => e.preventDefault()}
                                             >
-                                                <img src={img} alt="" className="w-full h-full object-cover" />
+                                                <img src={img} alt="" className="w-full h-full object-cover pointer-events-none" />
                                                 
                                                 {/* Badge Logic */}
                                                 {idx === 0 && (
