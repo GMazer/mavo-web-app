@@ -1,13 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
-import { Product, AppSettings } from '../types';
+import { Product, AppSettings, ProductColor } from '../types';
 import ProductCard from './ProductCard';
 import { StarIcon } from '@heroicons/react/20/solid';
 import { 
     TruckIcon, 
     CreditCardIcon, 
     PhoneIcon, 
-    ArrowPathIcon,
+    ArrowPathIcon, 
     ChevronDownIcon
 } from '@heroicons/react/24/outline';
 
@@ -27,6 +27,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
   const [isHovering, setIsHovering] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  
+  // State for selected color
+  const [selectedColor, setSelectedColor] = useState<ProductColor | null>(null);
+
   const [activeTab, setActiveTab] = useState<'info' | 'care' | 'policy'>('info');
   const [expandHighlights, setExpandHighlights] = useState(false);
   const [expandBoughtTogether, setExpandBoughtTogether] = useState(false);
@@ -54,6 +58,19 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
     setExpandHighlights(false);
     setExpandBoughtTogether(false);
     window.scrollTo(0, 0);
+
+    // Set default selected color to the first one available
+    if (product.colors && product.colors.length > 0) {
+        const firstColor = product.colors[0];
+        // Handle legacy string data if necessary, though type suggests object
+        if (typeof firstColor === 'string') {
+            setSelectedColor({ name: firstColor, hex: firstColor });
+        } else {
+            setSelectedColor(firstColor);
+        }
+    } else {
+        setSelectedColor(null);
+    }
   }, [product]);
 
   const handleAddToCart = () => {
@@ -61,6 +78,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
         alert("Vui lòng chọn kích thước!");
         return;
     }
+    // Logic could be extended to include selectedColor in the cart item
     onAddToCart(product, quantity, selectedSize);
   };
 
@@ -74,11 +92,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
 
   const relatedProducts = allProducts.filter(p => p.id !== product.id).slice(0, 4);
   const boughtTogetherProducts = allProducts.filter(p => p.id !== product.id).slice(4, 8);
-
-  // Get Primary Color Name safely
-  const primaryColorName = product.colors && product.colors.length > 0 
-    ? (typeof product.colors[0] === 'string' ? product.colors[0] : product.colors[0].name)
-    : 'Mặc định';
 
   return (
     <div className="w-full">
@@ -144,14 +157,28 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
           </div>
 
           <div className="mb-6">
-            <p className="text-sm mb-2">Màu sắc: <span className="font-bold">{primaryColorName}</span></p>
+            <p className="text-sm mb-2">Màu sắc: <span className="font-bold">{selectedColor ? selectedColor.name : 'Chưa chọn'}</span></p>
             <div className="flex gap-3">
                 {product.colors?.map((color, idx) => {
+                    // Safe handling for string vs object types
                     const hex = typeof color === 'string' ? color : color.hex;
                     const name = typeof color === 'string' ? color : color.name;
+                    
+                    // Check if this color is the currently selected one
+                    const isSelected = selectedColor && selectedColor.hex === hex;
+
                     return (
-                        <div key={idx} className={`w-8 h-8 rounded-full border-2 ${idx === 0 ? 'border-black' : 'border-transparent'} p-0.5 cursor-pointer`} title={name}>
-                            <div className="w-full h-full rounded-full border border-gray-200" style={{ backgroundColor: hex }}></div>
+                        <div 
+                            key={idx} 
+                            onClick={() => setSelectedColor({ name, hex })}
+                            className={`w-8 h-8 rounded-full border-2 p-0.5 cursor-pointer transition-all duration-200 
+                                ${isSelected ? 'border-black scale-110' : 'border-transparent hover:border-gray-300'}`} 
+                            title={name}
+                        >
+                            <div 
+                                className="w-full h-full rounded-full border border-gray-200 shadow-sm" 
+                                style={{ backgroundColor: hex }}
+                            ></div>
                         </div>
                     );
                 })}

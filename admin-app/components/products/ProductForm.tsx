@@ -11,6 +11,26 @@ interface ProductFormProps {
     onSaved: (product: Product, isNew: boolean) => void;
 }
 
+// Common Fashion Colors Palette
+const PRESET_COLORS = [
+    { name: "Đen", hex: "#000000" },
+    { name: "Trắng", hex: "#FFFFFF" },
+    { name: "Be (Kem)", hex: "#F5F5DC" },
+    { name: "Nâu", hex: "#8B4513" },
+    { name: "Nâu Tây", hex: "#A0522D" },
+    { name: "Xám", hex: "#808080" },
+    { name: "Xanh Navy", hex: "#000080" },
+    { name: "Xanh Dương", hex: "#0000FF" },
+    { name: "Xanh Rêu", hex: "#556B2F" },
+    { name: "Đỏ", hex: "#FF0000" },
+    { name: "Đỏ Đô", hex: "#800000" },
+    { name: "Hồng", hex: "#FFC0CB" },
+    { name: "Hồng Pastel", hex: "#FFD1DC" },
+    { name: "Vàng", hex: "#FFFF00" },
+    { name: "Cam", hex: "#FFA500" },
+    { name: "Tím", hex: "#800080" }
+];
+
 const ProductForm: React.FC<ProductFormProps> = ({ initialProduct, onCancel, onSaved }) => {
     const [product, setProduct] = useState<Product>(initialProduct);
     const [saving, setSaving] = useState(false);
@@ -57,6 +77,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialProduct, onCancel, onS
         // Reset inputs
         setTempColorName('');
         setTempColorHex('#000000');
+    };
+
+    const handleSelectPresetColor = (name: string, hex: string) => {
+        setTempColorName(name);
+        setTempColorHex(hex);
     };
 
     const handleRemoveColor = (indexToRemove: number) => {
@@ -169,8 +194,25 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialProduct, onCancel, onS
                             )}
                         </div>
 
+                        {/* Preset Palette */}
+                        <div className="mb-4">
+                            <span className="text-xs text-gray-500 block mb-2">Gợi ý màu phổ biến (Nhấn để chọn):</span>
+                            <div className="flex flex-wrap gap-2">
+                                {PRESET_COLORS.map((preset) => (
+                                    <button
+                                        key={preset.hex}
+                                        type="button"
+                                        onClick={() => handleSelectPresetColor(preset.name, preset.hex)}
+                                        className="w-6 h-6 rounded-full border border-gray-300 shadow-sm hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        style={{ backgroundColor: preset.hex }}
+                                        title={preset.name}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+
                         {/* Add New Color */}
-                        <div className="flex items-end gap-3">
+                        <div className="flex items-end gap-3 border-t border-gray-200 pt-3">
                             <div className="flex-1">
                                 <label className="block text-xs text-gray-500 mb-1">Tên màu (VD: Đỏ Đô)</label>
                                 <input 
