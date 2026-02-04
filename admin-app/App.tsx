@@ -248,9 +248,8 @@ const AdminApp: React.FC = () => {
   // --- Real-time Drag and Drop Handlers (The "Slide" Effect) ---
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, position: number) => {
       dragItem.current = position;
-      // Fade the element being dragged
-      e.currentTarget.classList.add('opacity-40');
       e.dataTransfer.effectAllowed = "move";
+      // Optional: Set custom drag image if needed, but default is usually fine
   };
 
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>, position: number) => {
@@ -273,7 +272,8 @@ const AdminApp: React.FC = () => {
           images: newList
       }));
 
-      // Update our reference to the new position of the dragged item
+      // CRITICAL FOR STABILITY: Update the dragItem ref to the NEW position
+      // This ensures that the "dragged item" conceptually follows the mouse to the new slot.
       dragItem.current = position;
   };
 
@@ -282,9 +282,9 @@ const AdminApp: React.FC = () => {
   }
 
   const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
-      // Remove the fade effect
-      e.currentTarget.classList.remove('opacity-40');
       dragItem.current = null;
+      // Force a re-render to clear any drag styling if needed
+      setEditingProduct((prev: any) => ({ ...prev })); 
   };
 
   const handleSave = async () => {
@@ -438,20 +438,19 @@ const AdminApp: React.FC = () => {
                                     <div className="grid grid-cols-4 gap-4 mb-4">
                                         {editingProduct.images && editingProduct.images.map((img: string, idx: number) => (
                                             <div 
-                                                key={img} 
-                                                // REMOVED 'transition-all' to prevent layout jitter during drag.
-                                                // ADDED 'cursor-move' and specific border hover effects.
-                                                className="relative group aspect-[3/4] bg-gray-200 cursor-move border-2 border-transparent hover:border-blue-400 select-none"
+                                                key={idx} // CRITICAL FIX: Use index as key to maintain stable DOM slots during swap
+                                                className={`relative group aspect-[3/4] bg-gray-200 cursor-move border-2 transition-all duration-150
+                                                    ${dragItem.current === idx ? 'opacity-40 border-blue-500' : 'border-transparent hover:border-blue-400'}`}
                                                 draggable
                                                 onDragStart={(e) => handleDragStart(e, idx)}
                                                 onDragEnter={(e) => handleDragEnter(e, idx)}
                                                 onDragOver={handleDragOver}
                                                 onDragEnd={handleDragEnd}
                                             >
-                                                {/* ADDED pointer-events-none to image to ensure the drag event target is the div container */}
+                                                {/* pointer-events-none ensures drag events bubble to the container */}
                                                 <img src={img} alt="" className="w-full h-full object-cover pointer-events-none" />
                                                 
-                                                {/* Badge Logic */}
+                                                {/* Badge Logic - pointer-events-none to prevent blocking drop target */}
                                                 {idx === 0 && (
                                                     <div className="absolute top-0 left-0 bg-blue-600 text-white text-[10px] px-2 py-1 font-bold shadow-sm z-10 pointer-events-none">
                                                         Đại diện
@@ -467,8 +466,6 @@ const AdminApp: React.FC = () => {
                                                     onClick={() => removeImage(idx)}
                                                     className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-20 cursor-pointer"
                                                     title="Xóa ảnh"
-                                                    // Ensure button is clickable but doesn't interfere with drag start if possible, 
-                                                    // though standard behavior is fine here since it's on hover.
                                                 >
                                                     <TrashIcon />
                                                 </button>
