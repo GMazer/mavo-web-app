@@ -14,7 +14,7 @@ const app = new Hono<{ Bindings: Bindings }>();
 // Middleware
 app.use('*', logger());
 
-// Fix CORS: Allow specific origins including localhost:3001 and localhost:3000
+// Fix CORS: Allow specific origins including localhost and ngrok
 app.use('*', cors({
   origin: (origin) => {
     // Allow standard development ports and production domains
@@ -25,11 +25,22 @@ app.use('*', cors({
       'http://localhost:8080',
       'http://127.0.0.1:3001'
     ];
-    // If origin is in the allowed list, return it.
-    // Also allow if origin is undefined (e.g. server-to-server or non-browser tools)
-    if (!origin || allowedOrigins.includes(origin)) {
+    
+    // 1. If origin is in the allowed list, return it.
+    if (allowedOrigins.includes(origin)) {
       return origin;
     }
+
+    // 2. Allow if origin is undefined (e.g. server-to-server or non-browser tools)
+    if (!origin) {
+      return origin;
+    }
+
+    // 3. Allow ngrok domains dynamically (ends with .ngrok-free.app)
+    if (origin.endsWith('.ngrok-free.app')) {
+      return origin;
+    }
+
     // Fallback: Reflect origin for development convenience (or return null to block)
     return origin; 
   },
