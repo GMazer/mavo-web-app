@@ -1,11 +1,14 @@
 
-import { Product } from "../types";
+import { Product, AppSettings } from "../types";
 import { compressImage } from "../utils/helpers";
 
 const PROD_API_URL = 'https://mavo-fashion-api.mavo-web.workers.dev'; 
 const API_BASE = PROD_API_URL;
 const API_URL = `${API_BASE}/api/products`;
+const SETTINGS_URL = `${API_BASE}/api/settings`;
 const UPLOAD_URL = `${API_BASE}/api/uploads/presign`;
+
+// --- Products ---
 
 export const fetchProductsApi = async (): Promise<Product[]> => {
     const res = await fetch(`${API_URL}?_t=${Date.now()}`);
@@ -23,7 +26,6 @@ export const fetchProductsApi = async (): Promise<Product[]> => {
         price: item.pricing?.price ?? item.price ?? 0,
         originalPrice: item.pricing?.compareAtPrice ?? item.originalPrice,
         images: item.images || (item.image ? [item.image] : []),
-        // Ensure isVisible is boolean. API sends true/false now, but fallback to true if undefined.
         isVisible: item.isVisible !== undefined ? item.isVisible : true
     }));
 };
@@ -40,7 +42,6 @@ export const saveProductApi = async (product: Product): Promise<Product> => {
     });
     
     if (!res.ok) {
-        // Extract exact error message from backend (e.g., "no such column: isVisible")
         const errData = await res.json().catch(() => ({}));
         console.error("Save API Error:", errData);
         throw new Error(errData.error || errData.message || "Failed to save product");
@@ -53,13 +54,31 @@ export const saveProductApi = async (product: Product): Promise<Product> => {
     };
 };
 
+// --- Settings ---
+
+export const fetchSettingsApi = async (): Promise<AppSettings> => {
+    const res = await fetch(`${SETTINGS_URL}?_t=${Date.now()}`);
+    if (!res.ok) throw new Error("Failed to fetch settings");
+    return await res.json();
+};
+
+export const saveSettingsApi = async (settings: Partial<AppSettings>): Promise<void> => {
+    const res = await fetch(SETTINGS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings)
+    });
+    if (!res.ok) throw new Error("Failed to save settings");
+};
+
+// --- Uploads ---
+
 export const uploadImagesApi = async (files: File[]): Promise<string[]> => {
     const uploadedUrls: string[] = [];
 
     await Promise.all(files.map(async (originalFile) => {
         const compressedFile = await compressImage(originalFile);
 
-        // 1. Get Presigned URL
         const presignRes = await fetch(UPLOAD_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -72,7 +91,6 @@ export const uploadImagesApi = async (files: File[]): Promise<string[]> => {
         if (!presignRes.ok) throw new Error(`Failed to get URL for ${originalFile.name}`);
         const { uploadUrl, publicUrl } = await presignRes.json();
 
-        // 2. Upload to R2
         const uploadRes = await fetch(uploadUrl, {
             method: 'PUT',
             headers: { 'Content-Type': compressedFile.type },

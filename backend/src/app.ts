@@ -1,9 +1,11 @@
+
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import healthRouter from './routes/health';
 import productsRouter from './routes/products';
 import uploadRouter from './routes/upload';
+import settingsRouter from './routes/settings';
 import { Bindings } from './bindings';
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -41,6 +43,7 @@ app.use('*', cors({
 app.route('/api/health', healthRouter);
 app.route('/api/products', productsRouter);
 app.route('/api/uploads', uploadRouter);
+app.route('/api/settings', settingsRouter);
 
 // 404 Handler
 app.notFound((c) => {

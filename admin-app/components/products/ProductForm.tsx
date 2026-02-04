@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
 import { Product } from '../../types';
-import { Spinner } from '../ui/Icons';
+import { Spinner, UploadIcon, TrashIcon } from '../ui/Icons';
 import ProductImageGallery from './ProductImageGallery';
-import { saveProductApi } from '../../services/api';
+import { saveProductApi, uploadImagesApi } from '../../services/api';
 
 interface ProductFormProps {
     initialProduct: Product;
@@ -14,6 +15,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialProduct, onCancel, onS
     const [product, setProduct] = useState<Product>(initialProduct);
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [uploadingSize, setUploadingSize] = useState(false);
 
     const handleChange = (field: keyof Product, value: any) => {
         setProduct(prev => ({ ...prev, [field]: value }));
@@ -29,6 +31,23 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialProduct, onCancel, onS
             alert("Lưu thất bại!");
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleCustomSizeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+        setUploadingSize(true);
+        try {
+            const files = Array.from(e.target.files);
+            const urls = await uploadImagesApi(files);
+            if (urls.length > 0) {
+                handleChange('customSizeGuide', urls[0]);
+            }
+        } catch (err) {
+            alert("Lỗi tải ảnh");
+        } finally {
+            setUploadingSize(false);
+            e.target.value = '';
         }
     };
 
@@ -71,6 +90,32 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialProduct, onCancel, onS
                         uploading={uploading}
                         setUploading={setUploading}
                     />
+
+                    {/* Custom Size Guide */}
+                    <div className="border border-gray-200 rounded-md p-4 bg-gray-50">
+                        <h4 className="text-sm font-bold text-gray-700 mb-2">Bảng Size Riêng (Tùy chọn)</h4>
+                        <p className="text-xs text-gray-500 mb-3">Nếu không tải lên, hệ thống sẽ sử dụng Bảng size chung trong Cấu hình.</p>
+                        
+                        <div className="flex items-start gap-4">
+                            {product.customSizeGuide ? (
+                                <div className="relative group w-24 h-24 border bg-white rounded overflow-hidden">
+                                    <img src={product.customSizeGuide} alt="Custom Size" className="w-full h-full object-cover" />
+                                    <button 
+                                        onClick={() => handleChange('customSizeGuide', null)}
+                                        className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full opacity-80 hover:opacity-100"
+                                    >
+                                        <TrashIcon />
+                                    </button>
+                                </div>
+                            ) : null}
+
+                            <label className="cursor-pointer inline-flex items-center gap-2 bg-white border border-gray-300 px-3 py-2 rounded shadow-sm hover:bg-gray-100">
+                                {uploadingSize ? <Spinner /> : <UploadIcon />}
+                                <span className="text-sm">{product.customSizeGuide ? 'Thay ảnh khác' : 'Tải ảnh lên'}</span>
+                                <input type="file" className="hidden" accept="image/*" onChange={handleCustomSizeUpload} disabled={uploadingSize} />
+                            </label>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Right Col */}
@@ -134,7 +179,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialProduct, onCancel, onS
 
                     <button 
                         onClick={handleSave}
-                        disabled={saving || uploading}
+                        disabled={saving || uploading || uploadingSize}
                         className="w-full bg-blue-600 text-white py-2 rounded font-medium hover:bg-blue-700 disabled:opacity-50 flex justify-center items-center gap-2"
                     >
                         {saving && <Spinner />}

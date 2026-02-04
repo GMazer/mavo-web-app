@@ -10,7 +10,16 @@ export interface Product {
     images: string[];
     colors?: string[];
     thumbnailUrl?: string;
-    isVisible?: boolean; // New field for status toggle
+    isVisible?: boolean; 
+    customSizeGuide?: string | null; // New field for specific size guide
+}
+
+export interface AppSettings {
+    hotline: string;
+    email: string;
+    zalo: string;
+    sizeGuideDefault: string;
+    careGuideDefault: string;
 }
 
 export interface DragState {

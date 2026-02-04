@@ -1,9 +1,10 @@
+
 import React from 'react';
-import { ChartBarIcon, ShoppingBagIcon, UserGroupIcon } from '../ui/Icons';
+import { ChartBarIcon, ShoppingBagIcon, UserGroupIcon, CogIcon } from '../ui/Icons';
 
 interface SidebarProps {
-    activeTab: 'dashboard' | 'products' | 'orders';
-    onTabChange: (tab: 'dashboard' | 'products' | 'orders') => void;
+    activeTab: 'dashboard' | 'products' | 'orders' | 'settings';
+    onTabChange: (tab: 'dashboard' | 'products' | 'orders' | 'settings') => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
@@ -24,6 +25,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
                 </button>
                 <button onClick={() => onTabChange('orders')} className={navItemClass('orders')}>
                     <UserGroupIcon /> Đơn hàng
+                </button>
+                <div className="border-t border-gray-700 my-2 pt-2"></div>
+                 <button onClick={() => onTabChange('settings')} className={navItemClass('settings')}>
+                    <CogIcon /> Cấu hình
                 </button>
             </nav>
             <div className="p-4 border-t border-gray-700">
