@@ -73,13 +73,49 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialProduct, onCancel, onS
                             placeholder="Nhập tên sản phẩm..."
                         />
                     </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                             <label className="block text-sm font-medium text-gray-700">Chất vải (Material)</label>
+                             <input 
+                                type="text" 
+                                value={product.material || ''}
+                                onChange={(e) => handleChange('material', e.target.value)}
+                                className="w-full border border-gray-300 rounded-md p-2"
+                                placeholder="Ví dụ: Vải dệt thoi"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                             <label className="block text-sm font-medium text-gray-700">Dòng sản phẩm (Gender)</label>
+                             <select 
+                                value={product.gender || 'FEMALE'}
+                                onChange={(e) => handleChange('gender', e.target.value)}
+                                className="w-full border border-gray-300 rounded-md p-2"
+                            >
+                                <option value="FEMALE">FEMALE (Nữ)</option>
+                                <option value="MALE">MALE (Nam)</option>
+                                <option value="UNISEX">UNISEX</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div className="space-y-4">
-                        <label className="block text-sm font-medium text-gray-700">Mô tả</label>
+                        <label className="block text-sm font-medium text-gray-700">Thông tin chi tiết (Hiển thị trong tab "Thông tin sản phẩm")</label>
                         <textarea 
                             value={product.description || ''}
                             onChange={(e) => handleChange('description', e.target.value)}
-                            className="w-full border border-gray-300 rounded-md p-2 h-32"
-                            placeholder="Mô tả chi tiết sản phẩm..."
+                            className="w-full border border-gray-300 rounded-md p-2 h-24"
+                            placeholder="Ví dụ: Thổi hồn vào những thiết kế MAVO..."
+                        ></textarea>
+                    </div>
+
+                    <div className="space-y-4">
+                        <label className="block text-sm font-medium text-gray-700">Đặc điểm nổi bật (Hiển thị ở mục mở rộng)</label>
+                        <textarea 
+                            value={product.highlights || ''}
+                            onChange={(e) => handleChange('highlights', e.target.value)}
+                            className="w-full border border-gray-300 rounded-md p-2 h-24"
+                            placeholder="Ví dụ: Chất liệu cao cấp, thiết kế hiện đại..."
                         ></textarea>
                     </div>
                     

@@ -3,6 +3,9 @@ export interface Product {
     id: string;
     name: string;
     description?: string;
+    highlights?: string;
+    material?: string;
+    gender?: string;
     price: number;
     originalPrice?: number;
     sku?: string;

@@ -9,7 +9,10 @@ export interface Product {
   images?: string[]; // Array of additional images for gallery
   code?: string;     // Product code (e.g., D825...)
   colors?: string[];
-  description?: string;
+  description?: string; // Content for Product Info Tab
+  highlights?: string; // Content for Highlights Section
+  material?: string;
+  gender?: string;
   customSizeGuide?: string | null; // Optional override for size guide
 }
 

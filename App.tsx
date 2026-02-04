@@ -62,6 +62,9 @@ const App: React.FC = () => {
                 code: item.sku,
                 colors: item.colors,
                 description: item.description,
+                highlights: item.highlights,
+                material: item.material,
+                gender: item.gender,
                 customSizeGuide: item.customSizeGuide
             }));
             setProducts(normalizedData);

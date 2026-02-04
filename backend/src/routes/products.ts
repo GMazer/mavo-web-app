@@ -16,6 +16,9 @@ interface ProductRow {
     images: string; // JSON String
     colors: string; // JSON String
     description: string;
+    highlights: string;
+    material: string;
+    gender: string;
     isVisible: number; // SQLite 0 or 1
     customSizeGuide: string | null;
 }
@@ -50,7 +53,10 @@ const formatProduct = (row: ProductRow) => {
         images,
         colors,
         isVisible: row.isVisible === 1, // Convert Integer to Boolean
-        customSizeGuide: row.customSizeGuide
+        customSizeGuide: row.customSizeGuide,
+        highlights: row.highlights || '',
+        material: row.material || '',
+        gender: row.gender || 'FEMALE'
     };
 };
 
@@ -80,6 +86,9 @@ app.get('/', async (c) => {
                 sku: formatted.sku,
                 category: formatted.category,
                 description: formatted.description,
+                highlights: formatted.highlights,
+                material: formatted.material,
+                gender: formatted.gender,
                 colors: formatted.colors,
                 images: formatted.images,
                 isVisible: formatted.isVisible,
@@ -155,6 +164,10 @@ app.get('/:id', async (c) => {
             sku: dbProduct.sku,
             isVisible: dbProduct.isVisible,
             customSizeGuide: dbProduct.customSizeGuide,
+            material: dbProduct.material,
+            gender: dbProduct.gender,
+            highlights: dbProduct.highlights,
+            description: dbProduct.description,
             brand: "MAVO",
             categoryPath: ["Quần áo", dbProduct.category],
             
@@ -190,7 +203,6 @@ app.get('/:id', async (c) => {
                 sizes: ["S", "M", "L"]
             },
             
-            // ... (Rest of structure remains same) ...
             variants: ["S", "M", "L"].map(size => ({
                 id: `${dbProduct.id}_${size}`,
                 size: size,
@@ -217,12 +229,13 @@ app.get('/:id', async (c) => {
                 highlightsTitle: "THÔNG TIN SẢN PHẨM",
                 attributes: [
                     { label: "Sản phẩm", value: dbProduct.name },
-                    { label: "Chất vải", value: "Vải dệt thoi" },
-                    { label: "Dòng sản phẩm", value: "FEMALE" }
+                    { label: "Chất vải", value: dbProduct.material || "Vải dệt thoi" },
+                    { label: "Dòng sản phẩm", value: dbProduct.gender || "FEMALE" }
                 ],
-                description: dbProduct.description,
+                description: dbProduct.description, // Main description text
+                highlights: dbProduct.highlights, // Highlights text
                 sizeGuide: { 
-                    imageUrl: dbProduct.customSizeGuide, // Will use global fallback if null in frontend
+                    imageUrl: dbProduct.customSizeGuide,
                     alt: "Bảng thông số áo", 
                     unit: "cm" 
                 }
@@ -255,6 +268,9 @@ app.post('/', async (c) => {
         const originalPrice = body.originalPrice || null;
         const category = body.category || 'Uncategorized';
         const description = body.description || '';
+        const highlights = body.highlights || '';
+        const material = body.material || '';
+        const gender = body.gender || 'FEMALE';
         const isVisible = body.isVisible === false ? 0 : 1; 
         const customSizeGuide = body.customSizeGuide || null;
         
@@ -262,9 +278,9 @@ app.post('/', async (c) => {
         const colors = JSON.stringify(body.colors || []);
 
         await c.env.DB.prepare(`
-            INSERT INTO Products (id, slug, name, sku, price, originalPrice, category, images, colors, description, isVisible, customSizeGuide)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).bind(id, slug, name, sku, price, originalPrice, category, images, colors, description, isVisible, customSizeGuide).run();
+            INSERT INTO Products (id, slug, name, sku, price, originalPrice, category, images, colors, description, highlights, material, gender, isVisible, customSizeGuide)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(id, slug, name, sku, price, originalPrice, category, images, colors, description, highlights, material, gender, isVisible, customSizeGuide).run();
 
         const newProduct = await c.env.DB.prepare("SELECT * FROM Products WHERE id = ?").bind(id).first() as ProductRow;
         return c.json(formatProduct(newProduct), 201);
@@ -286,6 +302,9 @@ app.put('/:id', async (c) => {
         const price = updates.price !== undefined ? updates.price : existing.price;
         const originalPrice = updates.originalPrice !== undefined ? updates.originalPrice : existing.originalPrice;
         const description = updates.description !== undefined ? updates.description : existing.description;
+        const highlights = updates.highlights !== undefined ? updates.highlights : existing.highlights;
+        const material = updates.material !== undefined ? updates.material : existing.material;
+        const gender = updates.gender !== undefined ? updates.gender : existing.gender;
         const sku = updates.sku !== undefined ? updates.sku : existing.sku;
         const category = updates.category !== undefined ? updates.category : existing.category;
         const customSizeGuide = updates.customSizeGuide !== undefined ? updates.customSizeGuide : existing.customSizeGuide;
@@ -307,9 +326,9 @@ app.put('/:id', async (c) => {
 
         await c.env.DB.prepare(`
             UPDATE Products 
-            SET name = ?, price = ?, originalPrice = ?, description = ?, sku = ?, images = ?, colors = ?, isVisible = ?, category = ?, customSizeGuide = ?
+            SET name = ?, price = ?, originalPrice = ?, description = ?, highlights = ?, material = ?, gender = ?, sku = ?, images = ?, colors = ?, isVisible = ?, category = ?, customSizeGuide = ?
             WHERE id = ?
-        `).bind(name, price, originalPrice, description, sku, images, colors, isVisible, category, customSizeGuide, id).run();
+        `).bind(name, price, originalPrice, description, highlights, material, gender, sku, images, colors, isVisible, category, customSizeGuide, id).run();
 
         const updated = await c.env.DB.prepare("SELECT * FROM Products WHERE id = ?").bind(id).first() as ProductRow | null;
         return c.json(formatProduct(updated!));

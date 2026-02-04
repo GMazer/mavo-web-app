@@ -264,8 +264,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
                 <ChevronDownIcon className={`w-4 h-4 transition-transform duration-200 ${expandHighlights ? 'rotate-180' : ''}`} />
              </button>
              <div className={`overflow-hidden transition-all duration-300 ${expandHighlights ? 'max-h-96 mt-4' : 'max-h-0'}`}>
-                <p className="text-sm text-gray-600 font-light leading-relaxed">
-                    {product.description || 'Chất liệu cao cấp, thiết kế hiện đại phù hợp với nhiều phong cách.'}
+                {/* Dynamically display highlights */}
+                <p className="text-sm text-gray-600 font-light leading-relaxed whitespace-pre-line">
+                    {product.highlights || 'Chất liệu cao cấp, thiết kế hiện đại phù hợp với nhiều phong cách.'}
                 </p>
              </div>
           </div>
@@ -326,11 +327,13 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
                     <h3 className="text-lg font-light uppercase mb-6">THÔNG TIN SẢN PHẨM</h3>
                     <div className="text-sm font-light text-gray-700 space-y-2 mb-10">
                         <p>Sản phẩm: {product.name}</p>
-                        <p>Chất Vải: Vải Dệt thoi</p>
-                        <p>Dòng sản phẩm: FEMALE</p>
-                        <p className="leading-relaxed">
-                            Thổi hồn vào những thiết kế MAVO đem đến cho bạn trải nghiệm dòng sản phẩm với phong cách trẻ trung, năng động và hiện đại. <br/>
-                            MAVO By DO MANH CUONG
+                        {/* Dynamic fields */}
+                        <p>Chất Vải: {product.material || "Vải dệt thoi"}</p>
+                        <p>Dòng sản phẩm: {product.gender || "FEMALE"}</p>
+                        
+                        {/* Dynamic Description Block */}
+                        <p className="leading-relaxed whitespace-pre-line">
+                            {product.description || `Thổi hồn vào những thiết kế MAVO đem đến cho bạn trải nghiệm dòng sản phẩm với phong cách trẻ trung, năng động và hiện đại. \nMAVO By DO MANH CUONG`}
                         </p>
                     </div>
                     {/* Size Guide */}
