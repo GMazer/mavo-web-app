@@ -3,6 +3,7 @@ DROP TABLE IF EXISTS Reviews;
 DROP TABLE IF EXISTS Products;
 DROP TABLE IF EXISTS Settings;
 DROP TABLE IF EXISTS Categories;
+DROP TABLE IF EXISTS Orders;
 
 CREATE TABLE Categories (
     id TEXT PRIMARY KEY,
@@ -42,6 +43,23 @@ CREATE TABLE Reviews (
 CREATE TABLE Settings (
     key TEXT PRIMARY KEY,
     value TEXT
+);
+
+CREATE TABLE Orders (
+    id TEXT PRIMARY KEY,
+    customerName TEXT,
+    customerPhone TEXT,
+    customerEmail TEXT,
+    addressDetail TEXT,
+    city TEXT,
+    district TEXT,
+    ward TEXT,
+    note TEXT,
+    totalAmount INTEGER,
+    paymentMethod TEXT,
+    items TEXT, -- JSON Array of Cart Items
+    status TEXT DEFAULT 'pending', -- pending, processing, completed, cancelled
+    createdAt TEXT
 );
 
 -- SEED DATA CATEGORIES

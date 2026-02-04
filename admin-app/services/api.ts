@@ -8,6 +8,7 @@ const API_URL = `${API_BASE}/api/products`;
 const SETTINGS_URL = `${API_BASE}/api/settings`;
 const CATEGORIES_URL = `${API_BASE}/api/categories`;
 const UPLOAD_URL = `${API_BASE}/api/uploads/presign`;
+const ORDERS_URL = `${API_BASE}/api/orders`;
 
 // --- Products ---
 
@@ -158,4 +159,14 @@ export const uploadImagesApi = async (files: File[]): Promise<string[]> => {
     }));
 
     return uploadedUrls;
+};
+
+// --- Orders ---
+
+export const fetchOrdersApi = async () => {
+    const res = await fetch(`${ORDERS_URL}?_t=${Date.now()}`);
+    if (!res.ok) {
+        throw new Error("Failed to fetch orders");
+    }
+    return await res.json();
 };

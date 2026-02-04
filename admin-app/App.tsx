@@ -4,6 +4,7 @@ import Sidebar from './components/layout/Sidebar';
 import Dashboard from './pages/Dashboard';
 import ProductManager from './pages/ProductManager';
 import CategoryManager from './pages/CategoryManager';
+import OrderManager from './pages/OrderManager';
 import Settings from './pages/Settings';
 
 const AdminApp: React.FC = () => {
@@ -51,9 +52,7 @@ const AdminApp: React.FC = () => {
 
                     {activeTab === 'settings' && <Settings />}
 
-                    {activeTab === 'orders' && (
-                        <div className="text-gray-500 text-center py-20">Tính năng đang phát triển...</div>
-                    )}
+                    {activeTab === 'orders' && <OrderManager />}
                 </div>
             </main>
         </div>
