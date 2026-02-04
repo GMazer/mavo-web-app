@@ -1,4 +1,9 @@
 
+export interface ProductColor {
+    name: string;
+    hex: string;
+}
+
 export interface Product {
     id: string;
     name: string;
@@ -11,7 +16,7 @@ export interface Product {
     sku?: string;
     category?: string;
     images: string[];
-    colors?: string[];
+    colors?: ProductColor[];
     thumbnailUrl?: string;
     isVisible?: boolean; 
     customSizeGuide?: string | null; // New field for specific size guide

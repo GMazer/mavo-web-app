@@ -1,4 +1,9 @@
 
+export interface ProductColor {
+  name: string;
+  hex: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -8,7 +13,7 @@ export interface Product {
   image: string;
   images?: string[]; // Array of additional images for gallery
   code?: string;     // Product code (e.g., D825...)
-  colors?: string[];
+  colors?: ProductColor[]; // Updated to object array
   description?: string; // Content for Product Info Tab
   highlights?: string; // Content for Highlights Section
   material?: string;

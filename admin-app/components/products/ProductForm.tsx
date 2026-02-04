@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Product, Category } from '../../types';
+import { Product, Category, ProductColor } from '../../types';
 import { Spinner, UploadIcon, TrashIcon } from '../ui/Icons';
 import ProductImageGallery from './ProductImageGallery';
 import { saveProductApi, uploadImagesApi, fetchCategoriesApi } from '../../services/api';
@@ -20,6 +20,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialProduct, onCancel, onS
     // Categories
     const [categories, setCategories] = useState<Category[]>([]);
 
+    // Local state for adding new color
+    const [tempColorName, setTempColorName] = useState('');
+    const [tempColorHex, setTempColorHex] = useState('#000000');
+
     useEffect(() => {
         const loadCategories = async () => {
             try {
@@ -34,6 +38,30 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialProduct, onCancel, onS
 
     const handleChange = (field: keyof Product, value: any) => {
         setProduct(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleAddColor = () => {
+        if (!tempColorName.trim()) {
+            alert("Vui lòng nhập tên màu!");
+            return;
+        }
+        
+        const newColor: ProductColor = {
+            name: tempColorName.trim(),
+            hex: tempColorHex
+        };
+
+        const currentColors = product.colors || [];
+        handleChange('colors', [...currentColors, newColor]);
+        
+        // Reset inputs
+        setTempColorName('');
+        setTempColorHex('#000000');
+    };
+
+    const handleRemoveColor = (indexToRemove: number) => {
+        const currentColors = product.colors || [];
+        handleChange('colors', currentColors.filter((_, idx) => idx !== indexToRemove));
     };
 
     const handleSave = async () => {
@@ -111,6 +139,72 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialProduct, onCancel, onS
                                 <option value="MALE">MALE (Nam)</option>
                                 <option value="UNISEX">UNISEX</option>
                             </select>
+                        </div>
+                    </div>
+
+                    {/* Colors Manager */}
+                    <div className="space-y-2 bg-gray-50 p-4 rounded border border-gray-200">
+                        <label className="block text-sm font-medium text-gray-700">Màu sắc</label>
+                        
+                        {/* List Existing Colors */}
+                        <div className="flex flex-wrap gap-2 mb-3">
+                            {product.colors && product.colors.length > 0 ? (
+                                product.colors.map((color, idx) => (
+                                    <div key={idx} className="flex items-center gap-2 bg-white px-3 py-1.5 rounded border shadow-sm">
+                                        <div 
+                                            className="w-5 h-5 rounded-full border border-gray-300" 
+                                            style={{ backgroundColor: color.hex }}
+                                        ></div>
+                                        <span className="text-sm">{color.name}</span>
+                                        <button 
+                                            onClick={() => handleRemoveColor(idx)}
+                                            className="text-gray-400 hover:text-red-600 ml-2"
+                                        >
+                                            <TrashIcon />
+                                        </button>
+                                    </div>
+                                ))
+                            ) : (
+                                <span className="text-sm text-gray-400 italic">Chưa có màu sắc nào</span>
+                            )}
+                        </div>
+
+                        {/* Add New Color */}
+                        <div className="flex items-end gap-3">
+                            <div className="flex-1">
+                                <label className="block text-xs text-gray-500 mb-1">Tên màu (VD: Đỏ Đô)</label>
+                                <input 
+                                    type="text" 
+                                    value={tempColorName}
+                                    onChange={(e) => setTempColorName(e.target.value)}
+                                    className="w-full border border-gray-300 rounded p-1.5 text-sm"
+                                    placeholder="Nhập tên màu..."
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-gray-500 mb-1">Chọn màu</label>
+                                <div className="flex gap-2">
+                                    <input 
+                                        type="color" 
+                                        value={tempColorHex}
+                                        onChange={(e) => setTempColorHex(e.target.value)}
+                                        className="h-9 w-12 p-0 border border-gray-300 rounded cursor-pointer"
+                                    />
+                                    <input 
+                                        type="text"
+                                        value={tempColorHex}
+                                        onChange={(e) => setTempColorHex(e.target.value)}
+                                        className="w-20 border border-gray-300 rounded p-1.5 text-sm font-mono"
+                                    />
+                                </div>
+                            </div>
+                            <button 
+                                onClick={handleAddColor}
+                                type="button"
+                                className="bg-gray-800 text-white px-3 py-2 rounded text-sm hover:bg-black h-9"
+                            >
+                                Thêm
+                            </button>
                         </div>
                     </div>
 

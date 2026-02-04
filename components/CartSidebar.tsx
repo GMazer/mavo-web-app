@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { CartItem } from '../types';
 import { XMarkIcon, TrashIcon, MinusIcon, PlusIcon } from '@heroicons/react/24/outline';
@@ -73,7 +74,13 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
               </button>
             </div>
           ) : (
-            cartItems.map((item, idx) => (
+            cartItems.map((item, idx) => {
+              // Safe color name access
+              const colorName = item.colors && item.colors.length > 0 
+                ? (typeof item.colors[0] === 'string' ? item.colors[0] : item.colors[0].name)
+                : 'Mặc định';
+
+              return (
               <div key={`${item.id}-${item.selectedSize}-${idx}`} className="flex gap-4">
                 {/* Image */}
                 <div className="w-20 h-28 flex-shrink-0 bg-gray-50">
@@ -98,7 +105,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
                     </div>
                     <p className="text-xs text-gray-500 mt-1">
                         Phân loại: <span className="uppercase">{item.selectedSize || 'F'}</span> 
-                        {item.colors && item.colors.length > 0 && ` / ${item.colors[0]}`}
+                        {` / ${colorName}`}
                     </p>
                   </div>
 
@@ -127,7 +134,8 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
                   </div>
                 </div>
               </div>
-            ))
+              )
+            })
           )}
         </div>
 

@@ -32,12 +32,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
   const [expandBoughtTogether, setExpandBoughtTogether] = useState(false);
 
   // Determine Size Guide Image
-  // Priority: Product Custom Guide -> Global Default -> Fallback Placeholder
   const sizeGuideImage = product.customSizeGuide || settings.sizeGuideDefault || 'https://via.placeholder.com/800x500?text=Size+Guide+Pending';
-  
   // Determine Care Guide Image
   const careGuideImage = settings.careGuideDefault || 'https://via.placeholder.com/800x500?text=Care+Guide+Pending';
-
   // Determine Return Policy Image
   const returnPolicyImage = settings.returnPolicyDefault || 'https://via.placeholder.com/800x500?text=Policy+Pending';
 
@@ -77,6 +74,11 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
 
   const relatedProducts = allProducts.filter(p => p.id !== product.id).slice(0, 4);
   const boughtTogetherProducts = allProducts.filter(p => p.id !== product.id).slice(4, 8);
+
+  // Get Primary Color Name safely
+  const primaryColorName = product.colors && product.colors.length > 0 
+    ? (typeof product.colors[0] === 'string' ? product.colors[0] : product.colors[0].name)
+    : 'Mặc định';
 
   return (
     <div className="w-full">
@@ -142,15 +144,19 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
           </div>
 
           <div className="mb-6">
-            <p className="text-sm mb-2">Màu sắc: <span className="font-bold">Mặc định</span></p>
+            <p className="text-sm mb-2">Màu sắc: <span className="font-bold">{primaryColorName}</span></p>
             <div className="flex gap-3">
-                {product.colors?.map((color, idx) => (
-                    <div key={idx} className={`w-8 h-8 rounded-full border-2 ${idx === 0 ? 'border-black' : 'border-transparent'} p-0.5 cursor-pointer`}>
-                        <div className="w-full h-full rounded-full border border-gray-200" style={{ backgroundColor: color }}></div>
-                    </div>
-                ))}
+                {product.colors?.map((color, idx) => {
+                    const hex = typeof color === 'string' ? color : color.hex;
+                    const name = typeof color === 'string' ? color : color.name;
+                    return (
+                        <div key={idx} className={`w-8 h-8 rounded-full border-2 ${idx === 0 ? 'border-black' : 'border-transparent'} p-0.5 cursor-pointer`} title={name}>
+                            <div className="w-full h-full rounded-full border border-gray-200" style={{ backgroundColor: hex }}></div>
+                        </div>
+                    );
+                })}
             </div>
-          </div>
+        </div>
 
           <div className="mb-6">
             <p className="text-sm mb-2">Kích thước:</p>

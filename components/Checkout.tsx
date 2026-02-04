@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { CartItem } from '../types';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
@@ -110,30 +111,36 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, onPlaceOrder }) => {
 
                 {/* Product List */}
                 <div className="space-y-4 mb-6 border-b border-gray-200 pb-6">
-                    {cartItems.map((item, idx) => (
-                        <div key={`${item.id}-${item.selectedSize}-${idx}`} className="flex justify-between items-start text-sm">
-                            <div className="flex items-start pr-4">
-                                <img 
-                                    src={item.image} 
-                                    alt={item.name} 
-                                    className="w-12 h-16 object-cover mr-3 border border-gray-200 flex-shrink-0"
-                                />
-                                <div>
+                    {cartItems.map((item, idx) => {
+                         const colorName = item.colors && item.colors.length > 0 
+                            ? (typeof item.colors[0] === 'string' ? item.colors[0] : item.colors[0].name)
+                            : 'N/A';
+
+                        return (
+                            <div key={`${item.id}-${item.selectedSize}-${idx}`} className="flex justify-between items-start text-sm">
+                                <div className="flex items-start pr-4">
+                                    <img 
+                                        src={item.image} 
+                                        alt={item.name} 
+                                        className="w-12 h-16 object-cover mr-3 border border-gray-200 flex-shrink-0"
+                                    />
                                     <div>
-                                        <span className="text-gray-600">{item.name}</span> 
-                                        <strong className="ml-1">× {item.quantity}</strong>
-                                    </div>
-                                    <div className="text-xs text-gray-400 mt-1">
-                                        Màu sắc: {item.colors?.[0] || 'N/A'} <br/>
-                                        Size: {item.selectedSize}
+                                        <div>
+                                            <span className="text-gray-600">{item.name}</span> 
+                                            <strong className="ml-1">× {item.quantity}</strong>
+                                        </div>
+                                        <div className="text-xs text-gray-400 mt-1">
+                                            Màu sắc: {colorName} <br/>
+                                            Size: {item.selectedSize}
+                                        </div>
                                     </div>
                                 </div>
+                                <span className="font-bold whitespace-nowrap">
+                                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price * item.quantity).replace('₫', '')}₫
+                                </span>
                             </div>
-                            <span className="font-bold whitespace-nowrap">
-                                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price * item.quantity).replace('₫', '')}₫
-                            </span>
-                        </div>
-                    ))}
+                        )
+                    })}
                 </div>
 
                 {/* Totals */}

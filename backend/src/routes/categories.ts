@@ -48,7 +48,7 @@ app.put('/:id', async (c) => {
     const id = c.req.param('id');
     try {
         const body = await c.req.json();
-        const existing = await c.env.DB.prepare("SELECT * FROM Categories WHERE id = ?").bind(id).first<CategoryRow>();
+        const existing = await c.env.DB.prepare("SELECT * FROM Categories WHERE id = ?").bind(id).first() as CategoryRow | null;
         
         if (!existing) return c.json({ error: "Category not found" }, 404);
 

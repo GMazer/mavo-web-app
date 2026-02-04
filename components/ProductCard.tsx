@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Product } from '../types';
 
@@ -9,8 +10,6 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, onClick }) => {
   // Determine Primary and Secondary images
-  // Logic: product.images[0] is primary. product.images[1] is hover.
-  // Fallback to product.image if product.images is empty.
   const primaryImage = product.images?.[0] || product.image;
   const secondaryImage = product.images?.[1];
 
@@ -42,7 +41,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, onClick
                     e.stopPropagation();
                     onAddToCart(product);
                 }}
-                /* Removed font-sfu-book */
                 className="w-full bg-white text-black font-bold text-[11px] py-3 uppercase tracking-wider hover:bg-gray-50 shadow-md border border-transparent hover:border-gray-200"
             >
                 Mua ngay
@@ -52,19 +50,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, onClick
 
       {/* Details Section */}
       <div className="mt-4 flex flex-col gap-1.5">
-        {/* Product Name: Clean, light/regular font, left aligned. Removed font-sfu-book. */}
         <h3 className="text-sm text-gray-700 truncate leading-normal hover:text-black transition-colors">
           {product.name}
         </h3>
 
         {/* Price Section */}
         <div className="flex items-baseline gap-2">
-          {/* Removed font-sfu-book */}
           <p className="text-sm text-black font-normal">
             {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price).replace('₫', '')} ₫
           </p>
           {product.originalPrice && (
-            /* Removed font-sfu-book */
             <p className="text-sm text-gray-400 line-through decoration-gray-400 font-light">
               {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.originalPrice).replace('₫', '')} ₫
             </p>
@@ -74,24 +69,29 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, onClick
         {/* Color Swatches */}
         {product.colors && product.colors.length > 0 && (
             <div className="flex gap-2 mt-2">
-                {product.colors.map((color, idx) => (
-                    <div 
-                        key={idx}
-                        // Outer Ring: Increased size to w-5 h-5 (20px), added padding to create gap between color and border
-                        className="w-5 h-5 rounded-full border border-gray-300 p-[2px] cursor-pointer hover:border-gray-500 transition-colors flex items-center justify-center"
-                    >
-                        {/* Inner Color Circle */}
+                {product.colors.map((color, idx) => {
+                    // Safety check for legacy data if exists, though seed data is updated
+                    const hex = typeof color === 'string' ? color : color.hex;
+                    const name = typeof color === 'string' ? color : color.name;
+                    return (
                         <div 
-                            className="w-full h-full rounded-full"
-                            style={{ 
-                                backgroundColor: color,
-                                // Add a subtle border for white colors so they don't blend into the white gap
-                                border: color.toLowerCase() === '#ffffff' ? '1px solid #e5e7eb' : 'none'
-                            }}
+                            key={idx}
+                            title={name}
+                            // Outer Ring
+                            className="w-5 h-5 rounded-full border border-gray-300 p-[2px] cursor-pointer hover:border-gray-500 transition-colors flex items-center justify-center"
                         >
+                            {/* Inner Color Circle */}
+                            <div 
+                                className="w-full h-full rounded-full"
+                                style={{ 
+                                    backgroundColor: hex,
+                                    border: hex.toLowerCase() === '#ffffff' ? '1px solid #e5e7eb' : 'none'
+                                }}
+                            >
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         )}
       </div>
