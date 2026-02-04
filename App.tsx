@@ -182,6 +182,7 @@ const App: React.FC = () => {
       <Header 
         cartCount={totalItems} 
         onOpenCart={() => setIsCartOpen(true)}
+        onLogoClick={goHome}
       />
 
       <CartSidebar 
