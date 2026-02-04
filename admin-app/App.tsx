@@ -250,19 +250,15 @@ const AdminApp: React.FC = () => {
       dragItem.current = position;
       // Fade the element being dragged
       e.currentTarget.classList.add('opacity-40');
-      // Set effect to move
       e.dataTransfer.effectAllowed = "move";
   };
 
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>, position: number) => {
-      e.preventDefault(); // Necessary to allow dropping
-      
+      e.preventDefault(); 
       // If we are not dragging, or dragging over the same item, ignore
       if (dragItem.current === null || dragItem.current === position) return;
 
       // Real-time SWAP logic:
-      // We modify the array immediately as we hover over other items.
-      // This creates the visual effect of items sliding out of the way.
       const newList = [...editingProduct.images];
       const draggedItemContent = newList[dragItem.current];
       
@@ -280,6 +276,10 @@ const AdminApp: React.FC = () => {
       // Update our reference to the new position of the dragged item
       dragItem.current = position;
   };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault(); // Crucial for onDrop (and general DnD logic) to work
+  }
 
   const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
       // Remove the fade effect
@@ -438,32 +438,37 @@ const AdminApp: React.FC = () => {
                                     <div className="grid grid-cols-4 gap-4 mb-4">
                                         {editingProduct.images && editingProduct.images.map((img: string, idx: number) => (
                                             <div 
-                                                key={img} // Using img URL as key helps React identify elements better during reorder
-                                                className="relative group aspect-[3/4] bg-gray-200 cursor-move border-2 border-transparent hover:border-blue-400 transition-all duration-300 ease-in-out"
+                                                key={img} 
+                                                // REMOVED 'transition-all' to prevent layout jitter during drag.
+                                                // ADDED 'cursor-move' and specific border hover effects.
+                                                className="relative group aspect-[3/4] bg-gray-200 cursor-move border-2 border-transparent hover:border-blue-400 select-none"
                                                 draggable
                                                 onDragStart={(e) => handleDragStart(e, idx)}
                                                 onDragEnter={(e) => handleDragEnter(e, idx)}
+                                                onDragOver={handleDragOver}
                                                 onDragEnd={handleDragEnd}
-                                                onDragOver={(e) => e.preventDefault()}
                                             >
+                                                {/* ADDED pointer-events-none to image to ensure the drag event target is the div container */}
                                                 <img src={img} alt="" className="w-full h-full object-cover pointer-events-none" />
                                                 
                                                 {/* Badge Logic */}
                                                 {idx === 0 && (
-                                                    <div className="absolute top-0 left-0 bg-blue-600 text-white text-[10px] px-2 py-1 font-bold shadow-sm z-10">
+                                                    <div className="absolute top-0 left-0 bg-blue-600 text-white text-[10px] px-2 py-1 font-bold shadow-sm z-10 pointer-events-none">
                                                         Đại diện
                                                     </div>
                                                 )}
                                                 {idx === 1 && (
-                                                    <div className="absolute top-0 left-0 bg-gray-800 text-white text-[10px] px-2 py-1 font-bold shadow-sm z-10">
+                                                    <div className="absolute top-0 left-0 bg-gray-800 text-white text-[10px] px-2 py-1 font-bold shadow-sm z-10 pointer-events-none">
                                                         Ảnh phụ (Hover)
                                                     </div>
                                                 )}
 
                                                 <button 
                                                     onClick={() => removeImage(idx)}
-                                                    className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                                                    className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-20 cursor-pointer"
                                                     title="Xóa ảnh"
+                                                    // Ensure button is clickable but doesn't interfere with drag start if possible, 
+                                                    // though standard behavior is fine here since it's on hover.
                                                 >
                                                     <TrashIcon />
                                                 </button>
