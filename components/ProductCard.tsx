@@ -8,18 +8,35 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, onClick }) => {
+  // Determine Primary and Secondary images
+  // Logic: product.images[0] is primary. product.images[1] is hover.
+  // Fallback to product.image if product.images is empty.
+  const primaryImage = product.images?.[0] || product.image;
+  const secondaryImage = product.images?.[1];
+
   return (
     <div className="group cursor-pointer block" onClick={onClick}>
       {/* Aspect Ratio 2/3 for tall fashion images */}
       <div className="relative aspect-[2/3] w-full overflow-hidden bg-gray-100">
-        <img
-          src={product.image}
-          alt={product.name}
-          className="h-full w-full object-cover object-center"
-        />
         
-        {/* MUA NGAY Button - Slides up on hover */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 ease-out z-20">
+        {/* Primary Image (Always visible initially) */}
+        <img
+          src={primaryImage}
+          alt={product.name}
+          className="absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 ease-in-out z-10"
+        />
+
+        {/* Secondary Image (Visible on hover with fade effect) */}
+        {secondaryImage && (
+            <img 
+                src={secondaryImage}
+                alt={`${product.name} alternate`}
+                className="absolute inset-0 h-full w-full object-cover object-center opacity-0 group-hover:opacity-100 transition-opacity duration-700 ease-in-out z-20"
+            />
+        )}
+        
+        {/* MUA NGAY Button - Slides up on hover - Z-Index needs to be higher than images */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 ease-out z-30">
             <button 
                 onClick={(e) => {
                     e.stopPropagation();

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 // Icons
 const ChartBarIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>;
@@ -114,6 +114,10 @@ const AdminApp: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  
+  // Drag and Drop state
+  const dragItem = useRef<number | null>(null);
+  const dragOverItem = useRef<number | null>(null);
 
   // Fetch products on load
   useEffect(() => {
@@ -136,7 +140,9 @@ const AdminApp: React.FC = () => {
           const flattenedData = items.map((item: any) => ({
              ...item,
              price: item.pricing?.price ?? item.price ?? 0,
-             originalPrice: item.pricing?.compareAtPrice ?? item.originalPrice
+             originalPrice: item.pricing?.compareAtPrice ?? item.originalPrice,
+             // Ensure images is always an array
+             images: item.images || (item.image ? [item.image] : [])
           }));
           setProducts(flattenedData);
       } catch (err) {
@@ -180,51 +186,57 @@ const AdminApp: React.FC = () => {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
       if (!e.target.files || e.target.files.length === 0 || !editingProduct) return;
       
-      const originalFile = e.target.files[0];
+      const files = Array.from(e.target.files);
       setUploading(true);
 
       try {
-          // 0. Compress Image
-          const compressedFile = await compressImage(originalFile);
+          const uploadedUrls: string[] = [];
 
-          // 1. Get Presigned URL
-          const presignRes = await fetch(UPLOAD_URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                  filename: compressedFile.name,
-                  contentType: compressedFile.type
-              })
-          });
+          // Process files concurrently
+          await Promise.all(files.map(async (originalFile) => {
+              // 0. Compress Image
+              const compressedFile = await compressImage(originalFile);
 
-          if (!presignRes.ok) throw new Error("Failed to get presigned URL");
-          const { uploadUrl, publicUrl } = await presignRes.json();
+              // 1. Get Presigned URL
+              const presignRes = await fetch(UPLOAD_URL, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                      filename: compressedFile.name,
+                      contentType: compressedFile.type
+                  })
+              });
 
-          // 2. Upload to R2 directly (Client-side upload)
-          const uploadRes = await fetch(uploadUrl, {
-              method: 'PUT',
-              headers: { 
-                  'Content-Type': compressedFile.type 
-                  // No Authorization header here, as it's included in the signed URL query params
-              },
-              body: compressedFile
-          });
+              if (!presignRes.ok) throw new Error(`Failed to get URL for ${originalFile.name}`);
+              const { uploadUrl, publicUrl } = await presignRes.json();
 
-          if (!uploadRes.ok) throw new Error("Failed to upload file to R2");
+              // 2. Upload to R2 directly (Client-side upload)
+              const uploadRes = await fetch(uploadUrl, {
+                  method: 'PUT',
+                  headers: { 
+                      'Content-Type': compressedFile.type 
+                  },
+                  body: compressedFile
+              });
 
-          // 3. Update State with the public URL
+              if (!uploadRes.ok) throw new Error(`Failed to upload ${originalFile.name}`);
+              uploadedUrls.push(publicUrl);
+          }));
+
+          // 3. Update State with all new public URLs appended
           setEditingProduct((prev: any) => ({
               ...prev,
-              images: [...(prev.images || []), publicUrl]
+              images: [...(prev.images || []), ...uploadedUrls]
           }));
           
-          alert("Tải và nén ảnh thành công!");
+          // Only alert if multiple files, otherwise it's too noisy? No, keep it simple.
+          // alert("Tải và nén ảnh thành công!");
       } catch (err) {
           console.error("Upload error", err);
           alert("Lỗi tải ảnh! Kiểm tra console.");
       } finally {
           setUploading(false);
-          // Reset input
+          // Reset input to allow re-uploading same file if needed
           e.target.value = '';
       }
   };
@@ -236,6 +248,40 @@ const AdminApp: React.FC = () => {
           images: prev.images.filter((_: any, idx: number) => idx !== indexToRemove)
       }));
   }
+
+  // --- Drag and Drop Handlers ---
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, position: number) => {
+      dragItem.current = position;
+  };
+
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>, position: number) => {
+      dragOverItem.current = position;
+  };
+
+  const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
+      if (dragItem.current === null || dragOverItem.current === null || !editingProduct) {
+          dragItem.current = null;
+          dragOverItem.current = null;
+          return;
+      }
+      
+      const copyListItems = [...editingProduct.images];
+      const dragItemContent = copyListItems[dragItem.current];
+      
+      // Remove item from old position
+      copyListItems.splice(dragItem.current, 1);
+      // Insert item at new position
+      copyListItems.splice(dragOverItem.current, 0, dragItemContent);
+      
+      setEditingProduct((prev: any) => ({
+          ...prev,
+          images: copyListItems
+      }));
+
+      dragItem.current = null;
+      dragOverItem.current = null;
+  };
+
 
   const handleSave = async () => {
       if (!editingProduct) return;
@@ -260,11 +306,17 @@ const AdminApp: React.FC = () => {
           
           alert(isNew ? "Tạo mới thành công!" : "Cập nhật thành công!");
           
+          // Normalize the saved product's images to be an array for local state update
+          const normalizedSavedProduct = {
+             ...savedProduct,
+             images: JSON.parse(savedProduct.images || '[]')
+          };
+          
           // Update local state
           if (isNew) {
-              setProducts(prev => [savedProduct, ...prev]);
+              setProducts(prev => [normalizedSavedProduct, ...prev]);
           } else {
-              setProducts(prev => prev.map(p => p.id === savedProduct.id ? savedProduct : p));
+              setProducts(prev => prev.map(p => p.id === savedProduct.id ? normalizedSavedProduct : p));
           }
 
           setEditingProduct(null);
@@ -374,23 +426,50 @@ const AdminApp: React.FC = () => {
                                 
                                 {/* Image Management */}
                                 <div className="space-y-4 bg-gray-50 p-4 border rounded-md">
-                                    <label className="block text-sm font-medium text-gray-700">Hình ảnh</label>
+                                    <div className="flex justify-between items-end mb-2">
+                                        <label className="block text-sm font-medium text-gray-700">Hình ảnh</label>
+                                        <span className="text-xs text-gray-400">Kéo thả để sắp xếp thứ tự</span>
+                                    </div>
                                     
                                     <div className="grid grid-cols-4 gap-4 mb-4">
                                         {editingProduct.images && editingProduct.images.map((img: string, idx: number) => (
-                                            <div key={idx} className="relative group aspect-[3/4] bg-gray-200">
+                                            <div 
+                                                key={idx} 
+                                                className="relative group aspect-[3/4] bg-gray-200 cursor-move border-2 border-transparent hover:border-blue-400 transition-colors"
+                                                draggable
+                                                onDragStart={(e) => handleDragStart(e, idx)}
+                                                onDragEnter={(e) => handleDragEnter(e, idx)}
+                                                onDragEnd={handleDragEnd}
+                                                onDragOver={(e) => e.preventDefault()}
+                                            >
                                                 <img src={img} alt="" className="w-full h-full object-cover" />
+                                                
+                                                {/* Badge Logic */}
+                                                {idx === 0 && (
+                                                    <div className="absolute top-0 left-0 bg-blue-600 text-white text-[10px] px-2 py-1 font-bold shadow-sm z-10">
+                                                        Đại diện
+                                                    </div>
+                                                )}
+                                                {idx === 1 && (
+                                                    <div className="absolute top-0 left-0 bg-gray-800 text-white text-[10px] px-2 py-1 font-bold shadow-sm z-10">
+                                                        Ảnh phụ (Hover)
+                                                    </div>
+                                                )}
+
                                                 <button 
                                                     onClick={() => removeImage(idx)}
-                                                    className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                                                    title="Xóa ảnh"
                                                 >
                                                     <TrashIcon />
                                                 </button>
+                                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 pointer-events-none transition-colors"></div>
                                             </div>
                                         ))}
                                         {(!editingProduct.images || editingProduct.images.length === 0) && (
-                                            <div className="col-span-4 text-center text-sm text-gray-400 py-4 border-2 border-dashed border-gray-300 rounded">
-                                                Chưa có hình ảnh nào. Tải ảnh lên ngay.
+                                            <div className="col-span-4 text-center text-sm text-gray-400 py-8 border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center gap-2">
+                                                <p>Chưa có hình ảnh nào.</p>
+                                                <p className="text-xs">Ảnh đầu tiên sẽ là ảnh đại diện.</p>
                                             </div>
                                         )}
                                     </div>
@@ -398,16 +477,17 @@ const AdminApp: React.FC = () => {
                                     <div className="flex items-center gap-4">
                                         <label className={`cursor-pointer flex items-center gap-2 bg-white border border-gray-300 px-4 py-2 rounded shadow-sm hover:bg-gray-50 transition-colors ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                             {uploading ? <Spinner /> : <UploadIcon />}
-                                            <span className="text-sm font-medium text-gray-700">{uploading ? 'Đang nén & tải lên...' : 'Tải ảnh lên'}</span>
+                                            <span className="text-sm font-medium text-gray-700">{uploading ? 'Đang xử lý...' : 'Tải ảnh lên'}</span>
                                             <input 
                                                 type="file" 
                                                 className="hidden" 
                                                 accept="image/*"
+                                                multiple
                                                 onChange={handleImageUpload}
                                                 disabled={uploading}
                                             />
                                         </label>
-                                        <span className="text-xs text-gray-500">Hỗ trợ JPG, PNG (Max 5MB). Tự động nén sang WebP.</span>
+                                        <span className="text-xs text-gray-500">Hỗ trợ JPG, PNG (Max 5MB). Nén WebP. Có thể chọn nhiều ảnh.</span>
                                     </div>
                                 </div>
                             </div>
@@ -503,17 +583,23 @@ const AdminApp: React.FC = () => {
                                     <td colSpan={4} className="px-6 py-8 text-center text-gray-500">Không có sản phẩm nào. Nhấn "+ Thêm mới" để tạo.</td>
                                 </tr>
                             )}
-                            {products.map(product => (
+                            {products.map(product => {
+                                // Logic: Use first image in array as thumbnail, fallback to thumbnailUrl or 'N/A'
+                                const thumb = product.images?.[0] || product.thumbnailUrl;
+                                return (
                                 <tr key={product.id} className="hover:bg-gray-50 transition-colors">
                                     <td className="px-6 py-4 font-medium flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-gray-200 rounded overflow-hidden flex-shrink-0">
-                                            {product.thumbnailUrl ? (
-                                                <img src={product.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                                        <div className="w-10 h-10 bg-gray-200 rounded overflow-hidden flex-shrink-0 border border-gray-200">
+                                            {thumb ? (
+                                                <img src={thumb} alt="" className="w-full h-full object-cover" />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">N/A</div>
+                                                <div className="w-full h-full flex items-center justify-center text-xs text-gray-400 font-bold bg-gray-100">N/A</div>
                                             )}
                                         </div>
-                                        {product.name}
+                                        <div className="flex flex-col">
+                                            <span>{product.name}</span>
+                                            <span className="text-[10px] text-gray-400">{product.images?.length || 0} ảnh</span>
+                                        </div>
                                     </td>
                                     <td className="px-6 py-4 text-sm text-gray-500">{product.sku}</td>
                                     <td className="px-6 py-4">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}</td>
@@ -526,7 +612,7 @@ const AdminApp: React.FC = () => {
                                         </button>
                                     </td>
                                 </tr>
-                            ))}
+                            )})}
                         </tbody>
                     </table>
                 )}
