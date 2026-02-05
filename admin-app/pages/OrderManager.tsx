@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { fetchOrdersApi, fetchProductsApi } from '../services/api'; 
+import { fetchOrdersApi, fetchProductsApi, updateOrderStatusApi } from '../services/api'; 
 import { 
     Spinner, MagnifyingGlassIcon, CalendarIcon, FunnelIcon, 
     ArrowDownTrayIcon, PlusIcon, ShoppingBagIcon, ClockIcon, 
@@ -45,6 +45,10 @@ const OrderManager: React.FC = () => {
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [showDatePicker, setShowDatePicker] = useState(false);
+
+    // Status Update State
+    const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+    const [tempStatus, setTempStatus] = useState<string>('');
 
     // Filters
     const [filterStatus, setFilterStatus] = useState('All');
@@ -152,6 +156,32 @@ const OrderManager: React.FC = () => {
     const handleSubmitNewOrder = async () => {
         alert("Tính năng tạo đơn đang được cập nhật phía Backend API.");
         setIsCreateModalOpen(false);
+    };
+
+    // --- Update Status Logic ---
+    const handleOpenDetail = (order: Order) => {
+        setSelectedOrder(order);
+        setTempStatus(order.status);
+    };
+
+    const handleSaveStatus = async () => {
+        if (!selectedOrder) return;
+        setIsUpdatingStatus(true);
+        try {
+            await updateOrderStatusApi(selectedOrder.id, tempStatus);
+            
+            // Update local state
+            const updatedOrder = { ...selectedOrder, status: tempStatus };
+            setOrders(prev => prev.map(o => o.id === selectedOrder.id ? updatedOrder : o));
+            setSelectedOrder(updatedOrder);
+            
+            alert("Cập nhật trạng thái thành công!");
+        } catch (error) {
+            console.error(error);
+            alert("Lỗi khi cập nhật trạng thái.");
+        } finally {
+            setIsUpdatingStatus(false);
+        }
     };
 
     const getStatusStyle = (status: string) => {
@@ -399,7 +429,7 @@ const OrderManager: React.FC = () => {
                                     const productImage = 'https://images.unsplash.com/photo-1552874869-5c39ec9288dc?q=80&w=100&auto=format&fit=crop'; 
 
                                     return (
-                                        <tr key={order.id} className="hover:bg-gray-50 transition-colors group cursor-pointer" onClick={() => setSelectedOrder(order)}>
+                                        <tr key={order.id} className="hover:bg-gray-50 transition-colors group cursor-pointer" onClick={() => handleOpenDetail(order)}>
                                             <td className="px-6 py-4" onClick={e => e.stopPropagation()}>
                                                 <input type="checkbox" className="rounded border-gray-300 text-black focus:ring-black" />
                                             </td>
@@ -578,10 +608,32 @@ const OrderManager: React.FC = () => {
                         <div className="p-8 max-h-[70vh] overflow-y-auto">
                             {/* Status Bar */}
                             <div className="flex items-center justify-between bg-blue-50 p-4 rounded-lg border border-blue-100 mb-8">
-                                <span className="text-blue-800 text-sm font-medium">Trạng thái hiện tại: <span className="font-bold uppercase ml-1">{getStatusText(selectedOrder.status)}</span></span>
-                                {/* Mock Action Buttons */}
-                                <div className="flex gap-2">
-                                    <button className="bg-white border border-blue-200 text-blue-600 px-3 py-1 rounded text-xs font-bold hover:bg-blue-100">Cập nhật trạng thái</button>
+                                <span className="text-blue-800 text-sm font-medium flex items-center gap-2">
+                                    Trạng thái: 
+                                    <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${getStatusStyle(selectedOrder.status)}`}>
+                                        {getStatusText(selectedOrder.status)}
+                                    </span>
+                                </span>
+                                
+                                <div className="flex items-center gap-2">
+                                    <select 
+                                        className="text-xs border border-blue-300 rounded px-2 py-1.5 bg-white text-gray-700 outline-none focus:border-blue-500"
+                                        value={tempStatus || selectedOrder.status}
+                                        onChange={(e) => setTempStatus(e.target.value)}
+                                    >
+                                        <option value="pending">Chờ xử lý</option>
+                                        <option value="processing">Đang giao</option>
+                                        <option value="completed">Hoàn thành</option>
+                                        <option value="cancelled">Đã hủy</option>
+                                    </select>
+                                    <button 
+                                        onClick={handleSaveStatus}
+                                        disabled={isUpdatingStatus}
+                                        className="bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1"
+                                    >
+                                        {isUpdatingStatus && <Spinner />}
+                                        {isUpdatingStatus ? 'Lưu...' : 'Cập nhật'}
+                                    </button>
                                 </div>
                             </div>
 

@@ -172,3 +172,16 @@ export const fetchOrdersApi = async () => {
     }
     return await res.json();
 };
+
+export const updateOrderStatusApi = async (id: string, status: string) => {
+    const res = await fetch(`${ORDERS_URL}/${id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Failed to update status");
+    }
+    return await res.json();
+};
