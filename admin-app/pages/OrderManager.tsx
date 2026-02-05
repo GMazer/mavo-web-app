@@ -259,13 +259,15 @@ const OrderManager: React.FC = () => {
 
             {/* Toolbar */}
             <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 z-10 relative">
-                <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto">
-                    {/* FIXED DATE PICKER UI */}
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                    {/* FIXED DATE PICKER UI - Floating Popup Style */}
                     <div className="relative">
                         <button 
                             onClick={() => setShowDatePicker(!showDatePicker)}
-                            className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm whitespace-nowrap transition-colors ${
-                                (dateRange.start || dateRange.end) ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                            className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm whitespace-nowrap transition-colors shadow-sm ${
+                                (dateRange.start || dateRange.end) 
+                                    ? 'bg-blue-50 border-blue-200 text-blue-700 font-medium' 
+                                    : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-black'
                             }`}
                         >
                             <CalendarIcon />
@@ -277,45 +279,59 @@ const OrderManager: React.FC = () => {
                             </span>
                         </button>
                         
-                        {/* Improved Date Picker Dropdown */}
+                        {/* Floating Popup with Backdrop */}
                         {showDatePicker && (
-                            <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 shadow-xl rounded-xl p-5 w-80 z-50 animate-fade-in">
-                                <h4 className="font-bold text-sm mb-3 text-gray-800">Chọn khoảng thời gian</h4>
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase">Từ ngày</label>
-                                        <input 
-                                            type="date" 
-                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-black focus:border-transparent outline-none cursor-pointer"
-                                            value={dateRange.start}
-                                            onChange={(e) => setDateRange({...dateRange, start: e.target.value})}
-                                        />
+                            <>
+                                {/* Invisible Backdrop to close on click outside */}
+                                <div 
+                                    className="fixed inset-0 z-20 cursor-default" 
+                                    onClick={() => setShowDatePicker(false)}
+                                ></div>
+
+                                {/* Popup Content */}
+                                <div className="absolute top-full left-0 mt-3 bg-white border border-gray-100 shadow-2xl rounded-xl p-5 w-80 z-30 animate-fade-in ring-1 ring-black/5">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h4 className="font-bold text-sm text-gray-800">Khoảng thời gian</h4>
+                                        <button onClick={() => setShowDatePicker(false)} className="text-gray-400 hover:text-black">✕</button>
                                     </div>
-                                    <div>
-                                        <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase">Đến ngày</label>
-                                        <input 
-                                            type="date" 
-                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-black focus:border-transparent outline-none cursor-pointer"
-                                            value={dateRange.end}
-                                            onChange={(e) => setDateRange({...dateRange, end: e.target.value})}
-                                        />
-                                    </div>
-                                    <div className="flex justify-between items-center pt-2 border-t border-gray-100 mt-2">
-                                        <button 
-                                            onClick={() => { setDateRange({start: '', end: ''}); }}
-                                            className="text-xs text-gray-500 hover:text-red-600 font-medium"
-                                        >
-                                            Xóa bộ lọc
-                                        </button>
-                                        <button 
-                                            onClick={() => setShowDatePicker(false)}
-                                            className="text-xs bg-black text-white px-4 py-2 rounded-lg font-bold hover:bg-gray-800 transition-colors"
-                                        >
-                                            Áp dụng
-                                        </button>
+                                    
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Từ ngày</label>
+                                            <input 
+                                                type="date" 
+                                                className="w-full border border-gray-200 bg-gray-50 rounded-lg px-3 py-2 text-sm focus:bg-white focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all cursor-pointer"
+                                                value={dateRange.start}
+                                                onChange={(e) => setDateRange({...dateRange, start: e.target.value})}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Đến ngày</label>
+                                            <input 
+                                                type="date" 
+                                                className="w-full border border-gray-200 bg-gray-50 rounded-lg px-3 py-2 text-sm focus:bg-white focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all cursor-pointer"
+                                                value={dateRange.end}
+                                                onChange={(e) => setDateRange({...dateRange, end: e.target.value})}
+                                            />
+                                        </div>
+                                        
+                                        <div className="flex justify-end items-center gap-3 pt-3 border-t border-gray-100 mt-2">
+                                            <button 
+                                                onClick={() => { setDateRange({start: '', end: ''}); }}
+                                                className="text-xs text-gray-500 hover:text-red-600 font-medium px-2"
+                                            >
+                                                Xóa
+                                            </button>
+                                            <button 
+                                                onClick={() => setShowDatePicker(false)}
+                                                className="text-xs bg-black text-white px-4 py-2 rounded-lg font-bold hover:bg-gray-800 transition-colors shadow-md"
+                                            >
+                                                Áp dụng
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            </>
                         )}
                     </div>
                     
@@ -323,7 +339,7 @@ const OrderManager: React.FC = () => {
                         <select 
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
-                            className="appearance-none flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 pr-8 cursor-pointer focus:outline-none"
+                            className="appearance-none flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 pr-8 cursor-pointer focus:outline-none shadow-sm"
                         >
                             <option value="All">Trạng thái: Tất cả</option>
                             <option value="pending">Chờ xử lý</option>
@@ -340,7 +356,7 @@ const OrderManager: React.FC = () => {
                 <div className="flex items-center gap-3 w-full md:w-auto">
                     <button 
                         onClick={handleExportCSV}
-                        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 w-full md:w-auto justify-center hover:border-black transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 w-full md:w-auto justify-center hover:border-black transition-colors shadow-sm"
                     >
                         <ArrowDownTrayIcon />
                         <span>Xuất Excel</span>
