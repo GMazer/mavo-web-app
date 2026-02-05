@@ -33,38 +33,70 @@ async function importData() {
     
     try {
         const rawData = fs.readFileSync(jsonPath, 'utf8');
-        const jsonData = JSON.parse(rawData);
+        const fullData = JSON.parse(rawData);
         
-        console.log('🚀 Đang gửi dữ liệu lên Server (Có thể mất vài giây)...');
-        
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(jsonData)
-        });
+        // Chuyển object lớn thành danh sách các keys (mã tỉnh)
+        const provinceKeys = Object.keys(fullData);
+        const total = provinceKeys.length;
 
-        const result = await response.json();
+        console.log(`📦 Tìm thấy ${total} Tỉnh/Thành phố.`);
+        console.log('🚀 Bắt đầu chia nhỏ và gửi dữ liệu (Tránh lỗi quá tải Worker)...');
+        console.log('-----------------------------------');
 
-        if (response.ok) {
-            console.log('✅ IMPORT THÀNH CÔNG!');
-            console.log('-----------------------------------');
-            console.log(`🏛️  Tỉnh/TP: ${result.imported.provinces}`);
-            console.log(`🏘️  Quận/Huyện: ${result.imported.districts}`);
-            console.log(`🏡  Phường/Xã: ${result.imported.wards}`);
-            console.log('-----------------------------------');
-        } else {
-            console.error('❌ IMPORT THẤT BẠI:', result);
+        let successCount = 0;
+        let failCount = 0;
+        let totalWards = 0;
+
+        // Gửi từng tỉnh một
+        for (let i = 0; i < total; i++) {
+            const key = provinceKeys[i];
+            const provinceData = fullData[key];
+            const provinceName = provinceData.name_with_type || provinceData.name;
+
+            // Tạo payload nhỏ chỉ chứa 1 tỉnh
+            const payload = {
+                [key]: provinceData
+            };
+
+            process.stdout.write(`⏳ [${i + 1}/${total}] Đang nhập: ${provinceName}... `);
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    const wardsCount = result.imported?.wards || 0;
+                    totalWards += wardsCount;
+                    console.log(`✅ OK (${wardsCount} xã/phường)`);
+                    successCount++;
+                } else {
+                    console.log(`❌ LỖI`);
+                    console.error(`   -> Chi tiết:`, result);
+                    failCount++;
+                }
+            } catch (err) {
+                console.log(`❌ LỖI KẾT NỐI`);
+                console.error(`   -> ${err.message}`);
+                failCount++;
+            }
+            
+            // Nghỉ 1 chút xíu giữa các request để server thở (opsional)
+            // await new Promise(r => setTimeout(r, 100));
         }
+
+        console.log('-----------------------------------');
+        console.log(`🎉 HOÀN TẤT!`);
+        console.log(`✅ Thành công: ${successCount} tỉnh`);
+        console.log(`❌ Thất bại: ${failCount} tỉnh`);
+        console.log(`🏡 Tổng số xã/phường đã nhập: ${totalWards}`);
 
     } catch (error) {
-        console.error('❌ LỖI KẾT NỐI:', error.message);
-        if (mode === 'LOCAL') {
-            console.log('Hãy chắc chắn rằng server đang chạy (npm run dev).');
-        } else {
-            console.log('Hãy chắc chắn rằng bạn đã deploy server (npm run deploy).');
-        }
+        console.error('❌ LỖI FILE/KẾT NỐI:', error.message);
     }
 }
 
