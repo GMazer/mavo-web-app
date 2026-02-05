@@ -2,10 +2,35 @@
 import React, { useState, useEffect } from 'react';
 import { CartItem } from '../types';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
-import { VN_LOCATIONS, Province, District } from '../data/vn_locations';
-import { Spinner } from '../admin-app/components/ui/Icons'; // Reusing spinner if available, or simpler one
 
 const API_BASE = 'https://mavo-fashion-api.mavo-web.workers.dev/api';
+
+// --- NEW TYPES for tree.json structure ---
+interface Ward {
+    code: string;
+    name: string;
+    name_with_type: string;
+    type: string;
+    slug: string;
+}
+
+interface District {
+    code: string;
+    name: string;
+    name_with_type: string;
+    type: string;
+    slug: string;
+    wards: Record<string, Ward>; // Object of Wards
+}
+
+interface Province {
+    code: string;
+    name: string;
+    name_with_type: string;
+    type: string;
+    slug: string;
+    districts: Record<string, District>; // Object of Districts
+}
 
 interface CheckoutProps {
   cartItems: CartItem[];
@@ -16,6 +41,27 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, onPlaceOrder }) => {
   const [paymentMethod, setPaymentMethod] = useState<'bank' | 'cod'>('bank');
   const [submitting, setSubmitting] = useState(false);
   
+  // Locations State
+  const [locations, setLocations] = useState<Province[]>([]);
+
+  // Fetch locations from tree.json
+  useEffect(() => {
+      fetch('/tree.json')
+        .then(res => {
+            if(res.ok) return res.json();
+            console.warn("tree.json not found in root directory");
+            return {};
+        })
+        .then(data => {
+            // Convert the root Object of Provinces to an Array for easy mapping in the select box
+            const provinceArray = Object.values(data) as Province[];
+            // Optional: Sort by code or name
+            provinceArray.sort((a, b) => parseInt(a.code) - parseInt(b.code));
+            setLocations(provinceArray);
+        })
+        .catch(err => console.error("Failed to load locations", err));
+  }, []);
+
   // Form State
   const [formData, setFormData] = useState({
       firstName: '',
@@ -23,30 +69,60 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, onPlaceOrder }) => {
       phone: '',
       email: '',
       addressDetail: '',
-      city: '', // Province
+      city: '', 
       district: '',
       ward: '',
       note: ''
   });
 
-  // Location Selector State
+  // Location Selector State (Store full object to access nested children)
   const [selectedCity, setSelectedCity] = useState<Province | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<District | null>(null);
   
   // Cascade Logic
   const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const cityName = e.target.value;
-      const city = VN_LOCATIONS.find(c => c.name === cityName) || null;
+      const cityCode = e.target.value;
+      const city = locations.find(c => c.code === cityCode) || null;
+      
       setSelectedCity(city);
-      setSelectedDistrict(null);
-      setFormData({ ...formData, city: cityName, district: '', ward: '' });
+      setSelectedDistrict(null); // Reset district
+      
+      // Update form data with the Name, but keep reference for children
+      setFormData({ 
+          ...formData, 
+          city: city ? city.name_with_type : '', 
+          district: '', 
+          ward: '' 
+      });
   };
 
   const handleDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const districtName = e.target.value;
-      const district = selectedCity?.districts.find(d => d.name === districtName) || null;
+      const districtCode = e.target.value;
+      
+      if (!selectedCity) return;
+
+      // Access district from the selectedCity's object map
+      const district = selectedCity.districts[districtCode] || null;
+      
       setSelectedDistrict(district);
-      setFormData({ ...formData, district: districtName, ward: '' });
+      
+      setFormData({ 
+          ...formData, 
+          district: district ? district.name_with_type : '', 
+          ward: '' 
+      });
+  };
+
+  const handleWardChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const wardCode = e.target.value;
+      if (!selectedDistrict) return;
+
+      const ward = selectedDistrict.wards[wardCode] || null;
+
+      setFormData({
+          ...formData,
+          ward: ward ? ward.name_with_type : ''
+      });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -91,8 +167,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, onPlaceOrder }) => {
           });
 
           if (res.ok) {
-              // Success
-              onPlaceOrder(); // This will clear cart and redirect home
+              onPlaceOrder(); 
           } else {
               const err = await res.json();
               alert(`Đặt hàng thất bại: ${err.error || 'Lỗi không xác định'}`);
@@ -106,12 +181,12 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, onPlaceOrder }) => {
   };
 
   const subtotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-  const total = subtotal; // Add shipping logic here if needed
+  const total = subtotal; 
 
   return (
     <div className="w-full max-w-[1440px] mx-auto px-6 lg:px-10 py-10 animate-fade-in">
       
-      {/* Success/Notification Banner mimicking the reference */}
+      {/* Success/Notification Banner */}
       {cartItems.length > 0 && (
           <div className="bg-[#fcfcfc] border border-gray-200 p-4 mb-8 flex items-center gap-2 text-sm text-gray-600">
              <CheckCircleIcon className="w-5 h-5 text-green-600" />
@@ -153,17 +228,19 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, onPlaceOrder }) => {
                     </div>
                 </div>
 
+                {/* --- LOCATION SELECTORS (UPDATED) --- */}
                 <div>
                     <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Tỉnh / Thành phố *</label>
                     <select 
                         name="city" 
-                        value={formData.city} 
+                        // We use the Code to track selection, but store Name in formData
+                        value={selectedCity?.code || ''}
                         onChange={handleCityChange} 
                         className="w-full h-12 border border-gray-200 bg-[#f9f9f9] px-4 text-sm outline-none focus:border-black rounded-none transition-colors"
                     >
                         <option value="">Chọn Tỉnh / Thành phố...</option>
-                        {VN_LOCATIONS.map(loc => (
-                            <option key={loc.code} value={loc.name}>{loc.name}</option>
+                        {locations.map(loc => (
+                            <option key={loc.code} value={loc.code}>{loc.name_with_type}</option>
                         ))}
                     </select>
                 </div>
@@ -173,14 +250,14 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, onPlaceOrder }) => {
                         <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Quận / Huyện *</label>
                         <select 
                             name="district" 
-                            value={formData.district} 
+                            value={selectedDistrict?.code || ''}
                             onChange={handleDistrictChange} 
                             disabled={!selectedCity}
                             className="w-full h-12 border border-gray-200 bg-[#f9f9f9] px-4 text-sm outline-none focus:border-black rounded-none transition-colors disabled:bg-gray-100"
                         >
                             <option value="">Chọn Quận / Huyện...</option>
-                            {selectedCity?.districts.map(d => (
-                                <option key={d.code} value={d.name}>{d.name}</option>
+                            {selectedCity && Object.values(selectedCity.districts).map(d => (
+                                <option key={d.code} value={d.code}>{d.name_with_type}</option>
                             ))}
                         </select>
                     </div>
@@ -188,14 +265,15 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, onPlaceOrder }) => {
                         <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Phường / Xã *</label>
                         <select 
                             name="ward" 
-                            value={formData.ward} 
-                            onChange={handleInputChange} 
+                            // Check via name_with_type in formData, but ideally use code if refactoring state fully
+                            // Here we just trigger change to save the name
+                            onChange={handleWardChange}
                             disabled={!selectedDistrict}
                             className="w-full h-12 border border-gray-200 bg-[#f9f9f9] px-4 text-sm outline-none focus:border-black rounded-none transition-colors disabled:bg-gray-100"
                         >
                             <option value="">Chọn Phường / Xã...</option>
-                            {selectedDistrict?.wards.map(w => (
-                                <option key={w.code} value={w.name}>{w.name}</option>
+                            {selectedDistrict && Object.values(selectedDistrict.wards).map(w => (
+                                <option key={w.code} value={w.code}>{w.name_with_type}</option>
                             ))}
                         </select>
                     </div>
@@ -220,7 +298,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, onPlaceOrder }) => {
             </form>
         </div>
 
-        {/* RIGHT COLUMN: Order Summary */}
+        {/* RIGHT COLUMN: Order Summary (Unchanged) */}
         <div className="w-full lg:w-[450px] flex-shrink-0">
             <div className="border-2 border-dashed border-gray-800 p-8 bg-[#fffcf5]">
                 <h2 className="text-xl font-normal uppercase text-center mb-8 tracking-wide">Đơn hàng của bạn</h2>

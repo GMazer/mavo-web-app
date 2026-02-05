@@ -1,0 +1,67 @@
+
+[
+  {
+    "Name": "Thành phố Hà Nội",
+    "Code": "01",
+    "Districts": [
+      {
+        "Name": "Quận Ba Đình",
+        "Code": "001",
+        "Wards": [
+          { "Name": "Phường Phúc Xá", "Code": "00001" },
+          { "Name": "Phường Trúc Bạch", "Code": "00004" },
+          { "Name": "Phường Vĩnh Phúc", "Code": "00006" },
+          { "Name": "Phường Cống Vị", "Code": "00007" },
+          { "Name": "Phường Liễu Giai", "Code": "00008" }
+        ]
+      },
+      {
+        "Name": "Quận Hoàn Kiếm",
+        "Code": "002",
+        "Wards": [
+          { "Name": "Phường Phúc Tân", "Code": "00037" },
+          { "Name": "Phường Đồng Xuân", "Code": "00040" },
+          { "Name": "Phường Hàng Mã", "Code": "00043" }
+        ]
+      }
+    ]
+  },
+  {
+    "Name": "Thành phố Hồ Chí Minh",
+    "Code": "79",
+    "Districts": [
+      {
+        "Name": "Quận 1",
+        "Code": "760",
+        "Wards": [
+          { "Name": "Phường Tân Định", "Code": "26734" },
+          { "Name": "Phường Đa Kao", "Code": "26737" },
+          { "Name": "Phường Bến Nghé", "Code": "26740" }
+        ]
+      },
+      {
+        "Name": "Quận 3",
+        "Code": "770",
+        "Wards": [
+          { "Name": "Phường 1", "Code": "27133" },
+          { "Name": "Phường 2", "Code": "27136" },
+          { "Name": "Phường 3", "Code": "27139" }
+        ]
+      }
+    ]
+  },
+  {
+    "Name": "Thành phố Đà Nẵng",
+    "Code": "48",
+    "Districts": [
+      {
+        "Name": "Quận Hải Châu",
+        "Code": "492",
+        "Wards": [
+          { "Name": "Phường Thạch Thang", "Code": "20233" },
+          { "Name": "Phường Hải Châu I", "Code": "20236" }
+        ]
+      }
+    ]
+  }
+]
