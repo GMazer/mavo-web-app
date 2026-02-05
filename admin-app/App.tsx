@@ -31,14 +31,6 @@ const AdminApp: React.FC = () => {
             <main className="flex-1 overflow-auto">
                 <header className="h-16 bg-white shadow-sm flex items-center justify-between px-8">
                     <h2 className="text-xl font-semibold text-gray-800 capitalize">{getTabTitle()}</h2>
-                    {activeTab === 'products' && (
-                        <button 
-                            onClick={() => createProductTrigger.current?.()}
-                            className="bg-black text-white px-4 py-2 text-sm font-bold uppercase rounded hover:bg-gray-800"
-                        >
-                            + Thêm mới
-                        </button>
-                    )}
                 </header>
 
                 <div className="p-8">
