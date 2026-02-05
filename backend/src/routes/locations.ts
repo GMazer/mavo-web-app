@@ -47,7 +47,7 @@ app.get('/wards/:district_code', async (c) => {
 app.post('/import', async (c) => {
     try {
         const body = await c.req.json();
-        const provincesObj = body; // Assuming body is the root object of tree.json
+        const provincesObj = body; 
 
         if (!provincesObj || Object.keys(provincesObj).length === 0) {
             return c.json({ error: "Invalid JSON or empty" }, 400);
@@ -56,14 +56,6 @@ app.post('/import', async (c) => {
         let provinceCount = 0;
         let districtCount = 0;
         let wardCount = 0;
-
-        // Note: D1 execution limit is tight. 
-        // For large datasets, this might need chunking on the client side 
-        // or optimized batch inserts. Here we try a reasonable batch approach.
-        
-        // We will loop through and insert. 
-        // In a real production environment with huge data, 
-        // we'd build giant SQL strings, but here we process iteratively for safety.
 
         const provinces = Object.values(provincesObj) as any[];
 
@@ -76,8 +68,11 @@ app.post('/import', async (c) => {
             `).bind(p.code, p.name, p.name_with_type, p.slug).run();
             provinceCount++;
 
-            if (p.districts) {
-                const districts = Object.values(p.districts) as any[];
+            // CHECK BOTH 'districts' AND 'quan-huyen' KEYS
+            const districtsObj = p.districts || p['quan-huyen'];
+
+            if (districtsObj) {
+                const districts = Object.values(districtsObj) as any[];
                 for (const d of districts) {
                     // 2. Insert District
                     await c.env.DB.prepare(`
@@ -87,15 +82,14 @@ app.post('/import', async (c) => {
                     `).bind(d.code, p.code, d.name, d.name_with_type, d.slug, d.path_with_type).run();
                     districtCount++;
 
-                    if (d.wards) {
-                        const wards = Object.values(d.wards) as any[];
+                    // CHECK BOTH 'wards' AND 'xa-phuong' KEYS
+                    const wardsObj = d.wards || d['xa-phuong'];
+
+                    if (wardsObj) {
+                        const wards = Object.values(wardsObj) as any[];
                         
-                        // Batch insert wards for this district to save round trips
+                        // Batch insert wards for this district
                         if (wards.length > 0) {
-                            // Construct batch insert query manually is complex with variable binding
-                            // We will use Promise.all for parallel execution for Wards in this district
-                            // Cloudflare D1 supports batch() but prepared statements are better
-                            
                             const stmts = wards.map(w => 
                                 c.env.DB.prepare(`
                                     INSERT INTO Wards (code, parent_code, name, name_with_type, slug, path_with_type) 
@@ -104,8 +98,6 @@ app.post('/import', async (c) => {
                                 `).bind(w.code, d.code, w.name, w.name_with_type, w.slug, w.path_with_type)
                             );
                             
-                            // Execute in chunks of 10 to avoid limits if needed, or just batch
-                            // D1 batch limit is usually high enough for wards in a district
                             await c.env.DB.batch(stmts);
                             wardCount += wards.length;
                         }
