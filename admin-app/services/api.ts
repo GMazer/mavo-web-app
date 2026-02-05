@@ -185,3 +185,16 @@ export const updateOrderStatusApi = async (id: string, status: string) => {
     }
     return await res.json();
 };
+
+export const updateOrderStatusesApi = async (ids: string[], status: string) => {
+    const res = await fetch(`${ORDERS_URL}/bulk-status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids, status })
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Failed to bulk update status");
+    }
+    return await res.json();
+};

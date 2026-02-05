@@ -60,7 +60,7 @@ app.get('/', async (c) => {
     }
 });
 
-// PUT /api/orders/:id/status - Update order status
+// PUT /api/orders/:id/status - Update single order status
 app.put('/:id/status', async (c) => {
     const id = c.req.param('id');
     try {
@@ -68,6 +68,29 @@ app.put('/:id/status', async (c) => {
         await c.env.DB.prepare("UPDATE Orders SET status = ? WHERE id = ?").bind(status, id).run();
         return c.json({ success: true, id, status });
     } catch (e: any) {
+        return c.json({ error: e.message }, 500);
+    }
+});
+
+// PUT /api/orders/bulk-status - Update multiple orders status
+app.put('/bulk-status', async (c) => {
+    try {
+        const { ids, status } = await c.req.json();
+
+        if (!ids || !Array.isArray(ids) || ids.length === 0 || !status) {
+            return c.json({ error: "Invalid data" }, 400);
+        }
+
+        // Construct dynamic SQL for IN clause
+        const placeholders = ids.map(() => '?').join(',');
+        const query = `UPDATE Orders SET status = ? WHERE id IN (${placeholders})`;
+        
+        // Spread ids into bind parameters
+        await c.env.DB.prepare(query).bind(status, ...ids).run();
+
+        return c.json({ success: true, count: ids.length, status });
+    } catch (e: any) {
+        console.error("Bulk Update Error:", e);
         return c.json({ error: e.message }, 500);
     }
 });

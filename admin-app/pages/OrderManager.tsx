@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { fetchOrdersApi, fetchProductsApi, updateOrderStatusApi } from '../services/api'; 
+import { fetchOrdersApi, fetchProductsApi, updateOrderStatusApi, updateOrderStatusesApi } from '../services/api'; 
 import { 
     Spinner, MagnifyingGlassIcon, CalendarIcon, FunnelIcon, 
     ArrowDownTrayIcon, PlusIcon, ShoppingBagIcon, ClockIcon, 
@@ -46,7 +46,12 @@ const OrderManager: React.FC = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [showDatePicker, setShowDatePicker] = useState(false);
 
-    // Status Update State
+    // Selection State (Bulk Actions)
+    const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
+    const [bulkStatus, setBulkStatus] = useState('processing');
+    const [isBulkUpdating, setIsBulkUpdating] = useState(false);
+
+    // Status Update State (Single)
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
     const [tempStatus, setTempStatus] = useState<string>('');
 
@@ -112,6 +117,50 @@ const OrderManager: React.FC = () => {
         return matchesSearch && matchesStatus && matchesDate;
     });
 
+    // --- Selection Logic ---
+    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.checked) {
+            // Select all currently filtered orders
+            const allIds = new Set(filteredOrders.map(o => o.id));
+            setSelectedOrderIds(allIds);
+        } else {
+            setSelectedOrderIds(new Set());
+        }
+    };
+
+    const handleSelectRow = (id: string) => {
+        const newSelected = new Set(selectedOrderIds);
+        if (newSelected.has(id)) {
+            newSelected.delete(id);
+        } else {
+            newSelected.add(id);
+        }
+        setSelectedOrderIds(newSelected);
+    };
+
+    const handleBulkUpdate = async () => {
+        if (selectedOrderIds.size === 0) return;
+        if (!window.confirm(`Bạn có chắc chắn muốn cập nhật trạng thái ${selectedOrderIds.size} đơn hàng thành "${getStatusText(bulkStatus)}"?`)) return;
+
+        setIsBulkUpdating(true);
+        try {
+            const ids = Array.from(selectedOrderIds);
+            await updateOrderStatusesApi(ids, bulkStatus);
+            
+            // Optimistic Update
+            setOrders(prev => prev.map(o => ids.includes(o.id) ? { ...o, status: bulkStatus } : o));
+            
+            // Clear selection
+            setSelectedOrderIds(new Set());
+            alert("Cập nhật thành công!");
+        } catch (error) {
+            console.error(error);
+            alert("Lỗi khi cập nhật hàng loạt.");
+        } finally {
+            setIsBulkUpdating(false);
+        }
+    };
+
     // --- Statistics ---
     const totalOrders = orders.length;
     const pendingCount = orders.filter(o => o.status === 'pending').length;
@@ -158,7 +207,7 @@ const OrderManager: React.FC = () => {
         setIsCreateModalOpen(false);
     };
 
-    // --- Update Status Logic ---
+    // --- Update Status Logic (Single) ---
     const handleOpenDetail = (order: Order) => {
         setSelectedOrder(order);
         setTempStatus(order.status);
@@ -402,18 +451,23 @@ const OrderManager: React.FC = () => {
             </div>
 
             {/* Data Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative">
                 {loading ? (
                     <div className="flex justify-center items-center h-64">
                         <Spinner />
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto pb-16">
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-gray-50 border-b border-gray-100 text-xs uppercase text-gray-500 tracking-wider">
                                     <th className="px-6 py-4 font-semibold w-10">
-                                        <input type="checkbox" className="rounded border-gray-300 text-black focus:ring-black" />
+                                        <input 
+                                            type="checkbox" 
+                                            className="rounded border-gray-300 text-black focus:ring-black cursor-pointer" 
+                                            onChange={handleSelectAll}
+                                            checked={filteredOrders.length > 0 && selectedOrderIds.size === filteredOrders.length}
+                                        />
                                     </th>
                                     <th className="px-6 py-4 font-semibold">Mã đơn / Khách hàng</th>
                                     <th className="px-6 py-4 font-semibold">Ngày đặt</th>
@@ -427,11 +481,21 @@ const OrderManager: React.FC = () => {
                                 {filteredOrders.map((order) => {
                                     const firstItem = order.items[0]; 
                                     const productImage = 'https://images.unsplash.com/photo-1552874869-5c39ec9288dc?q=80&w=100&auto=format&fit=crop'; 
+                                    const isSelected = selectedOrderIds.has(order.id);
 
                                     return (
-                                        <tr key={order.id} className="hover:bg-gray-50 transition-colors group cursor-pointer" onClick={() => handleOpenDetail(order)}>
+                                        <tr 
+                                            key={order.id} 
+                                            className={`transition-colors group cursor-pointer ${isSelected ? 'bg-blue-50/50' : 'hover:bg-gray-50'}`} 
+                                            onClick={() => handleOpenDetail(order)}
+                                        >
                                             <td className="px-6 py-4" onClick={e => e.stopPropagation()}>
-                                                <input type="checkbox" className="rounded border-gray-300 text-black focus:ring-black" />
+                                                <input 
+                                                    type="checkbox" 
+                                                    className="rounded border-gray-300 text-black focus:ring-black cursor-pointer"
+                                                    checked={isSelected}
+                                                    onChange={() => handleSelectRow(order.id)}
+                                                />
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div>
@@ -496,6 +560,42 @@ const OrderManager: React.FC = () => {
                         </table>
                     </div>
                 )}
+
+                 {/* FLOATING BULK ACTION BAR */}
+                 {selectedOrderIds.size > 0 && (
+                    <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-white text-black shadow-2xl border border-gray-200 rounded-full px-6 py-3 flex items-center gap-4 z-20 animate-fade-in ring-1 ring-black/5">
+                        <span className="text-sm font-bold whitespace-nowrap">Đã chọn {selectedOrderIds.size} đơn hàng</span>
+                        <div className="h-4 w-[1px] bg-gray-300"></div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500 uppercase font-semibold">Đổi trạng thái:</span>
+                            <select 
+                                value={bulkStatus}
+                                onChange={(e) => setBulkStatus(e.target.value)}
+                                className="bg-gray-100 border-none rounded text-sm py-1 pl-2 pr-6 outline-none focus:ring-1 focus:ring-black cursor-pointer"
+                            >
+                                <option value="pending">Chờ xử lý</option>
+                                <option value="processing">Đang giao</option>
+                                <option value="completed">Hoàn thành</option>
+                                <option value="cancelled">Đã hủy</option>
+                            </select>
+                            <button 
+                                onClick={handleBulkUpdate}
+                                disabled={isBulkUpdating}
+                                className="bg-black text-white px-4 py-1.5 rounded-full text-xs font-bold hover:bg-gray-800 disabled:opacity-50 transition-all ml-1 flex items-center gap-1"
+                            >
+                                {isBulkUpdating && <Spinner />}
+                                {isBulkUpdating ? 'Đang xử lý...' : 'Cập nhật'}
+                            </button>
+                        </div>
+                        <button 
+                            onClick={() => setSelectedOrderIds(new Set())}
+                            className="ml-2 text-gray-400 hover:text-red-500"
+                            title="Bỏ chọn"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                 )}
 
                 {/* Pagination (Static) */}
                 <div className="flex items-center justify-between px-6 py-4 bg-gray-50 border-t border-gray-200">
