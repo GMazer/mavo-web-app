@@ -30,7 +30,8 @@ CREATE TABLE Products (
     material TEXT, 
     gender TEXT, 
     isVisible INTEGER DEFAULT 1, 
-    customSizeGuide TEXT 
+    customSizeGuide TEXT,
+    stock INTEGER DEFAULT 100 -- Added stock column
 );
 
 CREATE TABLE Reviews (
@@ -107,18 +108,18 @@ INSERT INTO Categories (id, name, slug, description) VALUES
 ('c6', 'Jumpsuits', 'jumpsuits', 'Đồ bay, áo liền quần'),
 ('c7', 'Áo khoác', 'ao-khoac', 'Blazer, Vest, áo khoác ngoài');
 
--- SEED DATA PRODUCTS
-INSERT INTO Products (id, slug, name, sku, price, originalPrice, category, images, colors, description, highlights, material, gender, isVisible, customSizeGuide) VALUES 
+-- SEED DATA PRODUCTS (Updated with Stock)
+INSERT INTO Products (id, slug, name, sku, price, originalPrice, category, images, colors, description, highlights, material, gender, isVisible, customSizeGuide, stock) VALUES 
 ('1', 'brown-long-sleeves-woven-vest', 'Brown Long Sleeves Woven Vest', 'D82510002T6CB0261', 999000, 2399000, 'Set', 
  '["https://images.unsplash.com/photo-1552874869-5c39ec9288dc?q=80&w=800&auto=format&fit=crop","https://images.unsplash.com/photo-1550614000-4b9519e02c97?q=80&w=800&auto=format&fit=crop","https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=800&auto=format&fit=crop","https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=800&auto=format&fit=crop"]', 
  '[{"name": "Nâu", "hex": "#8B4513"}]', 
  'Thổi hồn vào những thiết kế MAVO đem đến cho bạn trải nghiệm dòng sản phẩm với phong cách trẻ trung, năng động và hiện đại.\nMAVO By DO MANH CUONG',
  'Chất liệu cao cấp, thiết kế hiện đại phù hợp với nhiều phong cách.',
- 'Vải dệt thoi', 'FEMALE', 1, NULL),
+ 'Vải dệt thoi', 'FEMALE', 1, NULL, 85),
 ('2', 'brown-woven-mini-skirt', 'Brown Woven Mini Skirt', 'S99210002T6CB0261', 599000, 1399000, 'Chân váy', 
  '["https://images.unsplash.com/photo-1582142407894-ec85f1260a46?q=80&w=800&auto=format&fit=crop","https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?q=80&w=800&auto=format&fit=crop"]', 
  '[{"name": "Nâu", "hex": "#8B4513"}]', 
- 'Chân váy ngắn dệt kim đồng bộ.', 'Thiết kế trẻ trung, năng động.', 'Vải dệt kim', 'FEMALE', 1, NULL);
+ 'Chân váy ngắn dệt kim đồng bộ.', 'Thiết kế trẻ trung, năng động.', 'Vải dệt kim', 'FEMALE', 1, NULL, 12);
 
 INSERT INTO Reviews (id, productId, stars, content, authorName, createdAt) VALUES
 ('r_001', '1', 5, 'Sản phẩm đẹp, vải dày dặn, đúng mô tả.', 'Nguyễn Văn A', '2024-02-03T10:00:00Z'),
@@ -132,8 +133,7 @@ INSERT INTO Settings (key, value) VALUES
 ('careGuideDefault', 'https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=800&auto=format&fit=crop'),
 ('returnPolicyDefault', 'https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?q=80&w=800&auto=format&fit=crop');
 
--- SEED DATA ADDRESS (Sample Data for Hanoi & HCM)
--- You can use the /api/locations/import endpoint to load the full JSON file
+-- SEED DATA ADDRESS
 INSERT INTO Provinces (code, name, name_with_type, slug) VALUES 
 ('01', 'Hà Nội', 'Thành phố Hà Nội', 'ha-noi'),
 ('79', 'Hồ Chí Minh', 'Thành phố Hồ Chí Minh', 'ho-chi-minh');

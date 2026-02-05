@@ -345,6 +345,16 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialProduct, onCancel, onS
                                 />
                             </div>
                             <div>
+                                <label className="text-xs text-gray-500">Số lượng tồn kho (Stock)</label>
+                                <input 
+                                    type="number" 
+                                    value={product.stock || 0}
+                                    onChange={(e) => handleChange('stock', Number(e.target.value))}
+                                    className="w-full border rounded p-2 font-bold" 
+                                    min="0"
+                                />
+                            </div>
+                            <div>
                                 <label className="text-xs text-gray-500">Danh mục</label>
                                 <select 
                                     value={product.category || 'Quần áo'}

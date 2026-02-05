@@ -20,6 +20,7 @@ export interface Product {
     thumbnailUrl?: string;
     isVisible?: boolean; 
     customSizeGuide?: string | null; 
+    stock?: number; // Added stock field
 }
 
 export interface AppSettings {
