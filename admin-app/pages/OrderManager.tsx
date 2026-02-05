@@ -1,12 +1,14 @@
 
 import React, { useEffect, useState } from 'react';
-import { fetchOrdersApi } from '../services/api';
+import { fetchOrdersApi, fetchProductsApi } from '../services/api'; // Added fetchProductsApi
 import { 
     Spinner, MagnifyingGlassIcon, CalendarIcon, FunnelIcon, 
     ArrowDownTrayIcon, PlusIcon, ShoppingBagIcon, ClockIcon, 
-    TruckIcon, CheckBadgeIcon, ChevronLeftIcon, ChevronRightIcon, BellIcon 
+    TruckIcon, CheckBadgeIcon, ChevronLeftIcon, ChevronRightIcon, BellIcon,
+    TrashIcon
 } from '../components/ui/Icons';
 import { formatCurrency } from '../utils/helpers';
+import { Product } from '../types';
 
 interface OrderItem {
     id: string;
@@ -44,20 +46,43 @@ const MavoLogo = () => (
 
 const OrderManager: React.FC = () => {
     const [orders, setOrders] = useState<Order[]>([]);
+    const [products, setProducts] = useState<Product[]>([]); // Store products for creating order
     const [loading, setLoading] = useState(false);
+    
+    // UI States
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [showDatePicker, setShowDatePicker] = useState(false);
+
+    // Filters
     const [filterStatus, setFilterStatus] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
+    const [dateRange, setDateRange] = useState({
+        start: '',
+        end: ''
+    });
+
+    // Create Order Form State
+    const [newOrder, setNewOrder] = useState({
+        customerName: '',
+        customerPhone: '',
+        address: '',
+        items: [] as { productId: string, quantity: number, size: string }[]
+    });
 
     useEffect(() => {
-        loadOrders();
+        loadData();
     }, []);
 
-    const loadOrders = async () => {
+    const loadData = async () => {
         setLoading(true);
         try {
-            const data = await fetchOrdersApi();
-            setOrders(data);
+            const [ordersData, productsData] = await Promise.all([
+                fetchOrdersApi(),
+                fetchProductsApi()
+            ]);
+            setOrders(ordersData);
+            setProducts(productsData);
         } catch (error) {
             console.error(error);
         } finally {
@@ -65,27 +90,84 @@ const OrderManager: React.FC = () => {
         }
     };
 
-    // --- Statistics Calculations ---
-    const totalOrders = orders.length;
-    const pendingCount = orders.filter(o => o.status === 'pending').length;
-    const shippingCount = orders.filter(o => o.status === 'processing').length; // Assuming processing = shipping for demo
-    const completedCount = orders.filter(o => o.status === 'completed').length;
-
     // --- Filter Logic ---
     const filteredOrders = orders.filter(order => {
         const matchesSearch = 
             order.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
-            order.customerName.toLowerCase().includes(searchTerm.toLowerCase());
+            order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            order.customerPhone.includes(searchTerm);
+        
         const matchesStatus = filterStatus === 'All' || order.status === filterStatus.toLowerCase();
-        return matchesSearch && matchesStatus;
+        
+        let matchesDate = true;
+        if (dateRange.start) {
+            matchesDate = matchesDate && new Date(order.createdAt) >= new Date(dateRange.start);
+        }
+        if (dateRange.end) {
+            // End of the day
+            const endDate = new Date(dateRange.end);
+            endDate.setHours(23, 59, 59, 999);
+            matchesDate = matchesDate && new Date(order.createdAt) <= endDate;
+        }
+
+        return matchesSearch && matchesStatus && matchesDate;
     });
+
+    // --- Statistics ---
+    const totalOrders = orders.length;
+    const pendingCount = orders.filter(o => o.status === 'pending').length;
+    const shippingCount = orders.filter(o => o.status === 'processing').length;
+    const completedCount = orders.filter(o => o.status === 'completed').length;
+
+    // --- Export CSV (UTF-8 Fix) ---
+    const handleExportCSV = () => {
+        const headers = ["Mã đơn", "Khách hàng", "Số điện thoại", "Ngày đặt", "Tổng tiền", "Trạng thái", "Địa chỉ"];
+        const rows = filteredOrders.map(o => [
+            `"${o.id}"`, // Escape ID to prevent scientific notation in Excel
+            `"${o.customerName}"`,
+            `"${o.customerPhone}"`,
+            `"${new Date(o.createdAt).toLocaleDateString('vi-VN')}"`,
+            `${o.totalAmount}`,
+            `"${getStatusText(o.status)}"`,
+            `"${o.addressDetail}, ${o.ward}, ${o.district}, ${o.city}"`
+        ]);
+
+        const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        
+        // Add BOM (\uFEFF) for Excel to recognize UTF-8
+        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute("href", url);
+        link.setAttribute("download", `don_hang_mavo_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    // --- Create Order Logic ---
+    const handleAddItemToNewOrder = () => {
+        if (products.length > 0) {
+            setNewOrder(prev => ({
+                ...prev,
+                items: [...prev.items, { productId: products[0].id, quantity: 1, size: 'M' }]
+            }));
+        }
+    };
+
+    const handleSubmitNewOrder = async () => {
+        // Mock submission (In real app, call API)
+        alert("Tính năng tạo đơn đang được cập nhật phía Backend API.");
+        setIsCreateModalOpen(false);
+    };
 
     const getStatusStyle = (status: string) => {
         switch (status) {
-            case 'pending': return 'bg-yellow-100 text-yellow-700';
-            case 'processing': return 'bg-blue-100 text-blue-700';
-            case 'completed': return 'bg-green-100 text-green-700';
-            case 'cancelled': return 'bg-red-100 text-red-700';
+            case 'pending': return 'bg-yellow-100 text-yellow-700 border border-yellow-200';
+            case 'processing': return 'bg-blue-100 text-blue-700 border border-blue-200';
+            case 'completed': return 'bg-green-100 text-green-700 border border-green-200';
+            case 'cancelled': return 'bg-red-100 text-red-700 border border-red-200';
             default: return 'bg-gray-100 text-gray-700';
         }
     };
@@ -101,7 +183,7 @@ const OrderManager: React.FC = () => {
     };
 
     return (
-        <div className="space-y-8 animate-fade-in font-sans pb-20">
+        <div className="space-y-8 animate-fade-in font-sans pb-20 relative">
             {/* Header Area */}
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                 <div>
@@ -109,20 +191,20 @@ const OrderManager: React.FC = () => {
                     <p className="text-sm text-gray-500 mt-1">Theo dõi và xử lý các đơn đặt hàng mới nhất.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <div className="relative">
-                        <MagnifyingGlassIcon />
+                    {/* Fixed Search Bar UI */}
+                    <div className="relative group">
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                            <MagnifyingGlassIcon /> 
+                        </div>
                         <input 
                             type="text" 
-                            placeholder="Tìm kiếm đơn hàng..." 
-                            className="pl-8 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black w-64 shadow-sm"
+                            placeholder="Tìm kiếm theo mã, tên, SĐT..." 
+                            className="pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm w-72 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all bg-white shadow-sm"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
-                         <div className="absolute left-2 top-2.5 text-gray-400 pointer-events-none">
-                            <MagnifyingGlassIcon /> 
-                         </div>
                     </div>
-                    <button className="p-2 text-gray-500 hover:text-black bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <button className="p-2.5 text-gray-500 hover:text-black bg-white border border-gray-200 rounded-lg shadow-sm transition-colors">
                         <BellIcon />
                     </button>
                 </div>
@@ -130,60 +212,46 @@ const OrderManager: React.FC = () => {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {/* Total Orders */}
-                <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-start">
                         <div>
                             <p className="text-gray-500 text-sm font-medium">Tổng đơn hàng</p>
                             <h3 className="text-3xl font-bold text-gray-800 mt-2">{totalOrders.toLocaleString()}</h3>
-                            <p className="text-green-500 text-xs font-bold mt-2 flex items-center">
-                                <span className="bg-green-100 px-1.5 py-0.5 rounded mr-1">↑ 5%</span> 
-                                tuần này
-                            </p>
                         </div>
-                        <div className="p-3 bg-blue-50 rounded-lg text-blue-600">
+                        <div className="p-3 bg-black text-white rounded-lg">
                             <MavoLogo />
                         </div>
                     </div>
                 </div>
-
-                {/* Pending */}
                 <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-start">
                         <div>
                             <p className="text-gray-500 text-sm font-medium">Chờ xử lý</p>
                             <h3 className="text-3xl font-bold text-gray-800 mt-2">{pendingCount}</h3>
-                            <p className="text-orange-500 text-xs mt-2">Cần hành động ngay</p>
                         </div>
-                        <div className="p-3 bg-orange-50 rounded-lg text-orange-600">
+                        <div className="p-3 bg-orange-50 text-orange-600 rounded-lg">
                             <ClockIcon />
                         </div>
                     </div>
                 </div>
-
-                {/* Shipping */}
                 <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-start">
                         <div>
                             <p className="text-gray-500 text-sm font-medium">Đang giao hàng</p>
                             <h3 className="text-3xl font-bold text-gray-800 mt-2">{shippingCount}</h3>
-                            <p className="text-gray-400 text-xs mt-2">Đang vận chuyển</p>
                         </div>
-                        <div className="p-3 bg-blue-50 rounded-lg text-blue-600">
+                        <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
                             <TruckIcon />
                         </div>
                     </div>
                 </div>
-
-                 {/* Completed */}
                  <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-start">
                         <div>
                             <p className="text-gray-500 text-sm font-medium">Hoàn thành</p>
                             <h3 className="text-3xl font-bold text-gray-800 mt-2">{completedCount}</h3>
-                            <p className="text-gray-400 text-xs mt-2">Tổng đơn giao thành công</p>
                         </div>
-                        <div className="p-3 bg-green-50 rounded-lg text-green-600">
+                        <div className="p-3 bg-green-50 text-green-600 rounded-lg">
                             <CheckBadgeIcon />
                         </div>
                     </div>
@@ -191,12 +259,63 @@ const OrderManager: React.FC = () => {
             </div>
 
             {/* Toolbar */}
-            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 z-10 relative">
                 <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto">
-                    <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 whitespace-nowrap">
-                        <CalendarIcon />
-                        <span>30 ngày qua</span>
-                    </button>
+                    {/* Date Picker Button */}
+                    <div className="relative">
+                        <button 
+                            onClick={() => setShowDatePicker(!showDatePicker)}
+                            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 whitespace-nowrap"
+                        >
+                            <CalendarIcon />
+                            <span>
+                                {dateRange.start || dateRange.end 
+                                    ? `${dateRange.start} - ${dateRange.end}` 
+                                    : 'Lọc theo ngày'
+                                }
+                            </span>
+                        </button>
+                        
+                        {/* Date Picker Dropdown */}
+                        {showDatePicker && (
+                            <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 shadow-lg rounded-lg p-4 w-72 z-20 animate-fade-in">
+                                <div className="space-y-3">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 mb-1">Từ ngày</label>
+                                        <input 
+                                            type="date" 
+                                            className="w-full border border-gray-300 rounded p-2 text-sm"
+                                            value={dateRange.start}
+                                            onChange={(e) => setDateRange({...dateRange, start: e.target.value})}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 mb-1">Đến ngày</label>
+                                        <input 
+                                            type="date" 
+                                            className="w-full border border-gray-300 rounded p-2 text-sm"
+                                            value={dateRange.end}
+                                            onChange={(e) => setDateRange({...dateRange, end: e.target.value})}
+                                        />
+                                    </div>
+                                    <div className="flex justify-between pt-2">
+                                        <button 
+                                            onClick={() => { setDateRange({start: '', end: ''}); setShowDatePicker(false); }}
+                                            className="text-xs text-red-500 hover:underline"
+                                        >
+                                            Xóa lọc
+                                        </button>
+                                        <button 
+                                            onClick={() => setShowDatePicker(false)}
+                                            className="text-xs bg-black text-white px-3 py-1 rounded hover:bg-gray-800"
+                                        >
+                                            Đóng
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                     
                     <div className="relative">
                         <select 
@@ -214,23 +333,22 @@ const OrderManager: React.FC = () => {
                             <FunnelIcon />
                         </div>
                     </div>
-                    
-                    <button 
-                        onClick={() => setFilterStatus('All')} 
-                        className="text-sm text-blue-600 hover:underline whitespace-nowrap"
-                    >
-                        Đặt lại bộ lọc
-                    </button>
                 </div>
 
                 <div className="flex items-center gap-3 w-full md:w-auto">
-                    <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 w-full md:w-auto justify-center">
+                    <button 
+                        onClick={handleExportCSV}
+                        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 w-full md:w-auto justify-center hover:border-black transition-colors"
+                    >
                         <ArrowDownTrayIcon />
-                        <span>Xuất CSV</span>
+                        <span>Xuất Excel</span>
                     </button>
-                    <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 w-full md:w-auto justify-center shadow-md shadow-blue-200">
+                    <button 
+                        onClick={() => setIsCreateModalOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg text-sm font-bold hover:bg-gray-800 w-full md:w-auto justify-center shadow-lg shadow-gray-400/20 transition-all active:scale-95"
+                    >
                         <PlusIcon />
-                        <span>Tạo đơn</span>
+                        <span>Tạo đơn mới</span>
                     </button>
                 </div>
             </div>
@@ -247,7 +365,7 @@ const OrderManager: React.FC = () => {
                             <thead>
                                 <tr className="bg-gray-50 border-b border-gray-100 text-xs uppercase text-gray-500 tracking-wider">
                                     <th className="px-6 py-4 font-semibold w-10">
-                                        <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                                        <input type="checkbox" className="rounded border-gray-300 text-black focus:ring-black" />
                                     </th>
                                     <th className="px-6 py-4 font-semibold">Mã đơn / Khách hàng</th>
                                     <th className="px-6 py-4 font-semibold">Ngày đặt</th>
@@ -259,31 +377,21 @@ const OrderManager: React.FC = () => {
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {filteredOrders.map((order) => {
-                                    // Generate initials for avatar
-                                    const initials = order.customerName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
-                                    const firstItem = order.items[0]; // Display representative item
-                                    
-                                    // Normally we would have product image in order item, assuming mock placeholder if missing
+                                    const firstItem = order.items[0]; 
                                     const productImage = 'https://images.unsplash.com/photo-1552874869-5c39ec9288dc?q=80&w=100&auto=format&fit=crop'; 
 
                                     return (
-                                        <tr key={order.id} className="hover:bg-gray-50 transition-colors group">
-                                            <td className="px-6 py-4">
-                                                <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                                        <tr key={order.id} className="hover:bg-gray-50 transition-colors group cursor-pointer" onClick={() => setSelectedOrder(order)}>
+                                            <td className="px-6 py-4" onClick={e => e.stopPropagation()}>
+                                                <input type="checkbox" className="rounded border-gray-300 text-black focus:ring-black" />
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    {/* Avatar */}
-                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-700 to-black text-white flex items-center justify-center text-xs font-bold shadow-sm">
-                                                        {initials}
+                                                <div>
+                                                    <div className="font-bold text-black text-sm group-hover:underline">
+                                                        #{order.id.slice(0, 8).toUpperCase()}
                                                     </div>
-                                                    <div>
-                                                        <div className="font-bold text-blue-600 text-sm hover:underline cursor-pointer" onClick={() => setSelectedOrder(order)}>
-                                                            #{order.id.slice(0, 8).toUpperCase()}
-                                                        </div>
-                                                        <div className="text-sm font-medium text-gray-900">{order.customerName}</div>
-                                                        <div className="text-xs text-gray-400">{order.customerEmail || order.customerPhone}</div>
-                                                    </div>
+                                                    <div className="text-sm font-medium text-gray-700 mt-1">{order.customerName}</div>
+                                                    <div className="text-xs text-gray-400">{order.customerPhone}</div>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
@@ -315,14 +423,13 @@ const OrderManager: React.FC = () => {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 text-center">
-                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusStyle(order.status)}`}>
+                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusStyle(order.status)}`}>
                                                     {getStatusText(order.status)}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 text-center">
                                                 <button 
-                                                    onClick={() => setSelectedOrder(order)}
-                                                    className="text-gray-400 hover:text-blue-600 font-medium text-sm transition-colors"
+                                                    className="text-gray-400 hover:text-black font-medium text-sm transition-colors border border-gray-200 px-3 py-1 rounded hover:border-black"
                                                 >
                                                     Chi tiết
                                                 </button>
@@ -342,7 +449,7 @@ const OrderManager: React.FC = () => {
                     </div>
                 )}
 
-                {/* Pagination (Mock) */}
+                {/* Pagination (Static) */}
                 <div className="flex items-center justify-between px-6 py-4 bg-gray-50 border-t border-gray-200">
                     <p className="text-sm text-gray-500">
                         Hiển thị <span className="font-medium text-gray-900">1-{filteredOrders.length}</span> trong số <span className="font-medium text-gray-900">{totalOrders}</span> đơn hàng
@@ -351,11 +458,8 @@ const OrderManager: React.FC = () => {
                          <button className="p-2 border border-gray-300 rounded hover:bg-white text-gray-400 hover:text-gray-600 disabled:opacity-50">
                             <ChevronLeftIcon />
                          </button>
-                         <button className="w-8 h-8 flex items-center justify-center bg-blue-600 text-white rounded text-sm font-bold shadow-sm">1</button>
+                         <button className="w-8 h-8 flex items-center justify-center bg-black text-white rounded text-sm font-bold shadow-sm">1</button>
                          <button className="w-8 h-8 flex items-center justify-center border border-gray-300 bg-white hover:bg-gray-50 rounded text-sm text-gray-600">2</button>
-                         <button className="w-8 h-8 flex items-center justify-center border border-gray-300 bg-white hover:bg-gray-50 rounded text-sm text-gray-600">3</button>
-                         <span className="text-gray-400 text-sm">...</span>
-                         <button className="w-8 h-8 flex items-center justify-center border border-gray-300 bg-white hover:bg-gray-50 rounded text-sm text-gray-600">24</button>
                          <button className="p-2 border border-gray-300 rounded hover:bg-white text-gray-600 hover:text-black">
                             <ChevronRightIcon />
                          </button>
@@ -363,7 +467,78 @@ const OrderManager: React.FC = () => {
                 </div>
             </div>
 
-            {/* Modal Detail */}
+            {/* Create Order Modal */}
+            {isCreateModalOpen && (
+                <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+                    <div className="bg-white w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden animate-fade-in">
+                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                            <h3 className="text-lg font-bold text-gray-800">Tạo đơn hàng mới</h3>
+                            <button onClick={() => setIsCreateModalOpen(false)} className="text-gray-400 hover:text-black">✕</button>
+                        </div>
+                        <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Tên khách hàng</label>
+                                    <input type="text" className="w-full border p-2 rounded" placeholder="Nhập tên khách hàng" 
+                                        value={newOrder.customerName} onChange={e => setNewOrder({...newOrder, customerName: e.target.value})} />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Số điện thoại</label>
+                                    <input type="text" className="w-full border p-2 rounded" placeholder="Số điện thoại"
+                                        value={newOrder.customerPhone} onChange={e => setNewOrder({...newOrder, customerPhone: e.target.value})} />
+                                </div>
+                                <div className="col-span-2">
+                                    <label className="block text-sm font-medium mb-1">Địa chỉ giao hàng</label>
+                                    <input type="text" className="w-full border p-2 rounded" placeholder="Địa chỉ chi tiết..."
+                                        value={newOrder.address} onChange={e => setNewOrder({...newOrder, address: e.target.value})} />
+                                </div>
+                            </div>
+
+                            <div className="border-t pt-4">
+                                <div className="flex justify-between items-center mb-2">
+                                    <h4 className="font-bold text-sm">Sản phẩm</h4>
+                                    <button onClick={handleAddItemToNewOrder} className="text-xs bg-gray-100 px-2 py-1 rounded hover:bg-gray-200">+ Thêm dòng</button>
+                                </div>
+                                {newOrder.items.map((item, idx) => (
+                                    <div key={idx} className="flex gap-2 mb-2">
+                                        <select 
+                                            className="flex-1 border p-2 rounded text-sm"
+                                            value={item.productId}
+                                            onChange={e => {
+                                                const newItems = [...newOrder.items];
+                                                newItems[idx].productId = e.target.value;
+                                                setNewOrder({...newOrder, items: newItems});
+                                            }}
+                                        >
+                                            {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                        </select>
+                                        <input type="number" className="w-16 border p-2 rounded text-sm" value={item.quantity} 
+                                            onChange={e => {
+                                                const newItems = [...newOrder.items];
+                                                newItems[idx].quantity = Number(e.target.value);
+                                                setNewOrder({...newOrder, items: newItems});
+                                            }}
+                                        />
+                                        <button 
+                                            onClick={() => setNewOrder(prev => ({...prev, items: prev.items.filter((_, i) => i !== idx)}))}
+                                            className="text-red-500 hover:text-red-700"
+                                        >
+                                            <TrashIcon />
+                                        </button>
+                                    </div>
+                                ))}
+                                {newOrder.items.length === 0 && <p className="text-sm text-gray-400 italic">Chưa có sản phẩm nào được chọn.</p>}
+                            </div>
+                        </div>
+                        <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
+                            <button onClick={() => setIsCreateModalOpen(false)} className="px-4 py-2 bg-white border rounded text-sm font-medium">Hủy</button>
+                            <button onClick={handleSubmitNewOrder} className="px-6 py-2 bg-black text-white rounded text-sm font-bold hover:bg-gray-800">Tạo đơn hàng</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* View Detail Modal */}
             {selectedOrder && (
                 <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setSelectedOrder(null)}>
                     <div className="bg-white w-full max-w-3xl rounded-xl shadow-2xl overflow-hidden animate-fade-in" onClick={e => e.stopPropagation()}>
@@ -396,23 +571,19 @@ const OrderManager: React.FC = () => {
                                 <div>
                                     <h4 className="font-bold text-xs uppercase text-gray-400 tracking-wider mb-4">Khách hàng</h4>
                                     <div className="flex items-start gap-4">
-                                        <div className="w-12 h-12 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center text-lg font-bold text-gray-500">
-                                            {selectedOrder.customerName[0]}
-                                        </div>
                                         <div>
-                                            <p className="font-bold text-gray-900">{selectedOrder.customerName}</p>
+                                            <p className="font-bold text-gray-900 text-lg">{selectedOrder.customerName}</p>
                                             <p className="text-sm text-gray-500 mt-1">{selectedOrder.customerEmail}</p>
-                                            <p className="text-sm text-gray-500">{selectedOrder.customerPhone}</p>
+                                            <p className="text-sm font-medium text-gray-700 mt-1">{selectedOrder.customerPhone}</p>
                                         </div>
                                     </div>
                                 </div>
                                 <div>
                                     <h4 className="font-bold text-xs uppercase text-gray-400 tracking-wider mb-4">Địa chỉ giao hàng</h4>
                                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 text-sm text-gray-600 leading-relaxed">
-                                        <p className="font-medium text-gray-900 mb-1">{selectedOrder.customerName}</p>
                                         <p>{selectedOrder.addressDetail}</p>
                                         <p>{selectedOrder.ward}, {selectedOrder.district}</p>
-                                        <p>{selectedOrder.city}</p>
+                                        <p className="font-bold mt-1">{selectedOrder.city}</p>
                                     </div>
                                 </div>
                             </div>
