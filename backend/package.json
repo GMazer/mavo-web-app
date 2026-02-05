@@ -10,7 +10,8 @@
     "db:setup": "wrangler d1 execute mavo-db --local --file=./schema.sql",
     "db:setup:prod": "wrangler d1 execute mavo-db --remote --file=./schema.sql",
     "db:update": "wrangler d1 execute mavo-db --local --file=./safe_migration.sql",
-    "db:update:prod": "wrangler d1 execute mavo-db --remote --file=./safe_migration.sql"
+    "db:update:prod": "wrangler d1 execute mavo-db --remote --file=./safe_migration.sql",
+    "seed:locations": "node seed-locations.js"
   },
   "dependencies": {
     "hono": "^4.1.0",
