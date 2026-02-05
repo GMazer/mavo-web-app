@@ -11,6 +11,16 @@ const SETTINGS_URL = `${API_BASE}/settings`;
 const CATEGORIES_URL = `${API_BASE}/categories`;
 const UPLOAD_URL = `${API_BASE}/uploads/presign`;
 const ORDERS_URL = `${API_BASE}/orders`;
+const DASHBOARD_URL = `${API_BASE}/dashboard`;
+
+// --- Dashboard ---
+export const fetchDashboardDataApi = async () => {
+    const res = await fetch(`${DASHBOARD_URL}?_t=${Date.now()}`);
+    if (!res.ok) {
+        throw new Error("Failed to fetch dashboard data");
+    }
+    return await res.json();
+};
 
 // --- Products ---
 

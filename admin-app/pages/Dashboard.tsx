@@ -1,69 +1,129 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
     CurrencyDollarIcon, ShoppingBagIcon, UserGroupIcon, ClipboardDocumentListIcon,
-    ArrowTrendingUpIcon, ArrowTrendingDownIcon, EllipsisHorizontalIcon, CalendarIcon, BellIcon
+    ArrowTrendingUpIcon, ArrowTrendingDownIcon, EllipsisHorizontalIcon, CalendarIcon, BellIcon, Spinner
 } from '../components/ui/Icons';
 import { formatCurrency } from '../utils/helpers';
-
-// Mock Data
-const STATS = [
-    { 
-        title: "Tổng doanh thu", 
-        value: 124592000, 
-        trend: 12.5, 
-        isUp: true, 
-        icon: <CurrencyDollarIcon />, 
-        color: "bg-green-100 text-green-600",
-        format: true 
-    },
-    { 
-        title: "Tổng đơn hàng", 
-        value: 1482, 
-        trend: 8.2, 
-        isUp: true, 
-        icon: <ShoppingBagIcon />, 
-        color: "bg-blue-100 text-blue-600",
-        format: false 
-    },
-    { 
-        title: "Khách hàng mới", 
-        value: 342, 
-        trend: 15.3, 
-        isUp: true, 
-        icon: <UserGroupIcon />, 
-        color: "bg-purple-100 text-purple-600",
-        format: false 
-    },
-    { 
-        title: "Giá trị đơn trung bình", 
-        value: 845000, 
-        trend: 2.1, 
-        isUp: false, 
-        icon: <ClipboardDocumentListIcon />, 
-        color: "bg-orange-100 text-orange-600",
-        format: true 
-    },
-];
-
-const TOP_PRODUCTS = [
-    { id: 1, name: "Váy Lụa Dự Tiệc", price: 2100000, sold: 245, revenue: 514500000, img: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=100&q=80" },
-    { id: 2, name: "Áo Blazer Đen", price: 1250000, sold: 180, revenue: 225000000, img: "https://images.unsplash.com/photo-1539533018447-63fcce2678e3?w=100&q=80" },
-    { id: 3, name: "Quần Jeans Ống Rộng", price: 850000, sold: 156, revenue: 132600000, img: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=100&q=80" },
-    { id: 4, name: "Túi Xách Da Mềm", price: 3200000, sold: 98, revenue: 313600000, img: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=100&q=80" },
-];
-
-const RECENT_ORDERS = [
-    { id: "#ORD-009", customer: "Alice Nguyễn", status: "completed", amount: 1200000 },
-    { id: "#ORD-010", customer: "Trần Văn B", status: "processing", amount: 850000 },
-    { id: "#ORD-011", customer: "Lê Thị C", status: "pending", amount: 2100000 },
-    { id: "#ORD-012", customer: "Phạm D", status: "cancelled", amount: 500000 },
-];
+import { fetchDashboardDataApi } from '../services/api';
 
 const Dashboard: React.FC = () => {
+    const [loading, setLoading] = useState(true);
+    const [data, setData] = useState<any>({
+        stats: {},
+        chart: [],
+        topCategories: [],
+        topProducts: [],
+        recentOrders: [],
+        totalProducts: 0
+    });
+
+    useEffect(() => {
+        const loadDashboard = async () => {
+            try {
+                const res = await fetchDashboardDataApi();
+                setData(res);
+            } catch (error) {
+                console.error("Failed to load dashboard data", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadDashboard();
+    }, []);
+
+    if (loading) return <div className="flex justify-center items-center h-96"><Spinner /></div>;
+
+    const { stats, chart, topCategories, topProducts, recentOrders, totalProducts } = data;
+
+    // Stats Config
+    const STATS = [
+        { 
+            title: "Tổng doanh thu", 
+            value: stats.totalRevenue || 0, 
+            trend: 0, 
+            isUp: true, 
+            icon: <CurrencyDollarIcon />, 
+            color: "bg-green-100 text-green-600",
+            format: true 
+        },
+        { 
+            title: "Tổng đơn hàng", 
+            value: stats.totalOrders || 0, 
+            trend: 0, 
+            isUp: true, 
+            icon: <ShoppingBagIcon />, 
+            color: "bg-blue-100 text-blue-600",
+            format: false 
+        },
+        { 
+            title: "Khách hàng", 
+            value: stats.newCustomers || 0, 
+            trend: 0, 
+            isUp: true, 
+            icon: <UserGroupIcon />, 
+            color: "bg-purple-100 text-purple-600",
+            format: false 
+        },
+        { 
+            title: "Giá trị đơn TB", 
+            value: stats.avgOrderValue || 0, 
+            trend: 0, 
+            isUp: true, 
+            icon: <ClipboardDocumentListIcon />, 
+            color: "bg-orange-100 text-orange-600",
+            format: true 
+        },
+    ];
+
+    // Helper to generate chart path
+    const getChartPath = (width: number, height: number, dataPoints: any[]) => {
+        if (!dataPoints || dataPoints.length === 0) return { line: "", area: "" };
+        const maxVal = Math.max(...dataPoints.map((d: any) => d.value), 100); // Avoid div by 0
+        const stepX = width / (dataPoints.length - 1 || 1);
+        
+        const points = dataPoints.map((d: any, i: number) => {
+            const x = i * stepX;
+            const y = height - (d.value / maxVal) * height; // Invert Y
+            return `${x},${y}`;
+        }).join(" ");
+
+        // For fill area, add bottom corners
+        const fillPoints = `0,${height} ${points} ${width},${height}`;
+        
+        return { line: `M${points.replace(/ /g, " L")}`, area: `M${fillPoints.replace(/ /g, " L")} Z` };
+    };
+
+    const chartPath = getChartPath(450, 180, chart);
+
+    // Helper for Pie Chart Gradient
+    const getConicGradient = (cats: any[]) => {
+        if (!cats || cats.length === 0) return '#e5e7eb'; // Gray if empty
+        let gradientStr = '';
+        let currentPercent = 0;
+        const colors = ['#3B82F6', '#22C55E', '#EAB308', '#6B7280', '#F97316'];
+
+        cats.forEach((cat, idx) => {
+            const endPercent = currentPercent + cat.percent;
+            gradientStr += `${colors[idx % colors.length]} ${currentPercent}% ${endPercent}%, `;
+            currentPercent = endPercent;
+        });
+        
+        // Fill remaining with gray if < 100%
+        if (currentPercent < 100) {
+            gradientStr += `#e5e7eb ${currentPercent}% 100%`;
+        } else {
+            gradientStr = gradientStr.slice(0, -2);
+        }
+
+        return `conic-gradient(${gradientStr})`;
+    };
+
+    const pieColors = ['bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-gray-500'];
+
     return (
         <div className="space-y-6 pb-10">
-            {/* Header Toolbar (Replaces the generic tab title in Sidebar layout if needed, but here acts as sub-header) */}
+            {/* Header Toolbar */}
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
                 <h2 className="text-lg font-bold text-gray-800">Tổng quan Dashboard</h2>
                 <div className="flex items-center gap-3">
@@ -95,9 +155,9 @@ const Dashboard: React.FC = () => {
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <span className={`flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full ${stat.isUp ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
-                                {stat.isUp ? <ArrowTrendingUpIcon /> : <ArrowTrendingDownIcon />}
-                                {stat.trend}%
+                             {/* Mock Trend for now as backend doesn't calculate history diff yet */}
+                            <span className={`flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600`}>
+                                --%
                             </span>
                             <span className="text-xs text-gray-400">vs tháng trước</span>
                         </div>
@@ -107,111 +167,87 @@ const Dashboard: React.FC = () => {
 
             {/* Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Sales Revenue Chart (Mock SVG) */}
+                {/* Sales Revenue Chart (Dynamic SVG) */}
                 <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                     <div className="flex justify-between items-center mb-6">
-                        <h3 className="font-bold text-gray-800">Biểu đồ doanh thu</h3>
+                        <h3 className="font-bold text-gray-800">Doanh thu (7 ngày gần nhất)</h3>
                         <button className="text-gray-400 hover:text-gray-600"><EllipsisHorizontalIcon /></button>
                     </div>
                     
                     <div className="relative h-64 w-full">
                          {/* Grid Lines */}
                         <div className="absolute inset-0 flex flex-col justify-between text-xs text-gray-400">
-                            {[40, 30, 20, 10, 0].map((val) => (
+                            {[100, 75, 50, 25, 0].map((val) => (
                                 <div key={val} className="flex items-center gap-2 w-full">
-                                    <span className="w-6 text-right">${val}k</span>
+                                    <span className="w-6 text-right opacity-0">{val}%</span> {/* Hidden scale for now */}
                                     <div className="h-px bg-gray-100 flex-1"></div>
                                 </div>
                             ))}
                         </div>
                         
                         {/* Line Chart Path */}
-                        <svg className="absolute inset-0 w-full h-full pt-2 pl-8 pb-6 overflow-visible" preserveAspectRatio="none">
-                            <defs>
-                                <linearGradient id="gradient" x1="0" x2="0" y1="0" y2="1">
-                                    <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.2" />
-                                    <stop offset="100%" stopColor="#3B82F6" stopOpacity="0" />
-                                </linearGradient>
-                            </defs>
-                            <path 
-                                d="M0,180 C50,160 100,170 150,130 C200,90 250,110 300,80 C350,50 400,60 450,40 L450,220 L0,220 Z" 
-                                fill="url(#gradient)" 
-                            />
-                            <path 
-                                d="M0,180 C50,160 100,170 150,130 C200,90 250,110 300,80 C350,50 400,60 450,40" 
-                                fill="none" 
-                                stroke="#3B82F6" 
-                                strokeWidth="3" 
-                                strokeLinecap="round"
-                            />
-                        </svg>
+                        {chart.length > 0 ? (
+                            <svg className="absolute inset-0 w-full h-full pt-2 pl-2 pb-6 overflow-visible" preserveAspectRatio="none" viewBox="0 0 450 180">
+                                <defs>
+                                    <linearGradient id="gradient" x1="0" x2="0" y1="0" y2="1">
+                                        <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.2" />
+                                        <stop offset="100%" stopColor="#3B82F6" stopOpacity="0" />
+                                    </linearGradient>
+                                </defs>
+                                <path 
+                                    d={chartPath.area} 
+                                    fill="url(#gradient)" 
+                                />
+                                <path 
+                                    d={chartPath.line} 
+                                    fill="none" 
+                                    stroke="#3B82F6" 
+                                    strokeWidth="3" 
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                />
+                            </svg>
+                        ) : (
+                            <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">Chưa có dữ liệu</div>
+                        )}
 
                          {/* X Axis Labels */}
-                        <div className="absolute bottom-0 left-8 right-0 flex justify-between text-xs text-gray-400 pt-2">
-                            <span>Thứ 2</span>
-                            <span>Thứ 3</span>
-                            <span>Thứ 4</span>
-                            <span>Thứ 5</span>
-                            <span>Thứ 6</span>
-                            <span>Thứ 7</span>
-                            <span>CN</span>
+                        <div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-400 pt-2">
+                            {chart.map((c: any, i: number) => (
+                                <span key={i}>{new Date(c.date).toLocaleDateString('vi-VN', {weekday: 'short'})}</span>
+                            ))}
                         </div>
                     </div>
                 </div>
 
-                {/* Top Categories Chart (CSS Conic Gradient) */}
+                {/* Top Categories Chart */}
                 <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col">
-                    <h3 className="font-bold text-gray-800 mb-6">Danh mục hàng đầu</h3>
+                    <h3 className="font-bold text-gray-800 mb-6">Phân bố sản phẩm</h3>
                     
                     <div className="flex-1 flex items-center justify-center relative">
                         {/* Donut Chart */}
                         <div 
-                            className="w-48 h-48 rounded-full relative"
-                            style={{
-                                background: `conic-gradient(
-                                    #3B82F6 0% 35%, 
-                                    #22C55E 35% 60%, 
-                                    #EAB308 60% 80%, 
-                                    #6B7280 80% 100%
-                                )`
-                            }}
+                            className="w-48 h-48 rounded-full relative transition-all duration-500"
+                            style={{ background: getConicGradient(topCategories) }}
                         >
                             <div className="absolute inset-4 bg-white rounded-full flex flex-col items-center justify-center z-10">
-                                <span className="text-2xl font-bold text-gray-800">5.4k</span>
+                                <span className="text-2xl font-bold text-gray-800">{totalProducts}</span>
                                 <span className="text-xs text-gray-500">Sản phẩm</span>
                             </div>
                         </div>
                     </div>
 
                     <div className="mt-6 space-y-3">
-                        <div className="flex items-center justify-between text-sm">
-                            <div className="flex items-center gap-2">
-                                <span className="w-3 h-3 rounded-full bg-blue-500"></span>
-                                <span className="text-gray-600">Thời trang Nữ</span>
+                        {topCategories.map((cat: any, idx: number) => (
+                            <div key={idx} className="flex items-center justify-between text-sm">
+                                <div className="flex items-center gap-2">
+                                    <span className={`w-3 h-3 rounded-full ${pieColors[idx % pieColors.length]}`}></span>
+                                    <span className="text-gray-600 truncate max-w-[120px]" title={cat.name}>{cat.name}</span>
+                                </div>
+                                <span className="font-bold text-gray-700">{cat.percent}%</span>
                             </div>
-                            <span className="font-bold text-gray-700">35%</span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                            <div className="flex items-center gap-2">
-                                <span className="w-3 h-3 rounded-full bg-green-500"></span>
-                                <span className="text-gray-600">Thời trang Nam</span>
-                            </div>
-                            <span className="font-bold text-gray-700">25%</span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                            <div className="flex items-center gap-2">
-                                <span className="w-3 h-3 rounded-full bg-yellow-500"></span>
-                                <span className="text-gray-600">Phụ kiện</span>
-                            </div>
-                            <span className="font-bold text-gray-700">20%</span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                            <div className="flex items-center gap-2">
-                                <span className="w-3 h-3 rounded-full bg-gray-500"></span>
-                                <span className="text-gray-600">Khác</span>
-                            </div>
-                            <span className="font-bold text-gray-700">20%</span>
-                        </div>
+                        ))}
+                        {topCategories.length === 0 && <p className="text-center text-gray-400 text-xs">Chưa có danh mục</p>}
                     </div>
                 </div>
             </div>
@@ -222,8 +258,7 @@ const Dashboard: React.FC = () => {
                 {/* Top Selling Products */}
                 <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                     <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                        <h3 className="font-bold text-gray-800">Sản phẩm bán chạy</h3>
-                        <button className="text-sm text-blue-600 font-medium hover:underline">Xem tất cả</button>
+                        <h3 className="font-bold text-gray-800">Top sản phẩm bán chạy</h3>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
@@ -236,17 +271,22 @@ const Dashboard: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 text-sm">
-                                {TOP_PRODUCTS.map((p) => (
-                                    <tr key={p.id} className="hover:bg-gray-50">
+                                {topProducts.map((p: any) => (
+                                    <tr key={p.id || Math.random()} className="hover:bg-gray-50">
                                         <td className="px-6 py-4 flex items-center gap-3">
-                                            <img src={p.img} className="w-10 h-12 object-cover rounded border border-gray-100" alt="" />
-                                            <span className="font-medium text-gray-800 line-clamp-1">{p.name}</span>
+                                            <div className="w-10 h-12 bg-gray-100 rounded border border-gray-100 flex-shrink-0">
+                                                {p.img && <img src={p.img} className="w-full h-full object-cover rounded" alt="" />}
+                                            </div>
+                                            <span className="font-medium text-gray-800 line-clamp-1" title={p.name}>{p.name}</span>
                                         </td>
                                         <td className="px-6 py-4 text-gray-600">{formatCurrency(p.price)}</td>
                                         <td className="px-6 py-4 text-center text-gray-600">{p.sold}</td>
                                         <td className="px-6 py-4 text-right font-bold text-gray-800">{formatCurrency(p.revenue)}</td>
                                     </tr>
                                 ))}
+                                {topProducts.length === 0 && (
+                                    <tr><td colSpan={4} className="text-center py-8 text-gray-400">Chưa có dữ liệu bán hàng</td></tr>
+                                )}
                             </tbody>
                         </table>
                     </div>
@@ -255,8 +295,7 @@ const Dashboard: React.FC = () => {
                 {/* Recent Orders */}
                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                     <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                        <h3 className="font-bold text-gray-800">Đơn hàng gần đây</h3>
-                        <button className="text-gray-400 hover:text-gray-600"><EllipsisHorizontalIcon /></button>
+                        <h3 className="font-bold text-gray-800">Đơn hàng mới</h3>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
@@ -268,7 +307,7 @@ const Dashboard: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 text-sm">
-                                {RECENT_ORDERS.map((o) => {
+                                {recentOrders.map((o: any) => {
                                     let statusColor = "bg-gray-100 text-gray-600";
                                     let statusText = o.status;
                                     if(o.status === 'completed') { statusColor = "bg-green-100 text-green-700"; statusText="Hoàn thành"; }
@@ -278,8 +317,8 @@ const Dashboard: React.FC = () => {
 
                                     return (
                                         <tr key={o.id} className="hover:bg-gray-50">
-                                            <td className="px-5 py-4 font-medium text-blue-600">{o.id}</td>
-                                            <td className="px-5 py-4 text-gray-800">{o.customer}</td>
+                                            <td className="px-5 py-4 font-medium text-blue-600">#{o.id.slice(0, 8)}</td>
+                                            <td className="px-5 py-4 text-gray-800 truncate max-w-[120px]">{o.customer}</td>
                                             <td className="px-5 py-4 text-right">
                                                 <span className={`text-[10px] font-bold px-2 py-1 rounded uppercase ${statusColor}`}>
                                                     {statusText}
@@ -288,6 +327,9 @@ const Dashboard: React.FC = () => {
                                         </tr>
                                     );
                                 })}
+                                {recentOrders.length === 0 && (
+                                    <tr><td colSpan={3} className="text-center py-8 text-gray-400">Chưa có đơn hàng</td></tr>
+                                )}
                             </tbody>
                         </table>
                     </div>
