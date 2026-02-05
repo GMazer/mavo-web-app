@@ -11,9 +11,9 @@ import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
 
 type ViewState = 'home' | 'product' | 'checkout';
 
-// Auto-detect API URL: Use localhost for development, production URL for deployment
-const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const API_BASE = isLocal ? 'http://localhost:8080/api' : 'https://mavo-fashion-api.mavo-web.workers.dev/api';
+// --- CONFIG API ---
+// Sử dụng Server Online (Cloudflare Workers)
+const API_BASE = 'https://mavo-fashion-api.mavo-web.workers.dev/api';
 
 const API_PRODUCTS = `${API_BASE}/products`;
 const API_SETTINGS = `${API_BASE}/settings`;
@@ -173,7 +173,7 @@ const App: React.FC = () => {
           <div className="min-h-screen flex items-center justify-center bg-white">
               <div className="flex flex-col items-center gap-4">
                   <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
-                  <p className="text-gray-500 text-sm tracking-wider uppercase">Đang tải dữ liệu...</p>
+                  <p className="text-gray-500 text-sm tracking-wider uppercase">Đang tải dữ liệu từ máy chủ...</p>
               </div>
           </div>
       );

@@ -2,8 +2,8 @@
 import { Product, AppSettings, Category } from "../types";
 import { compressImage } from "../utils/helpers";
 
-const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const API_ROOT = isLocal ? 'http://localhost:8080' : 'https://mavo-fashion-api.mavo-web.workers.dev';
+// --- CONFIG API ---
+const API_ROOT = 'https://mavo-fashion-api.mavo-web.workers.dev';
 const API_BASE = `${API_ROOT}/api`;
 
 const API_URL = `${API_BASE}/products`;

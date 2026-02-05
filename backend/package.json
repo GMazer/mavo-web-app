@@ -4,14 +4,15 @@
   "version": "1.0.0",
   "description": "Backend API for Mavo Fashion (Cloudflare Worker)",
   "scripts": {
-    "dev": "wrangler dev src/app.ts",
+    "dev": "wrangler dev src/app.ts --ip 0.0.0.0 --port 8080",
     "deploy": "wrangler deploy --minify src/app.ts",
     "db:create": "wrangler d1 create mavo-db",
     "db:setup": "wrangler d1 execute mavo-db --local --file=./schema.sql",
     "db:setup:prod": "wrangler d1 execute mavo-db --remote --file=./schema.sql",
     "db:update": "wrangler d1 execute mavo-db --local --file=./safe_migration.sql",
     "db:update:prod": "wrangler d1 execute mavo-db --remote --file=./safe_migration.sql",
-    "seed:locations": "node seed-locations.js"
+    "seed:locations": "node seed-locations.js local",
+    "seed:prod": "node seed-locations.js prod"
   },
   "dependencies": {
     "hono": "^4.1.0",

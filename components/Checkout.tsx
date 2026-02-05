@@ -4,9 +4,8 @@ import { CartItem } from '../types';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import { Spinner } from '../admin-app/components/ui/Icons';
 
-// Auto-detect API URL
-const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const API_BASE = isLocal ? 'http://localhost:8080/api' : 'https://mavo-fashion-api.mavo-web.workers.dev/api';
+// --- CONFIG API ---
+const API_BASE = 'https://mavo-fashion-api.mavo-web.workers.dev/api';
 
 // Simplified Types for API Response
 interface LocationItem {

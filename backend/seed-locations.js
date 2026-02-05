@@ -2,17 +2,25 @@
 const fs = require('fs');
 const path = require('path');
 
-// CẤU HÌNH
-const API_URL = 'http://localhost:8080/api/locations/import';
-// Đường dẫn tới file tree.json (Bạn có thể sửa lại nếu file nằm chỗ khác)
-// Mặc định đang tìm file tree.json nằm cùng cấp với thư mục backend hoặc trong backend
+// CẤU HÌNH URL
+const LOCAL_URL = 'http://127.0.0.1:8080/api/locations/import';
+const PROD_URL = 'https://mavo-fashion-api.mavo-web.workers.dev/api/locations/import';
+
+// Lấy tham số từ dòng lệnh (ví dụ: node seed-locations.js prod)
+const args = process.argv.slice(2);
+const mode = args[0] === 'prod' ? 'PRODUCTION' : 'LOCAL';
+const API_URL = mode === 'PRODUCTION' ? PROD_URL : LOCAL_URL;
+
 const FILE_PATHS = [
     path.join(__dirname, '../tree.json'),
     path.join(__dirname, 'tree.json'),
-    path.join(__dirname, '../dist/tree.json') // Đường dẫn trong lỗi của bạn
+    path.join(__dirname, '../dist/tree.json')
 ];
 
 async function importData() {
+    console.log(`🌍 Môi trường: ${mode}`);
+    console.log(`🔗 API Target: ${API_URL}`);
+
     let jsonPath = FILE_PATHS.find(p => fs.existsSync(p));
 
     if (!jsonPath) {
@@ -52,7 +60,11 @@ async function importData() {
 
     } catch (error) {
         console.error('❌ LỖI KẾT NỐI:', error.message);
-        console.log('Hãy chắc chắn rằng server đang chạy tại ' + API_URL);
+        if (mode === 'LOCAL') {
+            console.log('Hãy chắc chắn rằng server đang chạy (npm run dev).');
+        } else {
+            console.log('Hãy chắc chắn rằng bạn đã deploy server (npm run deploy).');
+        }
     }
 }
 
