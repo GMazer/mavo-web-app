@@ -4,7 +4,7 @@ import {
     CurrencyDollarIcon, ShoppingBagIcon, UserGroupIcon, ClipboardDocumentListIcon,
     ArrowTrendingUpIcon, ArrowTrendingDownIcon, EllipsisHorizontalIcon, CalendarIcon, BellIcon
 } from '../components/ui/Icons';
-import { formatCurrency } from '../../utils/helpers';
+import { formatCurrency } from '../utils/helpers';
 
 // Mock Data
 const STATS = [
