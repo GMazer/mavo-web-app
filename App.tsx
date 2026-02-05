@@ -11,8 +11,10 @@ import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
 
 type ViewState = 'home' | 'product' | 'checkout';
 
-// API URL
-const API_BASE = 'https://mavo-fashion-api.mavo-web.workers.dev/api';
+// Auto-detect API URL: Use localhost for development, production URL for deployment
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_BASE = isLocal ? 'http://localhost:8080/api' : 'https://mavo-fashion-api.mavo-web.workers.dev/api';
+
 const API_PRODUCTS = `${API_BASE}/products`;
 const API_SETTINGS = `${API_BASE}/settings`;
 const API_CATEGORIES = `${API_BASE}/categories`;

@@ -2,13 +2,15 @@
 import { Product, AppSettings, Category } from "../types";
 import { compressImage } from "../utils/helpers";
 
-const PROD_API_URL = 'https://mavo-fashion-api.mavo-web.workers.dev'; 
-const API_BASE = PROD_API_URL;
-const API_URL = `${API_BASE}/api/products`;
-const SETTINGS_URL = `${API_BASE}/api/settings`;
-const CATEGORIES_URL = `${API_BASE}/api/categories`;
-const UPLOAD_URL = `${API_BASE}/api/uploads/presign`;
-const ORDERS_URL = `${API_BASE}/api/orders`;
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_ROOT = isLocal ? 'http://localhost:8080' : 'https://mavo-fashion-api.mavo-web.workers.dev';
+const API_BASE = `${API_ROOT}/api`;
+
+const API_URL = `${API_BASE}/products`;
+const SETTINGS_URL = `${API_BASE}/settings`;
+const CATEGORIES_URL = `${API_BASE}/categories`;
+const UPLOAD_URL = `${API_BASE}/uploads/presign`;
+const ORDERS_URL = `${API_BASE}/orders`;
 
 // --- Products ---
 
