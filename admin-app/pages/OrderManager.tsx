@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { fetchOrdersApi, fetchProductsApi } from '../services/api'; // Added fetchProductsApi
+import { fetchOrdersApi, fetchProductsApi } from '../services/api'; 
 import { 
     Spinner, MagnifyingGlassIcon, CalendarIcon, FunnelIcon, 
     ArrowDownTrayIcon, PlusIcon, ShoppingBagIcon, ClockIcon, 
@@ -36,17 +36,9 @@ interface Order {
     items: OrderItem[];
 }
 
-// MAVO Logo SVG Component
-const MavoLogo = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" className="w-6 h-6">
-        <rect width="100" height="100" fill="black"/>
-        <text x="50%" y="50%" dominantBaseline="central" textAnchor="middle" fontFamily="sans-serif" fontWeight="900" fontSize="70" fill="white">M</text>
-    </svg>
-);
-
 const OrderManager: React.FC = () => {
     const [orders, setOrders] = useState<Order[]>([]);
-    const [products, setProducts] = useState<Product[]>([]); // Store products for creating order
+    const [products, setProducts] = useState<Product[]>([]); 
     const [loading, setLoading] = useState(false);
     
     // UI States
@@ -101,10 +93,13 @@ const OrderManager: React.FC = () => {
         
         let matchesDate = true;
         if (dateRange.start) {
-            matchesDate = matchesDate && new Date(order.createdAt) >= new Date(dateRange.start);
+            // Start of day
+            const startDate = new Date(dateRange.start);
+            startDate.setHours(0, 0, 0, 0);
+            matchesDate = matchesDate && new Date(order.createdAt) >= startDate;
         }
         if (dateRange.end) {
-            // End of the day
+            // End of day
             const endDate = new Date(dateRange.end);
             endDate.setHours(23, 59, 59, 999);
             matchesDate = matchesDate && new Date(order.createdAt) <= endDate;
@@ -123,7 +118,7 @@ const OrderManager: React.FC = () => {
     const handleExportCSV = () => {
         const headers = ["Mã đơn", "Khách hàng", "Số điện thoại", "Ngày đặt", "Tổng tiền", "Trạng thái", "Địa chỉ"];
         const rows = filteredOrders.map(o => [
-            `"${o.id}"`, // Escape ID to prevent scientific notation in Excel
+            `"${o.id}"`, 
             `"${o.customerName}"`,
             `"${o.customerPhone}"`,
             `"${new Date(o.createdAt).toLocaleDateString('vi-VN')}"`,
@@ -133,8 +128,6 @@ const OrderManager: React.FC = () => {
         ]);
 
         const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-        
-        // Add BOM (\uFEFF) for Excel to recognize UTF-8
         const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         const url = URL.createObjectURL(blob);
@@ -157,7 +150,6 @@ const OrderManager: React.FC = () => {
     };
 
     const handleSubmitNewOrder = async () => {
-        // Mock submission (In real app, call API)
         alert("Tính năng tạo đơn đang được cập nhật phía Backend API.");
         setIsCreateModalOpen(false);
     };
@@ -181,6 +173,13 @@ const OrderManager: React.FC = () => {
             default: return status;
         }
     };
+
+    // Format date for display in button
+    const formatDateDisplay = (dateStr: string) => {
+        if (!dateStr) return '';
+        const [year, month, day] = dateStr.split('-');
+        return `${day}/${month}/${year}`;
+    }
 
     return (
         <div className="space-y-8 animate-fade-in font-sans pb-20 relative">
@@ -210,7 +209,7 @@ const OrderManager: React.FC = () => {
                 </div>
             </div>
 
-            {/* Stats Cards */}
+            {/* Stats Cards - Updated Icon for Total Orders */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-start">
@@ -218,8 +217,8 @@ const OrderManager: React.FC = () => {
                             <p className="text-gray-500 text-sm font-medium">Tổng đơn hàng</p>
                             <h3 className="text-3xl font-bold text-gray-800 mt-2">{totalOrders.toLocaleString()}</h3>
                         </div>
-                        <div className="p-3 bg-black text-white rounded-lg">
-                            <MavoLogo />
+                        <div className="p-3 bg-indigo-50 text-indigo-600 rounded-lg">
+                            <ShoppingBagIcon />
                         </div>
                     </div>
                 </div>
@@ -261,55 +260,58 @@ const OrderManager: React.FC = () => {
             {/* Toolbar */}
             <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 z-10 relative">
                 <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto">
-                    {/* Date Picker Button */}
+                    {/* FIXED DATE PICKER UI */}
                     <div className="relative">
                         <button 
                             onClick={() => setShowDatePicker(!showDatePicker)}
-                            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 whitespace-nowrap"
+                            className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm whitespace-nowrap transition-colors ${
+                                (dateRange.start || dateRange.end) ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                            }`}
                         >
                             <CalendarIcon />
                             <span>
                                 {dateRange.start || dateRange.end 
-                                    ? `${dateRange.start} - ${dateRange.end}` 
+                                    ? `${formatDateDisplay(dateRange.start)} - ${formatDateDisplay(dateRange.end)}` 
                                     : 'Lọc theo ngày'
                                 }
                             </span>
                         </button>
                         
-                        {/* Date Picker Dropdown */}
+                        {/* Improved Date Picker Dropdown */}
                         {showDatePicker && (
-                            <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 shadow-lg rounded-lg p-4 w-72 z-20 animate-fade-in">
-                                <div className="space-y-3">
+                            <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 shadow-xl rounded-xl p-5 w-80 z-50 animate-fade-in">
+                                <h4 className="font-bold text-sm mb-3 text-gray-800">Chọn khoảng thời gian</h4>
+                                <div className="space-y-4">
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-500 mb-1">Từ ngày</label>
+                                        <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase">Từ ngày</label>
                                         <input 
                                             type="date" 
-                                            className="w-full border border-gray-300 rounded p-2 text-sm"
+                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-black focus:border-transparent outline-none cursor-pointer"
                                             value={dateRange.start}
                                             onChange={(e) => setDateRange({...dateRange, start: e.target.value})}
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-500 mb-1">Đến ngày</label>
+                                        <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase">Đến ngày</label>
                                         <input 
                                             type="date" 
-                                            className="w-full border border-gray-300 rounded p-2 text-sm"
+                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-black focus:border-transparent outline-none cursor-pointer"
                                             value={dateRange.end}
                                             onChange={(e) => setDateRange({...dateRange, end: e.target.value})}
                                         />
                                     </div>
-                                    <div className="flex justify-between pt-2">
+                                    <div className="flex justify-between items-center pt-2 border-t border-gray-100 mt-2">
                                         <button 
-                                            onClick={() => { setDateRange({start: '', end: ''}); setShowDatePicker(false); }}
-                                            className="text-xs text-red-500 hover:underline"
+                                            onClick={() => { setDateRange({start: '', end: ''}); }}
+                                            className="text-xs text-gray-500 hover:text-red-600 font-medium"
                                         >
-                                            Xóa lọc
+                                            Xóa bộ lọc
                                         </button>
                                         <button 
                                             onClick={() => setShowDatePicker(false)}
-                                            className="text-xs bg-black text-white px-3 py-1 rounded hover:bg-gray-800"
+                                            className="text-xs bg-black text-white px-4 py-2 rounded-lg font-bold hover:bg-gray-800 transition-colors"
                                         >
-                                            Đóng
+                                            Áp dụng
                                         </button>
                                     </div>
                                 </div>
