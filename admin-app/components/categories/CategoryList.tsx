@@ -35,7 +35,7 @@ const CategoryList: React.FC<CategoryListProps> = ({ categories, loading, onEdit
                             </th>
                             <th className="px-6 py-4">Tên danh mục</th>
                             <th className="px-6 py-4">Mô tả</th>
-                            <th className="px-6 py-4">Số sản phẩm</th>
+                            {/* Removed Product Count Column */}
                             <th className="px-6 py-4 text-center">Trạng thái</th>
                             <th className="px-6 py-4 text-center">Hành động</th>
                         </tr>
@@ -43,8 +43,6 @@ const CategoryList: React.FC<CategoryListProps> = ({ categories, loading, onEdit
                     <tbody className="divide-y divide-gray-100">
                         {currentCategories.map((cat, idx) => {
                             const colorClass = colors[idx % colors.length];
-                            // Mock product count (random)
-                            const productCount = Math.floor(Math.random() * 5000); 
                             const isVisible = cat.isVisible !== false; // Default true if undefined
 
                             return (
@@ -66,11 +64,7 @@ const CategoryList: React.FC<CategoryListProps> = ({ categories, loading, onEdit
                                     <td className="px-6 py-4">
                                         <p className="text-sm text-gray-500 line-clamp-1 max-w-xs">{cat.description || 'Chưa có mô tả'}</p>
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <span className="text-sm font-medium bg-gray-100 px-2.5 py-1 rounded-full text-gray-600">
-                                            {productCount.toLocaleString()}
-                                        </span>
-                                    </td>
+                                    {/* Removed Product Count Data Cell */}
                                     <td className="px-6 py-4 text-center">
                                          {/* Functional Active Switch */}
                                         <div 
@@ -111,7 +105,7 @@ const CategoryList: React.FC<CategoryListProps> = ({ categories, loading, onEdit
                         })}
                         {categories.length === 0 && (
                             <tr>
-                                <td colSpan={6} className="text-center py-12 text-gray-500">Chưa có danh mục nào.</td>
+                                <td colSpan={5} className="text-center py-12 text-gray-500">Chưa có danh mục nào.</td>
                             </tr>
                         )}
                     </tbody>
