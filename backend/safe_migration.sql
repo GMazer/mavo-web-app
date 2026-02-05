@@ -1,23 +1,30 @@
 
--- Chỉ tạo bảng Orders nếu chưa tồn tại
--- KHÔNG DROP các bảng Products, Categories, Settings cũ
-
-CREATE TABLE IF NOT EXISTS Orders (
-    id TEXT PRIMARY KEY,
-    customerName TEXT,
-    customerPhone TEXT,
-    customerEmail TEXT,
-    addressDetail TEXT,
-    city TEXT,
-    district TEXT,
-    ward TEXT,
-    note TEXT,
-    totalAmount INTEGER,
-    paymentMethod TEXT,
-    items TEXT, -- JSON Array of Cart Items
-    status TEXT DEFAULT 'pending', -- pending, processing, completed, cancelled
-    createdAt TEXT
+CREATE TABLE IF NOT EXISTS Provinces (
+    code TEXT PRIMARY KEY,
+    name TEXT,
+    name_with_type TEXT,
+    slug TEXT
 );
 
--- Index cho createdAt để query sort nhanh hơn
-CREATE INDEX IF NOT EXISTS idx_orders_createdAt ON Orders(createdAt);
+CREATE TABLE IF NOT EXISTS Districts (
+    code TEXT PRIMARY KEY,
+    parent_code TEXT,
+    name TEXT,
+    name_with_type TEXT,
+    slug TEXT,
+    path_with_type TEXT,
+    FOREIGN KEY(parent_code) REFERENCES Provinces(code)
+);
+
+CREATE TABLE IF NOT EXISTS Wards (
+    code TEXT PRIMARY KEY,
+    parent_code TEXT,
+    name TEXT,
+    name_with_type TEXT,
+    slug TEXT,
+    path_with_type TEXT,
+    FOREIGN KEY(parent_code) REFERENCES Districts(code)
+);
+
+CREATE INDEX IF NOT EXISTS idx_districts_parent ON Districts(parent_code);
+CREATE INDEX IF NOT EXISTS idx_wards_parent ON Wards(parent_code);

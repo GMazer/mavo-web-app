@@ -2,34 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import { CartItem } from '../types';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
+import { Spinner } from '../admin-app/components/ui/Icons';
 
 const API_BASE = 'https://mavo-fashion-api.mavo-web.workers.dev/api';
 
-// --- NEW TYPES for tree.json structure ---
-interface Ward {
+// Simplified Types for API Response
+interface LocationItem {
     code: string;
     name: string;
     name_with_type: string;
-    type: string;
-    slug: string;
-}
-
-interface District {
-    code: string;
-    name: string;
-    name_with_type: string;
-    type: string;
-    slug: string;
-    wards: Record<string, Ward>; // Object of Wards
-}
-
-interface Province {
-    code: string;
-    name: string;
-    name_with_type: string;
-    type: string;
-    slug: string;
-    districts: Record<string, District>; // Object of Districts
 }
 
 interface CheckoutProps {
@@ -41,26 +22,13 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, onPlaceOrder }) => {
   const [paymentMethod, setPaymentMethod] = useState<'bank' | 'cod'>('bank');
   const [submitting, setSubmitting] = useState(false);
   
-  // Locations State
-  const [locations, setLocations] = useState<Province[]>([]);
-
-  // Fetch locations from tree.json
-  useEffect(() => {
-      fetch('/tree.json')
-        .then(res => {
-            if(res.ok) return res.json();
-            console.warn("tree.json not found in root directory");
-            return {};
-        })
-        .then(data => {
-            // Convert the root Object of Provinces to an Array for easy mapping in the select box
-            const provinceArray = Object.values(data) as Province[];
-            // Optional: Sort by code or name
-            provinceArray.sort((a, b) => parseInt(a.code) - parseInt(b.code));
-            setLocations(provinceArray);
-        })
-        .catch(err => console.error("Failed to load locations", err));
-  }, []);
+  // --- Dynamic Location State ---
+  const [provinces, setProvinces] = useState<LocationItem[]>([]);
+  const [districts, setDistricts] = useState<LocationItem[]>([]);
+  const [wards, setWards] = useState<LocationItem[]>([]);
+  
+  const [loadingDistricts, setLoadingDistricts] = useState(false);
+  const [loadingWards, setLoadingWards] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -70,59 +38,90 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, onPlaceOrder }) => {
       email: '',
       addressDetail: '',
       city: '', 
+      cityCode: '',
       district: '',
+      districtCode: '',
       ward: '',
+      wardCode: '',
       note: ''
   });
 
-  // Location Selector State (Store full object to access nested children)
-  const [selectedCity, setSelectedCity] = useState<Province | null>(null);
-  const [selectedDistrict, setSelectedDistrict] = useState<District | null>(null);
-  
-  // Cascade Logic
-  const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const cityCode = e.target.value;
-      const city = locations.find(c => c.code === cityCode) || null;
+  // 1. Fetch Provinces on Mount
+  useEffect(() => {
+      fetch(`${API_BASE}/locations/provinces`)
+        .then(res => res.json())
+        .then(data => {
+            if (Array.isArray(data)) setProvinces(data);
+        })
+        .catch(err => console.error("Error fetching provinces:", err));
+  }, []);
+
+  // 2. Handle City Change -> Fetch Districts
+  const handleCityChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const code = e.target.value;
+      const city = provinces.find(p => p.code === code);
       
-      setSelectedCity(city);
-      setSelectedDistrict(null); // Reset district
-      
-      // Update form data with the Name, but keep reference for children
-      setFormData({ 
-          ...formData, 
-          city: city ? city.name_with_type : '', 
-          district: '', 
-          ward: '' 
-      });
+      setFormData(prev => ({
+          ...prev,
+          cityCode: code,
+          city: city ? city.name_with_type : '',
+          district: '', districtCode: '',
+          ward: '', wardCode: ''
+      }));
+      setDistricts([]);
+      setWards([]);
+
+      if (code) {
+          setLoadingDistricts(true);
+          try {
+              const res = await fetch(`${API_BASE}/locations/districts/${code}`);
+              const data = await res.json();
+              if (Array.isArray(data)) setDistricts(data);
+          } catch (err) {
+              console.error(err);
+          } finally {
+              setLoadingDistricts(false);
+          }
+      }
   };
 
-  const handleDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const districtCode = e.target.value;
-      
-      if (!selectedCity) return;
+  // 3. Handle District Change -> Fetch Wards
+  const handleDistrictChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const code = e.target.value;
+      const district = districts.find(d => d.code === code);
 
-      // Access district from the selectedCity's object map
-      const district = selectedCity.districts[districtCode] || null;
-      
-      setSelectedDistrict(district);
-      
-      setFormData({ 
-          ...formData, 
-          district: district ? district.name_with_type : '', 
-          ward: '' 
-      });
+      setFormData(prev => ({
+          ...prev,
+          districtCode: code,
+          district: district ? district.name_with_type : '',
+          ward: '', wardCode: ''
+      }));
+      setWards([]);
+
+      if (code) {
+          setLoadingWards(true);
+          try {
+              const res = await fetch(`${API_BASE}/locations/wards/${code}`);
+              const data = await res.json();
+              if (Array.isArray(data)) setWards(data);
+          } catch (err) {
+              console.error(err);
+          } finally {
+              setLoadingWards(false);
+          }
+      }
   };
 
+  // 4. Handle Ward Change
   const handleWardChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const wardCode = e.target.value;
-      if (!selectedDistrict) return;
-
-      const ward = selectedDistrict.wards[wardCode] || null;
-
-      setFormData({
-          ...formData,
+      const code = e.target.value;
+      const ward = wards.find(w => w.code === code);
+      
+      setFormData(prev => ({
+          ...prev,
+          wardCode: code,
           ward: ward ? ward.name_with_type : ''
-      });
+      }));
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -228,54 +227,54 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, onPlaceOrder }) => {
                     </div>
                 </div>
 
-                {/* --- LOCATION SELECTORS (UPDATED) --- */}
+                {/* --- LOCATION SELECTORS (DB POWERED) --- */}
                 <div>
                     <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Tỉnh / Thành phố *</label>
                     <select 
-                        name="city" 
-                        // We use the Code to track selection, but store Name in formData
-                        value={selectedCity?.code || ''}
+                        name="cityCode" 
+                        value={formData.cityCode}
                         onChange={handleCityChange} 
                         className="w-full h-12 border border-gray-200 bg-[#f9f9f9] px-4 text-sm outline-none focus:border-black rounded-none transition-colors"
                     >
                         <option value="">Chọn Tỉnh / Thành phố...</option>
-                        {locations.map(loc => (
+                        {provinces.map(loc => (
                             <option key={loc.code} value={loc.code}>{loc.name_with_type}</option>
                         ))}
                     </select>
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-6">
-                     <div className="flex-1">
+                     <div className="flex-1 relative">
                         <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Quận / Huyện *</label>
                         <select 
-                            name="district" 
-                            value={selectedDistrict?.code || ''}
+                            name="districtCode" 
+                            value={formData.districtCode}
                             onChange={handleDistrictChange} 
-                            disabled={!selectedCity}
-                            className="w-full h-12 border border-gray-200 bg-[#f9f9f9] px-4 text-sm outline-none focus:border-black rounded-none transition-colors disabled:bg-gray-100"
+                            disabled={!formData.cityCode || loadingDistricts}
+                            className="w-full h-12 border border-gray-200 bg-[#f9f9f9] px-4 text-sm outline-none focus:border-black rounded-none transition-colors disabled:bg-gray-100 disabled:text-gray-400"
                         >
-                            <option value="">Chọn Quận / Huyện...</option>
-                            {selectedCity && Object.values(selectedCity.districts).map(d => (
+                            <option value="">{loadingDistricts ? 'Đang tải...' : 'Chọn Quận / Huyện...'}</option>
+                            {districts.map(d => (
                                 <option key={d.code} value={d.code}>{d.name_with_type}</option>
                             ))}
                         </select>
+                        {loadingDistricts && <div className="absolute right-3 top-[38px]"><Spinner /></div>}
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 relative">
                         <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Phường / Xã *</label>
                         <select 
-                            name="ward" 
-                            // Check via name_with_type in formData, but ideally use code if refactoring state fully
-                            // Here we just trigger change to save the name
+                            name="wardCode" 
+                            value={formData.wardCode}
                             onChange={handleWardChange}
-                            disabled={!selectedDistrict}
-                            className="w-full h-12 border border-gray-200 bg-[#f9f9f9] px-4 text-sm outline-none focus:border-black rounded-none transition-colors disabled:bg-gray-100"
+                            disabled={!formData.districtCode || loadingWards}
+                            className="w-full h-12 border border-gray-200 bg-[#f9f9f9] px-4 text-sm outline-none focus:border-black rounded-none transition-colors disabled:bg-gray-100 disabled:text-gray-400"
                         >
-                            <option value="">Chọn Phường / Xã...</option>
-                            {selectedDistrict && Object.values(selectedDistrict.wards).map(w => (
+                            <option value="">{loadingWards ? 'Đang tải...' : 'Chọn Phường / Xã...'}</option>
+                            {wards.map(w => (
                                 <option key={w.code} value={w.code}>{w.name_with_type}</option>
                             ))}
                         </select>
+                        {loadingWards && <div className="absolute right-3 top-[38px]"><Spinner /></div>}
                     </div>
                 </div>
 
