@@ -12,7 +12,8 @@ CREATE TABLE Categories (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     slug TEXT UNIQUE,
-    description TEXT
+    description TEXT,
+    isVisible INTEGER DEFAULT 1 -- Added isVisible column
 );
 
 CREATE TABLE Products (
@@ -31,7 +32,7 @@ CREATE TABLE Products (
     gender TEXT, 
     isVisible INTEGER DEFAULT 1, 
     customSizeGuide TEXT,
-    stock INTEGER DEFAULT 100 -- Added stock column
+    stock INTEGER DEFAULT 100
 );
 
 CREATE TABLE Reviews (
@@ -99,14 +100,14 @@ CREATE INDEX idx_districts_parent ON Districts(parent_code);
 CREATE INDEX idx_wards_parent ON Wards(parent_code);
 
 -- SEED DATA CATEGORIES
-INSERT INTO Categories (id, name, slug, description) VALUES
-('c1', 'Váy đầm', 'vay-dam', 'Các mẫu váy đầm thời thượng'),
-('c2', 'Áo', 'ao', 'Áo sơ mi, áo kiểu, áo thun'),
-('c3', 'Quần', 'quan', 'Quần tây, quần jeans, quần short'),
-('c4', 'Chân váy', 'chan-vay', 'Chân váy ngắn, dài, xếp ly'),
-('c5', 'Set', 'set', 'Set bộ phối sẵn'),
-('c6', 'Jumpsuits', 'jumpsuits', 'Đồ bay, áo liền quần'),
-('c7', 'Áo khoác', 'ao-khoac', 'Blazer, Vest, áo khoác ngoài');
+INSERT INTO Categories (id, name, slug, description, isVisible) VALUES
+('c1', 'Váy đầm', 'vay-dam', 'Các mẫu váy đầm thời thượng', 1),
+('c2', 'Áo', 'ao', 'Áo sơ mi, áo kiểu, áo thun', 1),
+('c3', 'Quần', 'quan', 'Quần tây, quần jeans, quần short', 1),
+('c4', 'Chân váy', 'chan-vay', 'Chân váy ngắn, dài, xếp ly', 1),
+('c5', 'Set', 'set', 'Set bộ phối sẵn', 1),
+('c6', 'Jumpsuits', 'jumpsuits', 'Đồ bay, áo liền quần', 1),
+('c7', 'Áo khoác', 'ao-khoac', 'Blazer, Vest, áo khoác ngoài', 1);
 
 -- SEED DATA PRODUCTS (Updated with Stock)
 INSERT INTO Products (id, slug, name, sku, price, originalPrice, category, images, colors, description, highlights, material, gender, isVisible, customSizeGuide, stock) VALUES 

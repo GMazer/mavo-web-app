@@ -37,6 +37,7 @@ export interface Category {
     name: string;
     slug: string;
     description?: string;
+    isVisible?: boolean; // Added isVisible field
 }
 
 export interface DragState {

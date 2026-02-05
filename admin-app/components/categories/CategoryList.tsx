@@ -8,9 +8,10 @@ interface CategoryListProps {
     loading: boolean;
     onEdit: (cat: Category) => void;
     onDelete: (cat: Category) => void;
+    onToggleStatus: (cat: Category) => void;
 }
 
-const CategoryList: React.FC<CategoryListProps> = ({ categories, loading, onEdit, onDelete }) => {
+const CategoryList: React.FC<CategoryListProps> = ({ categories, loading, onEdit, onDelete, onToggleStatus }) => {
     // Pagination (Client side for now)
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 8;
@@ -44,6 +45,7 @@ const CategoryList: React.FC<CategoryListProps> = ({ categories, loading, onEdit
                             const colorClass = colors[idx % colors.length];
                             // Mock product count (random)
                             const productCount = Math.floor(Math.random() * 5000); 
+                            const isVisible = cat.isVisible !== false; // Default true if undefined
 
                             return (
                                 <tr key={cat.id} className="hover:bg-gray-50 transition-colors group">
@@ -70,10 +72,28 @@ const CategoryList: React.FC<CategoryListProps> = ({ categories, loading, onEdit
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-center">
-                                         {/* Mock Active Switch */}
-                                        <div className="relative inline-block w-9 h-5 align-middle select-none transition duration-200 ease-in">
-                                            <input type="checkbox" name="toggle" id={`toggle-${cat.id}`} className="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer" defaultChecked={true} style={{right: 0, borderColor: '#2563EB'}}/>
-                                            <label htmlFor={`toggle-${cat.id}`} className="toggle-label block overflow-hidden h-5 rounded-full bg-blue-600 cursor-pointer"></label>
+                                         {/* Functional Active Switch */}
+                                        <div 
+                                            onClick={() => onToggleStatus(cat)}
+                                            className="relative inline-block w-9 h-5 align-middle select-none transition duration-200 ease-in cursor-pointer"
+                                        >
+                                            <input 
+                                                type="checkbox" 
+                                                name={`toggle-${cat.id}`} 
+                                                id={`toggle-${cat.id}`} 
+                                                className="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer" 
+                                                checked={isVisible}
+                                                readOnly
+                                                style={{
+                                                    right: isVisible ? 0 : 'auto', 
+                                                    left: isVisible ? 'auto' : 0,
+                                                    borderColor: isVisible ? '#2563EB' : '#D1D5DB'
+                                                }}
+                                            />
+                                            <label 
+                                                htmlFor={`toggle-${cat.id}`} 
+                                                className={`toggle-label block overflow-hidden h-5 rounded-full cursor-pointer transition-colors ${isVisible ? 'bg-blue-600' : 'bg-gray-300'}`}
+                                            ></label>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-center">

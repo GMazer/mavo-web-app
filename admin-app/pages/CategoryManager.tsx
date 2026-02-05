@@ -54,6 +54,23 @@ const CategoryManager: React.FC = () => {
         }
     };
 
+    const handleToggleStatus = async (cat: Category) => {
+        const newStatus = !(cat.isVisible !== false);
+        const updatedCat = { ...cat, isVisible: newStatus };
+        
+        // Optimistic Update
+        setCategories(prev => prev.map(c => c.id === cat.id ? updatedCat : c));
+
+        try {
+            await saveCategoryApi(updatedCat);
+        } catch (error) {
+            console.error("Failed to toggle status", error);
+            alert("Lỗi khi cập nhật trạng thái.");
+            // Revert
+            setCategories(prev => prev.map(c => c.id === cat.id ? cat : c));
+        }
+    };
+
     // Filter Logic
     const filteredCategories = categories.filter(c => 
         c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -62,9 +79,7 @@ const CategoryManager: React.FC = () => {
 
     // Stats
     const totalCategories = categories.length;
-    // Mocking active count as we don't have is_active in DB yet
-    const activeCategories = categories.length; 
-    // Mocking most popular
+    const activeCategories = categories.filter(c => c.isVisible !== false).length; 
     const popularCategory = categories.length > 0 ? categories[0].name : 'N/A';
 
     return (
@@ -84,7 +99,7 @@ const CategoryManager: React.FC = () => {
                     <div>
                         <p className="text-gray-500 text-sm font-medium">Đang hoạt động</p>
                         <h3 className="text-3xl font-bold text-gray-800 mt-2">{activeCategories}</h3>
-                        <span className="text-green-500 text-xs font-bold mt-1 inline-block">0 Ngừng hoạt động</span>
+                        <span className="text-green-500 text-xs font-bold mt-1 inline-block">{totalCategories - activeCategories} Ngừng hoạt động</span>
                     </div>
                     <div className="p-3 bg-green-50 text-green-600 rounded-lg"><CheckBadgeIcon /></div>
                 </div>
@@ -139,6 +154,7 @@ const CategoryManager: React.FC = () => {
                     loading={loading}
                     onEdit={(cat) => { setEditingCategory(cat); setIsFormOpen(true); }}
                     onDelete={handleDelete}
+                    onToggleStatus={handleToggleStatus}
                 />
             </div>
 

@@ -11,7 +11,7 @@ interface CategoryFormProps {
 
 const CategoryForm: React.FC<CategoryFormProps> = ({ initialData, onClose, onSave }) => {
     const [formData, setFormData] = useState<Category>(
-        initialData || { id: '', name: '', slug: '', description: '' }
+        initialData || { id: '', name: '', slug: '', description: '', isVisible: true }
     );
     const [saving, setSaving] = useState(false);
 
@@ -71,6 +71,19 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ initialData, onClose, onSav
                             value={formData.description || ''}
                             onChange={e => setFormData({...formData, description: e.target.value})}
                         />
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <input 
+                            type="checkbox" 
+                            id="isVisible"
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            checked={formData.isVisible !== false}
+                            onChange={e => setFormData({...formData, isVisible: e.target.checked})}
+                        />
+                        <label htmlFor="isVisible" className="text-sm font-medium text-gray-700 select-none">
+                            Hiển thị danh mục này trên web
+                        </label>
                     </div>
 
                     <div className="flex items-center gap-3 pt-4 border-t border-gray-100 mt-2">
