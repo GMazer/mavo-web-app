@@ -38,9 +38,10 @@ const App: React.FC = () => {
       returnPolicyDefault: ''
   });
 
-  // Navigation State
+  // Navigation & Filter State
   const [currentView, setCurrentView] = useState<ViewState>('home');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
   // FETCH DATA FROM SERVER
   useEffect(() => {
@@ -163,6 +164,11 @@ const App: React.FC = () => {
     goHome();
   };
 
+  // --- FILTER LOGIC ---
+  const filteredProducts = selectedCategory === 'All' 
+    ? products 
+    : products.filter(p => p.category === selectedCategory);
+
   // Calculate total count for header badge
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -231,6 +237,12 @@ const App: React.FC = () => {
                 <>
                     <span className="mx-2 text-gray-300">/</span>
                     <span className="text-black">Quần áo</span>
+                    {selectedCategory !== 'All' && (
+                        <>
+                            <span className="mx-2 text-gray-300">/</span>
+                            <span className="text-black font-medium">{selectedCategory}</span>
+                        </>
+                    )}
                 </>
             )}
         </p>
@@ -269,11 +281,24 @@ const App: React.FC = () => {
                             <div className="w-full border-t border-gray-200 mb-4"></div>
                             
                             <ul className="space-y-3 pl-1">
+                                {/* "All" Option */}
+                                <li>
+                                    <button 
+                                        onClick={() => setSelectedCategory('All')}
+                                        className={`text-sm text-left w-full transition-colors block py-0.5 ${selectedCategory === 'All' ? 'font-bold text-black' : 'text-gray-600 hover:text-black'}`}
+                                    >
+                                        Tất cả sản phẩm
+                                    </button>
+                                </li>
+                                {/* Dynamic Categories */}
                                 {displayCategories.map((cat, idx) => (
                                     <li key={idx}>
-                                        <a href="#" className="text-sm text-gray-600 hover:text-black transition-colors block py-0.5">
+                                        <button 
+                                            onClick={() => setSelectedCategory(cat)}
+                                            className={`text-sm text-left w-full transition-colors block py-0.5 ${selectedCategory === cat ? 'font-bold text-black' : 'text-gray-600 hover:text-black'}`}
+                                        >
                                             {cat}
-                                        </a>
+                                        </button>
                                     </li>
                                 ))}
                             </ul>
@@ -283,16 +308,24 @@ const App: React.FC = () => {
                     {/* Product Grid Content */}
                     <div className="flex-1">
                         <div className="mb-3">
-                            <h1 className="text-[26px] uppercase font-normal tracking-wide">QUẦN ÁO</h1>
+                            <h1 className="text-[26px] uppercase font-normal tracking-wide">
+                                {selectedCategory === 'All' ? 'QUẦN ÁO' : selectedCategory}
+                            </h1>
                         </div>
 
-                        {products.length === 0 ? (
-                            <div className="py-20 text-center text-gray-500">
-                                Không tìm thấy sản phẩm nào.
+                        {filteredProducts.length === 0 ? (
+                            <div className="py-20 text-center flex flex-col items-center">
+                                <p className="text-gray-500 text-lg mb-2">Chưa có sản phẩm nào trong danh mục này.</p>
+                                <button 
+                                    onClick={() => setSelectedCategory('All')}
+                                    className="text-sm font-bold underline hover:text-gray-700"
+                                >
+                                    Xem tất cả sản phẩm
+                                </button>
                             </div>
                         ) : (
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-12">
-                                {products.map(product => (
+                                {filteredProducts.map(product => (
                                     <ProductCard 
                                         key={product.id} 
                                         product={product} 
@@ -303,12 +336,14 @@ const App: React.FC = () => {
                             </div>
                         )}
                         
-                        {/* Pagination */}
-                        <div className="mt-20 flex justify-center gap-2">
-                            <span className="w-8 h-8 flex items-center justify-center bg-black text-white text-sm rounded-full">1</span>
-                            <span className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 text-gray-600 text-sm rounded-full cursor-pointer">2</span>
-                            <span className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 text-gray-600 text-sm rounded-full cursor-pointer"><ChevronRightIcon className="w-3 h-3" /></span>
-                        </div>
+                        {/* Pagination (Only show if there are products) */}
+                        {filteredProducts.length > 0 && (
+                            <div className="mt-20 flex justify-center gap-2">
+                                <span className="w-8 h-8 flex items-center justify-center bg-black text-white text-sm rounded-full">1</span>
+                                <span className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 text-gray-600 text-sm rounded-full cursor-pointer">2</span>
+                                <span className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 text-gray-600 text-sm rounded-full cursor-pointer"><ChevronRightIcon className="w-3 h-3" /></span>
+                            </div>
+                        )}
                     </div>
                 </div>
              </div>
