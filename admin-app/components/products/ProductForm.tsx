@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Product, Category, ProductColor } from '../../types';
 import { Spinner, UploadIcon, TrashIcon } from '../ui/Icons';
@@ -106,7 +105,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialProduct, onCancel, onS
         if (!e.target.files || e.target.files.length === 0) return;
         setUploadingSize(true);
         try {
-            const files = Array.from(e.target.files);
+            const files = Array.from(e.target.files) as File[];
             const urls = await uploadImagesApi(files);
             if (urls.length > 0) {
                 handleChange('customSizeGuide', urls[0]);

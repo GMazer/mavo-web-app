@@ -65,7 +65,7 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
         
         setUploading(true);
         try {
-            const files = Array.from(e.target.files);
+            const files = Array.from(e.target.files) as File[];
             const uploadedUrls = await uploadImagesApi(files);
             onImagesChange([...images, ...uploadedUrls]);
         } catch (err) {

@@ -6,9 +6,10 @@ interface HeaderProps {
   cartCount: number;
   onOpenCart: () => void;
   onLogoClick: () => void;
+  onSearchClick: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ cartCount, onOpenCart, onLogoClick }) => {
+const Header: React.FC<HeaderProps> = ({ cartCount, onOpenCart, onLogoClick, onSearchClick }) => {
   // Base style for nav links
   const navLinkBase = "relative py-2 transition-colors duration-300 inline-block";
   
@@ -48,7 +49,11 @@ const Header: React.FC<HeaderProps> = ({ cartCount, onOpenCart, onLogoClick }) =
 
           {/* Icons & Actions - Aligned Right */}
           <div className="flex items-center gap-6 ml-auto">
-            <button className="text-black hover:opacity-70 transition-opacity">
+            <button 
+                className="text-black hover:opacity-70 transition-opacity"
+                onClick={onSearchClick}
+                title="Tìm kiếm"
+            >
               <MagnifyingGlassIcon className="w-5 h-5" />
             </button>
             
@@ -56,6 +61,7 @@ const Header: React.FC<HeaderProps> = ({ cartCount, onOpenCart, onLogoClick }) =
             <button 
                 className="text-black hover:opacity-70 transition-opacity relative flex items-center"
                 onClick={onOpenCart}
+                title="Giỏ hàng"
             >
               <ShoppingBagIcon className="w-5 h-5" />
               {cartCount > 0 && (

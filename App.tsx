@@ -6,6 +6,7 @@ import ProductDetail from './components/ProductDetail';
 import Footer from './components/Footer';
 import CartSidebar from './components/CartSidebar';
 import Checkout from './components/Checkout';
+import SearchOverlay from './components/SearchOverlay';
 import { Product, CartItem, AppSettings, Category } from './types';
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
 
@@ -22,6 +23,7 @@ const API_CATEGORIES = `${API_BASE}/categories`;
 const App: React.FC = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   
   // Data State
   const [products, setProducts] = useState<Product[]>([]);
@@ -185,8 +187,10 @@ const App: React.FC = () => {
         cartCount={totalItems} 
         onOpenCart={() => setIsCartOpen(true)}
         onLogoClick={goHome}
+        onSearchClick={() => setIsSearchOpen(true)}
       />
 
+      {/* Overlays */}
       <CartSidebar 
         isOpen={isCartOpen} 
         onClose={() => setIsCartOpen(false)}
@@ -194,6 +198,14 @@ const App: React.FC = () => {
         onRemoveItem={removeFromCart}
         onUpdateQuantity={updateQuantity}
         onCheckout={handleGoToCheckout}
+      />
+
+      <SearchOverlay 
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        products={products}
+        onProductClick={handleProductClick}
+        onAddToCart={(p) => addToCart(p, 1, 'M')}
       />
 
       {/* Breadcrumb */}

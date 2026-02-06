@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { fetchSettingsApi, saveSettingsApi, uploadImagesApi } from '../services/api';
 import { AppSettings } from '../types';
@@ -58,7 +57,7 @@ const Settings: React.FC = () => {
         if (!e.target.files || e.target.files.length === 0) return;
         setLoadingState(true);
         try {
-            const files = Array.from(e.target.files);
+            const files = Array.from(e.target.files) as File[];
             const urls = await uploadImagesApi(files);
             if (urls.length > 0) {
                 handleChange(key, urls[0]);

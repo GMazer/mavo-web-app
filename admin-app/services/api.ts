@@ -148,6 +148,7 @@ export const uploadImagesApi = async (files: File[]): Promise<string[]> => {
     await Promise.all(files.map(async (originalFile) => {
         const compressedFile = await compressImage(originalFile);
 
+        // 1. Get Presigned URL
         const presignRes = await fetch(UPLOAD_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -157,16 +158,30 @@ export const uploadImagesApi = async (files: File[]): Promise<string[]> => {
             })
         });
 
-        if (!presignRes.ok) throw new Error(`Failed to get URL for ${originalFile.name}`);
+        if (!presignRes.ok) throw new Error(`Failed to get upload URL for ${originalFile.name}`);
         const { uploadUrl, publicUrl } = await presignRes.json();
 
-        const uploadRes = await fetch(uploadUrl, {
-            method: 'PUT',
-            headers: { 'Content-Type': compressedFile.type },
-            body: compressedFile
-        });
+        // 2. Upload to R2 via Presigned URL
+        try {
+            const uploadRes = await fetch(uploadUrl, {
+                method: 'PUT',
+                headers: { 'Content-Type': compressedFile.type },
+                body: compressedFile
+            });
 
-        if (!uploadRes.ok) throw new Error(`Failed to upload ${originalFile.name}`);
+            if (!uploadRes.ok) {
+                throw new Error(`Upload failed with status: ${uploadRes.status}`);
+            }
+        } catch (error: any) {
+            // Detect CORS error
+            if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+                console.error("⛔ CÓ LỖI CORS KHI UPLOAD ⛔");
+                console.error("Bạn cần cập nhật cấu hình CORS cho R2 Bucket để cho phép origin:", window.location.origin);
+                console.error("Chạy lệnh: npx wrangler r2 bucket cors set mavo-assets --file cors.json");
+            }
+            throw error;
+        }
+
         uploadedUrls.push(publicUrl);
     }));
 

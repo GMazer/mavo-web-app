@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { fetchOrdersApi, fetchProductsApi, updateOrderStatusApi, updateOrderStatusesApi } from '../services/api'; 
 import { Product, Order } from '../types';
@@ -115,7 +114,7 @@ const OrderManager: React.FC = () => {
 
         setIsBulkUpdating(true);
         try {
-            const ids = Array.from(selectedOrderIds);
+            const ids = Array.from(selectedOrderIds) as string[];
             await updateOrderStatusesApi(ids, bulkStatus);
             
             // Optimistic Update

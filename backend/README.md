@@ -1,3 +1,4 @@
+
 # Backend API - Mavo Fashion
 
 ## Structure
@@ -53,6 +54,7 @@ Trước khi upload ảnh hoạt động, bạn cần cấu hình R2 theo các b
         ```bash
         npx wrangler r2 bucket cors set mavo-assets --file cors.json
         ```
+    *   **Lưu ý**: Nếu bạn chạy frontend ở port khác (ví dụ 5173, 3000), hãy đảm bảo port đó có trong file `cors.json` và chạy lại lệnh trên.
 
 ## Endpoints
 
