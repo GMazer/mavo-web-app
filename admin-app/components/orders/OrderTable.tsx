@@ -1,11 +1,12 @@
 
 import React from 'react';
-import { Order } from '../../types';
+import { Order, Product } from '../../types';
 import { formatCurrency } from '../../utils/helpers';
 import { Spinner, ChevronLeftIcon, ChevronRightIcon } from '../ui/Icons';
 
 interface OrderTableProps {
     orders: Order[];
+    products: Product[];
     totalOrders: number;
     loading: boolean;
     selectedOrderIds: Set<string>;
@@ -16,6 +17,7 @@ interface OrderTableProps {
 
 const OrderTable: React.FC<OrderTableProps> = ({
     orders,
+    products,
     totalOrders,
     loading,
     selectedOrderIds,
@@ -74,8 +76,16 @@ const OrderTable: React.FC<OrderTableProps> = ({
                         <tbody className="divide-y divide-gray-100">
                             {orders.map((order) => {
                                 const firstItem = order.items[0]; 
-                                const productImage = 'https://images.unsplash.com/photo-1552874869-5c39ec9288dc?q=80&w=100&auto=format&fit=crop'; 
                                 const isSelected = selectedOrderIds.has(order.id);
+                                
+                                // Determine Product Image
+                                let productImage = 'https://via.placeholder.com/100x100?text=No+Img';
+                                if (firstItem) {
+                                    const matchedProduct = products.find(p => p.id === firstItem.id);
+                                    if (matchedProduct) {
+                                        productImage = matchedProduct.thumbnailUrl || (matchedProduct.images && matchedProduct.images[0]) || productImage;
+                                    }
+                                }
 
                                 return (
                                     <tr 

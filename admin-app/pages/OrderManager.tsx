@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { fetchOrdersApi, fetchProductsApi, updateOrderStatusApi, updateOrderStatusesApi } from '../services/api'; 
 import { Product, Order } from '../types';
@@ -207,6 +208,7 @@ const OrderManager: React.FC = () => {
 
             <OrderTable 
                 orders={filteredOrders}
+                products={products}
                 totalOrders={orders.length}
                 loading={loading}
                 selectedOrderIds={selectedOrderIds}
