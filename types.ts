@@ -32,7 +32,12 @@ export interface AppSettings {
   zalo: string;
   sizeGuideDefault: string;
   careGuideDefault: string;
-  returnPolicyDefault: string; // New field
+  returnPolicyDefault: string;
+  // Social Media Links
+  facebook?: string;
+  instagram?: string;
+  youtube?: string;
+  tiktok?: string;
 }
 
 export interface Category {

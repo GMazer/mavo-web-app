@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { fetchSettingsApi, saveSettingsApi, uploadImagesApi } from '../services/api';
 import { AppSettings } from '../types';
@@ -11,7 +12,11 @@ const Settings: React.FC = () => {
         sizeGuideDefault: '',
         careGuideDefault: '',
         returnPolicyDefault: '',
-        googleSheetWebhookUrl: ''
+        googleSheetWebhookUrl: '',
+        facebook: '',
+        instagram: '',
+        youtube: '',
+        tiktok: ''
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -104,6 +109,53 @@ const Settings: React.FC = () => {
                             className="w-full border border-gray-300 rounded p-2"
                             value={settings.zalo}
                             onChange={(e) => handleChange('zalo', e.target.value)}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Social Media */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <h3 className="text-lg font-bold mb-4 border-b pb-2">Mạng xã hội</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Facebook URL</label>
+                        <input 
+                            type="text" 
+                            className="w-full border border-gray-300 rounded p-2 text-sm"
+                            value={settings.facebook || ''}
+                            onChange={(e) => handleChange('facebook', e.target.value)}
+                            placeholder="https://facebook.com/..."
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Instagram URL</label>
+                        <input 
+                            type="text" 
+                            className="w-full border border-gray-300 rounded p-2 text-sm"
+                            value={settings.instagram || ''}
+                            onChange={(e) => handleChange('instagram', e.target.value)}
+                            placeholder="https://instagram.com/..."
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">YouTube URL</label>
+                        <input 
+                            type="text" 
+                            className="w-full border border-gray-300 rounded p-2 text-sm"
+                            value={settings.youtube || ''}
+                            onChange={(e) => handleChange('youtube', e.target.value)}
+                            placeholder="https://youtube.com/..."
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">TikTok URL</label>
+                        <input 
+                            type="text" 
+                            className="w-full border border-gray-300 rounded p-2 text-sm"
+                            value={settings.tiktok || ''}
+                            onChange={(e) => handleChange('tiktok', e.target.value)}
+                            placeholder="https://tiktok.com/..."
                         />
                     </div>
                 </div>
