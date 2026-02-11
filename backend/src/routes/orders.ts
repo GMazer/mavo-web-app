@@ -24,6 +24,7 @@ app.post('/', async (c) => {
 
         const itemsJson = JSON.stringify(items);
 
+        // 1. Save Order to Database
         await c.env.DB.prepare(`
             INSERT INTO Orders (
                 id, customerName, customerPhone, customerEmail, 
@@ -35,6 +36,44 @@ app.post('/', async (c) => {
             addressDetail || '', city, district, ward, note || '',
             totalAmount, paymentMethod, itemsJson, createdAt
         ).run();
+
+        // 2. Integration: Send to Google Sheet (if configured)
+        try {
+            // Fetch Webhook URL from Settings table
+            const settingRow = await c.env.DB.prepare("SELECT value FROM Settings WHERE key = 'googleSheetWebhookUrl'").first() as { value: string } | null;
+            const webhookUrl = settingRow?.value;
+
+            if (webhookUrl && webhookUrl.startsWith('https://')) {
+                // Construct human-readable item list
+                const itemsSummary = items.map((i: any) => 
+                    `${i.name} (${i.size}/${i.color}) x${i.quantity}`
+                ).join(', ');
+
+                // Payload for Google Apps Script
+                const sheetPayload = {
+                    date: new Date(createdAt).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }),
+                    orderId: id,
+                    customerName,
+                    customerPhone,
+                    address: `${addressDetail}, ${ward}, ${district}, ${city}`,
+                    products: itemsSummary,
+                    amount: totalAmount,
+                    payment: paymentMethod,
+                    note: note || '',
+                    status: 'Chờ xử lý'
+                };
+
+                // Fire and forget (don't block the response significantly, but wait for fetch)
+                await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(sheetPayload)
+                });
+            }
+        } catch (sheetError) {
+            // Log error but don't fail the order creation response
+            console.error("Failed to send to Google Sheet:", sheetError);
+        }
 
         return c.json({ success: true, orderId: id }, 201);
     } catch (e: any) {

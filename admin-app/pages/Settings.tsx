@@ -10,7 +10,8 @@ const Settings: React.FC = () => {
         zalo: '',
         sizeGuideDefault: '',
         careGuideDefault: '',
-        returnPolicyDefault: ''
+        returnPolicyDefault: '',
+        googleSheetWebhookUrl: ''
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -104,6 +105,31 @@ const Settings: React.FC = () => {
                             value={settings.zalo}
                             onChange={(e) => handleChange('zalo', e.target.value)}
                         />
+                    </div>
+                </div>
+            </div>
+
+            {/* Integration */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div className="flex items-center gap-2 mb-4 border-b pb-2">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Google_Sheets_logo_%282014-2020%29.svg/800px-Google_Sheets_logo_%282014-2020%29.svg.png" className="w-6 h-auto" alt="Sheets" />
+                    <h3 className="text-lg font-bold">Kết nối Google Sheets</h3>
+                </div>
+                
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Google Apps Script Webhook URL</label>
+                        <input 
+                            type="text" 
+                            className="w-full border border-gray-300 rounded p-2 text-sm text-gray-600"
+                            value={settings.googleSheetWebhookUrl || ''}
+                            onChange={(e) => handleChange('googleSheetWebhookUrl', e.target.value)}
+                            placeholder="https://script.google.com/macros/s/..."
+                        />
+                        <p className="text-xs text-gray-500 mt-2">
+                            Dán URL Webhook từ Google Apps Script để tự động lưu đơn hàng mới vào file Excel online. 
+                            <a href="#" className="text-blue-600 underline ml-1" onClick={(e) => { e.preventDefault(); alert('Xem file GOOGLE_SHEET_SETUP.md trong source code để biết cách tạo script.'); }}>Xem hướng dẫn</a>
+                        </p>
                     </div>
                 </div>
             </div>

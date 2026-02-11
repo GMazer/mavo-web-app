@@ -172,8 +172,10 @@ const App: React.FC = () => {
   // Calculate total count for header badge
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  // Fallback categories if fetch fails, but preferred from DB
-  const displayCategories = categories.length > 0 ? categories.map(c => c.name) : ["Váy đầm", "Áo", "Quần", "Chân váy", "Set", "Jumpsuits", "Áo khoác"];
+  // Categories for Sidebar: Use DB categories if available and VISIBLE, else fallback
+  const displayCategories = categories.length > 0 
+    ? categories.filter(c => c.isVisible !== false).map(c => c.name) 
+    : ["Váy đầm", "Áo", "Quần", "Chân váy", "Set", "Jumpsuits", "Áo khoác"];
 
   // Loading Screen
   if (loading) {

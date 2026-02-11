@@ -30,6 +30,7 @@ export interface AppSettings {
     sizeGuideDefault: string;
     careGuideDefault: string;
     returnPolicyDefault: string; 
+    googleSheetWebhookUrl?: string; // New field for Google Sheet integration
 }
 
 export interface Category {
