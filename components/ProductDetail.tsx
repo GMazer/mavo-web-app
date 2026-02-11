@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { Product, AppSettings, ProductColor } from '../types';
+import { Product, AppSettings, ProductColor, Review } from '../types';
 import ProductCard from './ProductCard';
-import { StarIcon } from '@heroicons/react/20/solid';
+import { StarIcon, UserCircleIcon } from '@heroicons/react/20/solid';
 import { 
     TruckIcon, 
     CreditCardIcon, 
@@ -11,6 +11,9 @@ import {
     ChevronDownIcon
 } from '@heroicons/react/24/outline';
 import { useToast } from '../context/ToastContext';
+
+// --- CONFIG API ---
+const API_BASE = 'https://mavo-fashion-api.mavo-web.workers.dev/api';
 
 interface ProductDetailProps {
   product: Product;
@@ -37,6 +40,14 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
   const [expandHighlights, setExpandHighlights] = useState(false);
   const [expandBoughtTogether, setExpandBoughtTogether] = useState(false);
 
+  // Review State
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [userRating, setUserRating] = useState(0);
+  const [reviewContent, setReviewContent] = useState('');
+  const [reviewerName, setReviewerName] = useState('');
+  const [isAnonymous, setIsAnonymous] = useState(false);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
   // Determine Size Guide Image
   const sizeGuideImage = product.customSizeGuide || settings.sizeGuideDefault || 'https://via.placeholder.com/800x500?text=Size+Guide+Pending';
   // Determine Care Guide Image
@@ -59,6 +70,13 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
     setActiveTab('info');
     setExpandHighlights(false);
     setExpandBoughtTogether(false);
+    
+    // Reset Review Form
+    setUserRating(0);
+    setReviewContent('');
+    setReviewerName('');
+    setIsAnonymous(false);
+
     window.scrollTo(0, 0);
 
     // Set default selected color to the first one available
@@ -73,14 +91,29 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
     } else {
         setSelectedColor(null);
     }
+
+    // Fetch Reviews
+    fetchReviews(product.id);
+
   }, [product]);
+
+  const fetchReviews = async (productId: string) => {
+      try {
+          const res = await fetch(`${API_BASE}/products/${productId}/reviews?pageSize=20`);
+          if (res.ok) {
+              const data = await res.json();
+              setReviews(data.items || []);
+          }
+      } catch (error) {
+          console.error("Failed to fetch reviews", error);
+      }
+  };
 
   const handleAddToCart = () => {
     if (!selectedSize) {
         toast.error("Vui lòng chọn kích thước!");
         return;
     }
-    // Logic could be extended to include selectedColor in the cart item
     onAddToCart(product, quantity, selectedSize);
   };
 
@@ -92,8 +125,61 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
     onBuyNow(product, quantity, selectedSize);
   };
 
+  const handleSubmitReview = async () => {
+      if (userRating === 0) {
+          toast.error("Vui lòng chọn số sao đánh giá!");
+          return;
+      }
+      if (!isAnonymous && !reviewerName.trim()) {
+          toast.error("Vui lòng nhập tên của bạn hoặc chọn ẩn danh!");
+          return;
+      }
+      if (!reviewContent.trim()) {
+          toast.error("Vui lòng nhập nội dung đánh giá!");
+          return;
+      }
+
+      setIsSubmittingReview(true);
+      try {
+          const payload = {
+              stars: userRating,
+              content: reviewContent,
+              authorName: isAnonymous ? "Ẩn danh" : reviewerName
+          };
+
+          const res = await fetch(`${API_BASE}/products/${product.id}/reviews`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+          });
+
+          if (res.ok) {
+              const newReview = await res.json();
+              setReviews(prev => [newReview, ...prev]);
+              toast.success("Cảm ơn bạn đã đánh giá!");
+              // Reset form
+              setUserRating(0);
+              setReviewContent('');
+              setReviewerName('');
+              setIsAnonymous(false);
+          } else {
+              toast.error("Gửi đánh giá thất bại. Vui lòng thử lại.");
+          }
+      } catch (error) {
+          console.error(error);
+          toast.error("Lỗi kết nối.");
+      } finally {
+          setIsSubmittingReview(false);
+      }
+  };
+
   const relatedProducts = allProducts.filter(p => p.id !== product.id).slice(0, 4);
   const boughtTogetherProducts = allProducts.filter(p => p.id !== product.id).slice(4, 8);
+
+  // Review Stats
+  const avgRating = reviews.length > 0 
+      ? (reviews.reduce((acc, r) => acc + r.stars, 0) / reviews.length).toFixed(1) 
+      : 0;
 
   return (
     <div className="w-full">
@@ -141,10 +227,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
           </div>
 
           <div className="flex items-center gap-1 mb-6">
-            {[0, 1, 2, 3, 4].map((star) => (
-               <StarIcon key={star} className="w-4 h-4 text-gray-200" />
+            {[1, 2, 3, 4, 5].map((star) => (
+               <StarIcon key={star} className={`w-4 h-4 ${star <= Number(avgRating) ? 'text-yellow-400' : 'text-gray-200'}`} />
             ))}
-            <span className="text-sm text-gray-400 ml-1">(0)</span>
+            <span className="text-sm text-gray-400 ml-1">({reviews.length})</span>
           </div>
 
           <div className="flex items-baseline gap-3 mb-8">
@@ -420,32 +506,103 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
         <div className="border border-gray-200 p-6 lg:p-10 bg-white">
             <h3 className="text-sm font-bold uppercase mb-6">ĐÁNH GIÁ SẢN PHẨM</h3>
             <div className="flex flex-col md:flex-row gap-8 lg:gap-16">
-                <div className="flex flex-col items-center justify-center min-w-[150px]">
-                    <span className="text-6xl font-light">0</span>
+                
+                {/* Summary */}
+                <div className="flex flex-col items-center min-w-[150px]">
+                    <span className="text-6xl font-light">{avgRating}</span>
                     <div className="flex gap-1 my-2">
-                        {[1,2,3,4,5].map(s => <StarIcon key={s} className="w-4 h-4 text-gray-200" />)}
+                        {[1,2,3,4,5].map(s => (
+                            <StarIcon key={s} className={`w-4 h-4 ${s <= Math.round(Number(avgRating)) ? 'text-yellow-400' : 'text-gray-200'}`} />
+                        ))}
                     </div>
-                    <span className="text-gray-400 text-sm">Chưa có đánh giá nào</span>
+                    <span className="text-gray-400 text-sm">{reviews.length > 0 ? `${reviews.length} đánh giá` : 'Chưa có đánh giá nào'}</span>
                 </div>
+
+                {/* Review Form */}
                 <div className="flex-1 w-full">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label className="block text-sm text-gray-500 mb-1">Tên hiển thị:</label>
+                            <input 
+                                type="text" 
+                                className={`w-full border border-gray-300 p-2 text-sm focus:outline-none focus:border-black transition-colors ${isAnonymous ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''}`}
+                                placeholder="Nhập tên của bạn"
+                                value={reviewerName}
+                                onChange={(e) => setReviewerName(e.target.value)}
+                                disabled={isAnonymous}
+                            />
+                        </div>
+                        <div className="flex items-center h-full pt-6">
+                            <input 
+                                type="checkbox" 
+                                id="anon" 
+                                className="mr-2 cursor-pointer" 
+                                checked={isAnonymous}
+                                onChange={(e) => setIsAnonymous(e.target.checked)}
+                            />
+                            <label htmlFor="anon" className="text-sm text-gray-500 cursor-pointer select-none">Đánh giá ẩn danh</label>
+                        </div>
+                    </div>
+
                     <div className="mb-4">
                         <label className="block text-sm text-gray-500 mb-1">Đánh giá của bạn:</label>
                         <div className="flex gap-1">
-                             {[1,2,3,4,5].map(s => <StarIcon key={s} className="w-5 h-5 text-gray-200 cursor-pointer hover:text-yellow-400 transition-colors" />)}
+                             {[1,2,3,4,5].map(s => (
+                                <StarIcon 
+                                    key={s} 
+                                    onClick={() => setUserRating(s)}
+                                    className={`w-5 h-5 cursor-pointer transition-colors ${s <= userRating ? 'text-yellow-400' : 'text-gray-200 hover:text-yellow-300'}`} 
+                                />
+                             ))}
                         </div>
                     </div>
+                    
                     <div className="mb-4">
                          <label className="block text-sm text-gray-500 mb-2">Nhận xét của bạn:</label>
                          <textarea 
                             className="w-full border border-gray-300 p-3 text-sm focus:outline-none focus:border-black transition-colors min-h-[100px] bg-white"
                             placeholder="Chia sẻ cảm nhận của bạn về sản phẩm..."
+                            value={reviewContent}
+                            onChange={(e) => setReviewContent(e.target.value)}
                          ></textarea>
                     </div>
-                    <button className="bg-[#333] text-white text-xs font-bold uppercase px-6 py-3 hover:bg-black transition-colors">
-                        GỬI ĐÁNH GIÁ
+                    
+                    <button 
+                        onClick={handleSubmitReview}
+                        disabled={isSubmittingReview}
+                        className="bg-[#333] text-white text-xs font-bold uppercase px-6 py-3 hover:bg-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {isSubmittingReview ? 'ĐANG GỬI...' : 'GỬI ĐÁNH GIÁ'}
                     </button>
                 </div>
             </div>
+
+            {/* Review List */}
+            {reviews.length > 0 && (
+                <div className="mt-12 border-t border-gray-100 pt-8 space-y-8">
+                    {reviews.map((review) => (
+                        <div key={review.id} className="flex gap-4">
+                            <div className="flex-shrink-0">
+                                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
+                                    <UserCircleIcon className="w-full h-full" />
+                                </div>
+                            </div>
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="font-bold text-sm text-gray-900">{review.authorName}</span>
+                                    <span className="text-xs text-gray-400">• {new Date(review.createdAt).toLocaleDateString('vi-VN')}</span>
+                                </div>
+                                <div className="flex gap-0.5 mb-2">
+                                    {[1,2,3,4,5].map(s => (
+                                        <StarIcon key={s} className={`w-3 h-3 ${s <= review.stars ? 'text-yellow-400' : 'text-gray-200'}`} />
+                                    ))}
+                                </div>
+                                <p className="text-sm text-gray-600 leading-relaxed">{review.content}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
       </div>
 

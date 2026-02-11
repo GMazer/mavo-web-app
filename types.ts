@@ -47,3 +47,12 @@ export interface Category {
   description?: string;
   isVisible?: boolean;
 }
+
+export interface Review {
+  id: string;
+  productId: string;
+  stars: number;
+  content: string;
+  authorName: string;
+  createdAt: string;
+}
