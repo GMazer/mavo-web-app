@@ -14,10 +14,15 @@ app.post('/setup', async (c) => {
         const { username, password } = await c.req.json();
         if (!username || !password) return c.json({ error: "Missing fields" }, 400);
 
-        // Check if any admin exists
-        const countRes = await c.env.DB.prepare("SELECT COUNT(*) as count FROM Admins").first() as { count: number };
-        if (countRes.count > 0) {
-            return c.json({ error: "Admin already exists. Please login." }, 403);
+        // Check if DB is ready
+        try {
+            const countRes = await c.env.DB.prepare("SELECT COUNT(*) as count FROM Admins").first() as { count: number };
+            if (countRes.count > 0) {
+                return c.json({ error: "Admin already exists. Please login." }, 403);
+            }
+        } catch (dbError: any) {
+            // If table doesn't exist, this might throw
+            return c.json({ error: "Database Error: Could not check Admins table. Did you run 'npm run db:update:prod'?", details: dbError.message }, 500);
         }
 
         // Generate TOTP Secret
@@ -52,14 +57,26 @@ app.post('/setup', async (c) => {
         });
 
     } catch (e: any) {
+        console.error("Setup Error:", e);
         return c.json({ error: e.message }, 500);
     }
 });
 
 // 2. CHECK ADMIN EXISTS (To show Setup or Login screen)
 app.get('/check-init', async (c) => {
-    const countRes = await c.env.DB.prepare("SELECT COUNT(*) as count FROM Admins").first() as { count: number };
-    return c.json({ initialized: countRes.count > 0 });
+    try {
+        const countRes = await c.env.DB.prepare("SELECT COUNT(*) as count FROM Admins").first() as { count: number };
+        return c.json({ initialized: countRes.count > 0 });
+    } catch (e: any) {
+        console.error("Check-Init DB Error:", e);
+        // If table missing, return false to trigger Setup (setup will fail with DB error but clearer)
+        // Or return error to frontend
+        return c.json({ 
+            initialized: false, 
+            error: "Database check failed. Table 'Admins' might be missing.",
+            details: e.message 
+        });
+    }
 });
 
 // 3. LOGIN STEP 1: Verify Password

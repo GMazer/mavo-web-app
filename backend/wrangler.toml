@@ -1,5 +1,7 @@
+
 name = "mavo-fashion-api"
 compatibility_date = "2024-02-27"
+compatibility_flags = ["nodejs_compat"]
 
 [dev]
 port = 8080

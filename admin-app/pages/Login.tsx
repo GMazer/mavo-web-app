@@ -30,7 +30,28 @@ const Login: React.FC = () => {
     const checkInit = async () => {
         try {
             const res = await fetch(`${API_BASE}/auth/check-init`);
+            
+            if (res.status === 404) {
+                toast.error("API Backend chưa được cập nhật (404). Vui lòng Deploy lại Backend.");
+                setLoading(false);
+                return;
+            }
+
+            if (!res.ok) {
+                toast.error(`Lỗi Server: ${res.status}`);
+                return;
+            }
+
             const data = await res.json();
+            
+            if (data.error) {
+                console.error(data.error);
+                // If DB table missing, force setup mode visually but warn user
+                if (data.error.includes("Admins table")) {
+                    toast.error("Chưa tạo bảng Database (Admins). Vui lòng chạy lệnh migration.");
+                }
+            }
+
             if (!data.initialized) {
                 setMode('setup');
             } else {
@@ -38,7 +59,7 @@ const Login: React.FC = () => {
             }
         } catch (e) {
             console.error(e);
-            toast.error("Không thể kết nối đến server");
+            toast.error("Không thể kết nối đến server. Kiểm tra mạng hoặc Backend.");
         }
     };
 
@@ -55,10 +76,8 @@ const Login: React.FC = () => {
             if (res.ok) {
                 setQrUrl(data.otpauth_url);
                 setSecret(data.secret);
-                // Generate QR using Google Chart API for simplicity (or use a JS lib)
-                // In production, use a local JS library like qrcode.react
             } else {
-                toast.error(data.error);
+                toast.error(data.error || "Lỗi đăng ký");
             }
         } catch (e) {
             toast.error("Lỗi đăng ký");
@@ -123,7 +142,7 @@ const Login: React.FC = () => {
         toast.info("Vui lòng đăng nhập lại với mã 2FA.");
     };
 
-    if (mode === 'loading') return <div className="h-screen flex items-center justify-center"><Spinner /></div>;
+    if (mode === 'loading') return <div className="h-screen flex items-center justify-center flex-col gap-4"><Spinner /><p className="text-gray-500 text-sm">Đang kết nối API...</p></div>;
 
     return (
         <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 font-sans">
@@ -192,8 +211,9 @@ const Login: React.FC = () => {
 
                 {mode === 'setup' && !qrUrl && (
                     <form onSubmit={handleSetup} className="space-y-4">
-                        <div className="bg-blue-50 p-4 rounded text-sm text-blue-700 mb-4">
-                            Hệ thống chưa có Admin. Vui lòng tạo tài khoản quản trị viên đầu tiên.
+                        <div className="bg-blue-50 p-4 rounded text-sm text-blue-700 mb-4 border border-blue-100">
+                            <strong>Hệ thống chưa có Admin.</strong><br/>
+                            Vui lòng tạo tài khoản quản trị viên đầu tiên.
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Tạo Username</label>
@@ -203,7 +223,7 @@ const Login: React.FC = () => {
                             <label className="block text-sm font-medium text-gray-700 mb-1">Tạo Password</label>
                             <input type="password" className="w-full border border-gray-300 p-3 rounded-lg" value={password} onChange={e => setPassword(e.target.value)} required />
                         </div>
-                        <button disabled={loading} className="w-full bg-black text-white py-3 rounded-lg font-bold">
+                        <button disabled={loading} className="w-full bg-black text-white py-3 rounded-lg font-bold flex justify-center">
                             {loading ? <Spinner /> : 'TẠO TÀI KHOẢN'}
                         </button>
                     </form>
