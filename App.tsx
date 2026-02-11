@@ -9,6 +9,7 @@ import Checkout from './components/Checkout';
 import SearchOverlay from './components/SearchOverlay';
 import { Product, CartItem, AppSettings, Category } from './types';
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
+import { useToast } from './context/ToastContext';
 
 type ViewState = 'home' | 'product' | 'checkout';
 
@@ -21,6 +22,8 @@ const API_SETTINGS = `${API_BASE}/settings`;
 const API_CATEGORIES = `${API_BASE}/categories`;
 
 const App: React.FC = () => {
+  const toast = useToast(); // Hook for notifications
+  
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -91,6 +94,7 @@ const App: React.FC = () => {
 
       } catch (error) {
         console.error("Failed to fetch data:", error);
+        toast.error("Không thể tải dữ liệu từ máy chủ. Vui lòng tải lại trang.");
       } finally {
         setLoading(false);
       }
@@ -114,6 +118,10 @@ const App: React.FC = () => {
             return [...prevCart, { ...product, quantity, selectedSize: size }];
         }
     });
+    
+    // Notification
+    toast.success(`Đã thêm "${product.name}" vào giỏ hàng!`);
+
     // Open sidebar automatically when adding, ONLY if not going straight to checkout
     if (currentView !== 'checkout') {
         setIsCartOpen(true);
@@ -135,6 +143,7 @@ const App: React.FC = () => {
 
   const removeFromCart = (id: string, size: string) => {
     setCart(prev => prev.filter(item => !(item.id === id && item.selectedSize === size)));
+    toast.info("Đã xóa sản phẩm khỏi giỏ hàng.");
   };
 
   const updateQuantity = (id: string, size: string, newQuantity: number) => {
@@ -159,7 +168,7 @@ const App: React.FC = () => {
   };
 
   const handlePlaceOrder = () => {
-    alert("Cảm ơn bạn đã đặt hàng! Đơn hàng đang được xử lý.");
+    toast.success("Đặt hàng thành công! Mavo sẽ liên hệ sớm nhất.");
     setCart([]);
     goHome();
   };

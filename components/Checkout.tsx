@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { CartItem } from '../types';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import { Spinner } from '../admin-app/components/ui/Icons';
+import { useToast } from '../context/ToastContext';
 
 // --- CONFIG API ---
 const API_BASE = 'https://mavo-fashion-api.mavo-web.workers.dev/api';
@@ -20,6 +21,7 @@ interface CheckoutProps {
 }
 
 const Checkout: React.FC<CheckoutProps> = ({ cartItems, onPlaceOrder }) => {
+  const toast = useToast();
   const [paymentMethod, setPaymentMethod] = useState<'bank' | 'cod'>('bank');
   const [submitting, setSubmitting] = useState(false);
   
@@ -132,7 +134,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, onPlaceOrder }) => {
   const handleSubmit = async () => {
       // Validation
       if (!formData.firstName || !formData.phone || !formData.addressDetail || !formData.city || !formData.district || !formData.ward) {
-          alert("Vui lòng điền đầy đủ các thông tin bắt buộc (*)");
+          toast.error("Vui lòng điền đầy đủ các thông tin bắt buộc (*)");
           return;
       }
 
@@ -170,11 +172,11 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, onPlaceOrder }) => {
               onPlaceOrder(); 
           } else {
               const err = await res.json();
-              alert(`Đặt hàng thất bại: ${err.error || 'Lỗi không xác định'}`);
+              toast.error(`Đặt hàng thất bại: ${err.error || 'Lỗi không xác định'}`);
           }
       } catch (error) {
           console.error(error);
-          alert("Lỗi kết nối đến máy chủ.");
+          toast.error("Lỗi kết nối đến máy chủ.");
       } finally {
           setSubmitting(false);
       }
