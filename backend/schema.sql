@@ -7,6 +7,7 @@ DROP TABLE IF EXISTS Orders;
 DROP TABLE IF EXISTS Wards;
 DROP TABLE IF EXISTS Districts;
 DROP TABLE IF EXISTS Provinces;
+DROP TABLE IF EXISTS Admins;
 
 CREATE TABLE Categories (
     id TEXT PRIMARY KEY,
@@ -64,6 +65,14 @@ CREATE TABLE Orders (
     paymentMethod TEXT,
     items TEXT, 
     status TEXT DEFAULT 'pending', 
+    createdAt TEXT
+);
+
+CREATE TABLE Admins (
+    id TEXT PRIMARY KEY,
+    username TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    twoFactorSecret TEXT NOT NULL,
     createdAt TEXT
 );
 

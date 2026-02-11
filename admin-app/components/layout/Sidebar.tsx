@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { ChartBarIcon, ShoppingBagIcon, UserGroupIcon, CogIcon, TagIcon } from '../ui/Icons';
+import { useAuth } from '../../context/AuthContext';
 
 interface SidebarProps {
     activeTab: 'dashboard' | 'products' | 'categories' | 'orders' | 'settings';
@@ -8,6 +9,8 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
+    const { username, logout } = useAuth();
+
     const navItemClass = (tab: string) => 
         `w-full flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${activeTab === tab ? 'bg-gray-700 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`;
 
@@ -35,11 +38,15 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
                 </button>
             </nav>
             <div className="p-4 border-t border-gray-700">
-                <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gray-500"></div>
-                    <div>
-                        <p className="text-sm font-medium">Quản trị viên</p>
-                        <p className="text-xs text-gray-400">admin@mavo.vn</p>
+                <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-gray-500 flex items-center justify-center text-xs font-bold">
+                            {username ? username.charAt(0).toUpperCase() : 'A'}
+                        </div>
+                        <div className="overflow-hidden">
+                            <p className="text-sm font-medium truncate w-24">{username || 'Admin'}</p>
+                            <button onClick={logout} className="text-xs text-red-400 hover:text-red-300">Đăng xuất</button>
+                        </div>
                     </div>
                 </div>
             </div>

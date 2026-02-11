@@ -1,3 +1,4 @@
+
 export interface D1Result<T = unknown> {
   results: T[];
   success: boolean;
@@ -33,4 +34,7 @@ export type Bindings = {
   R2_SECRET_ACCESS_KEY: string;
   R2_BUCKET_NAME: string;
   R2_PUBLIC_DOMAIN: string; // e.g., https://pub-xxx.r2.dev or custom domain
+  
+  // Auth
+  JWT_SECRET: string;
 }

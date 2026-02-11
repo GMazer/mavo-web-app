@@ -6,12 +6,20 @@ import ProductManager from './pages/ProductManager';
 import CategoryManager from './pages/CategoryManager';
 import OrderManager from './pages/OrderManager';
 import Settings from './pages/Settings';
+import Login from './pages/Login';
+import { useAuth } from './context/AuthContext';
 
 const AdminApp: React.FC = () => {
+    const { isAuthenticated } = useAuth();
     const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'categories' | 'orders' | 'settings'>('products');
     
     // Ref to hold the create function from ProductManager
     const createProductTrigger = useRef<(() => void) | null>(null);
+
+    // If not authenticated, show Login page
+    if (!isAuthenticated) {
+        return <Login />;
+    }
 
     const getTabTitle = () => {
         switch(activeTab) {

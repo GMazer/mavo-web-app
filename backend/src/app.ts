@@ -10,7 +10,9 @@ import categoriesRouter from './routes/categories';
 import ordersRouter from './routes/orders';
 import locationsRouter from './routes/locations';
 import dashboardRouter from './routes/dashboard';
+import authRouter from './routes/auth';
 import { Bindings } from './bindings';
+import { rateLimiter } from './middleware/rateLimiter';
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -54,8 +56,12 @@ app.use('*', cors({
   credentials: true,
 }));
 
+// Apply Rate Limiter Global Middleware
+app.use('/api/*', rateLimiter);
+
 // Routes
 app.route('/api/health', healthRouter);
+app.route('/api/auth', authRouter); // New Auth Route
 app.route('/api/products', productsRouter);
 app.route('/api/uploads', uploadRouter);
 app.route('/api/settings', settingsRouter);
