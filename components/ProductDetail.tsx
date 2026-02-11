@@ -10,6 +10,7 @@ import {
     ArrowPathIcon, 
     ChevronDownIcon
 } from '@heroicons/react/24/outline';
+import { useToast } from '../context/ToastContext';
 
 interface ProductDetailProps {
   product: Product;
@@ -21,6 +22,7 @@ interface ProductDetailProps {
 }
 
 const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, settings, onAddToCart, onBuyNow, onRelatedClick }) => {
+  const toast = useToast();
   const images = product.images && product.images.length > 0 ? product.images : [product.image];
   
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -75,7 +77,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
 
   const handleAddToCart = () => {
     if (!selectedSize) {
-        alert("Vui lòng chọn kích thước!");
+        toast.error("Vui lòng chọn kích thước!");
         return;
     }
     // Logic could be extended to include selectedColor in the cart item
@@ -84,7 +86,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
 
   const handleBuyNow = () => {
     if (!selectedSize) {
-        alert("Vui lòng chọn kích thước!");
+        toast.error("Vui lòng chọn kích thước!");
         return;
     }
     onBuyNow(product, quantity, selectedSize);
