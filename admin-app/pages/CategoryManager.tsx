@@ -4,11 +4,14 @@ import { Category } from '../types';
 import { fetchCategoriesApi, saveCategoryApi, deleteCategoryApi } from '../services/api';
 import CategoryList from '../components/categories/CategoryList';
 import CategoryForm from '../components/categories/CategoryForm';
+import ConfirmModal from '../components/ui/ConfirmModal';
+import { useToast } from '../../context/ToastContext';
 import { 
     MagnifyingGlassIcon, PlusIcon, TagIcon, CheckBadgeIcon, ChartBarIcon, FunnelIcon 
 } from '../components/ui/Icons';
 
 const CategoryManager: React.FC = () => {
+    const toast = useToast();
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -16,6 +19,10 @@ const CategoryManager: React.FC = () => {
     // Modal State
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
+
+    // Delete State
+    const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         loadCategories();
@@ -28,29 +35,46 @@ const CategoryManager: React.FC = () => {
             setCategories(data);
         } catch (error) {
             console.error(error);
+            toast.error("Không thể tải danh mục");
         } finally {
             setLoading(false);
         }
     };
 
     const handleSave = async (data: Category) => {
-        const saved = await saveCategoryApi(data);
-        if (data.id) {
-            setCategories(prev => prev.map(c => c.id === saved.id ? saved : c));
-        } else {
-            setCategories(prev => [...prev, saved]);
+        try {
+            const saved = await saveCategoryApi(data);
+            if (data.id) {
+                setCategories(prev => prev.map(c => c.id === saved.id ? saved : c));
+                toast.success("Cập nhật danh mục thành công");
+            } else {
+                setCategories(prev => [...prev, saved]);
+                toast.success("Tạo danh mục mới thành công");
+            }
+            setIsFormOpen(false);
+            setEditingCategory(null);
+        } catch (error) {
+            console.error(error);
+            toast.error("Lỗi khi lưu danh mục");
         }
-        setIsFormOpen(false);
-        setEditingCategory(null);
     };
 
-    const handleDelete = async (cat: Category) => {
-        if (!window.confirm(`Xóa danh mục "${cat.name}"?`)) return;
+    const initiateDelete = (cat: Category) => {
+        setCategoryToDelete(cat);
+    };
+
+    const confirmDelete = async () => {
+        if (!categoryToDelete) return;
+        setIsDeleting(true);
         try {
-            await deleteCategoryApi(cat.id);
-            setCategories(prev => prev.filter(c => c.id !== cat.id));
+            await deleteCategoryApi(categoryToDelete.id);
+            setCategories(prev => prev.filter(c => c.id !== categoryToDelete.id));
+            toast.success("Đã xóa danh mục");
         } catch (error) {
-            alert("Lỗi khi xóa.");
+            toast.error("Lỗi khi xóa danh mục");
+        } finally {
+            setIsDeleting(false);
+            setCategoryToDelete(null);
         }
     };
 
@@ -63,9 +87,10 @@ const CategoryManager: React.FC = () => {
 
         try {
             await saveCategoryApi(updatedCat);
+            toast.success(`Đã cập nhật trạng thái danh mục "${cat.name}"`);
         } catch (error) {
             console.error("Failed to toggle status", error);
-            alert("Lỗi khi cập nhật trạng thái.");
+            toast.error("Lỗi khi cập nhật trạng thái.");
             // Revert
             setCategories(prev => prev.map(c => c.id === cat.id ? cat : c));
         }
@@ -153,7 +178,7 @@ const CategoryManager: React.FC = () => {
                     categories={filteredCategories}
                     loading={loading}
                     onEdit={(cat) => { setEditingCategory(cat); setIsFormOpen(true); }}
-                    onDelete={handleDelete}
+                    onDelete={initiateDelete}
                     onToggleStatus={handleToggleStatus}
                 />
             </div>
@@ -166,6 +191,18 @@ const CategoryManager: React.FC = () => {
                     onSave={handleSave}
                 />
             )}
+
+            {/* CONFIRM DELETE MODAL */}
+            <ConfirmModal
+                isOpen={!!categoryToDelete}
+                title="Xóa danh mục"
+                message={`Bạn có chắc muốn xóa danh mục "${categoryToDelete?.name}"? Các sản phẩm thuộc danh mục này sẽ không bị xóa nhưng sẽ mất phân loại.`}
+                confirmLabel="Xóa danh mục"
+                type="danger"
+                isLoading={isDeleting}
+                onConfirm={confirmDelete}
+                onCancel={() => setCategoryToDelete(null)}
+            />
         </div>
     );
 };

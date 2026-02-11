@@ -2,23 +2,30 @@
 import React, { useState, useEffect } from 'react';
 import ProductList from '../components/products/ProductList';
 import ProductForm from '../components/products/ProductForm';
+import ConfirmModal from '../components/ui/ConfirmModal';
 import { Product, Category } from '../types';
 import { fetchProductsApi, saveProductApi, deleteProductApi, fetchCategoriesApi } from '../services/api';
 import { 
-    MagnifyingGlassIcon, Spinner, FunnelIcon, ArrowDownTrayIcon, PlusIcon, 
+    MagnifyingGlassIcon, FunnelIcon, ArrowDownTrayIcon, PlusIcon, 
     ShoppingBagIcon, TagIcon 
 } from '../components/ui/Icons';
+import { useToast } from '../../context/ToastContext';
 
 // Custom icons for stats cards
 const AlertIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>;
 const OutStockIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>;
 
 const ProductManager: React.FC<{ onCreateTrigger: (trigger: () => void) => void }> = ({ onCreateTrigger }) => {
+    const toast = useToast();
     const [products, setProducts] = useState<Product[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     
+    // Delete Confirmation State
+    const [itemToDelete, setItemToDelete] = useState<Product | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
     // Filters
     const [searchTerm, setSearchTerm] = useState('');
     const [filterCategory, setFilterCategory] = useState('All');
@@ -45,7 +52,7 @@ const ProductManager: React.FC<{ onCreateTrigger: (trigger: () => void) => void 
             setCategories(categoriesData);
         } catch (error) {
             console.error(error);
-            alert("Lỗi tải dữ liệu");
+            toast.error("Không thể tải dữ liệu sản phẩm");
         } finally {
             setLoading(false);
         }
@@ -70,8 +77,10 @@ const ProductManager: React.FC<{ onCreateTrigger: (trigger: () => void) => void 
     const handleSaved = (savedProduct: Product, isNew: boolean) => {
         if (isNew) {
             setProducts(prev => [savedProduct, ...prev]);
+            toast.success(`Đã tạo mới sản phẩm "${savedProduct.name}"`);
         } else {
             setProducts(prev => prev.map(p => p.id === savedProduct.id ? savedProduct : p));
+            toast.success(`Đã cập nhật sản phẩm "${savedProduct.name}"`);
         }
         setEditingProduct(null);
     };
@@ -79,25 +88,36 @@ const ProductManager: React.FC<{ onCreateTrigger: (trigger: () => void) => void 
     const handleToggleVisibility = async (product: Product) => {
         const newStatus = !(product.isVisible !== false);
         const updatedProduct = { ...product, isVisible: newStatus };
+        // Optimistic update
         setProducts(prev => prev.map(p => p.id === product.id ? updatedProduct : p));
 
         try {
             await saveProductApi(updatedProduct);
+            toast.success(`Đã ${newStatus ? 'hiện' : 'ẩn'} sản phẩm "${product.name}"`);
         } catch (error: any) {
+            // Revert
             setProducts(prev => prev.map(p => p.id === product.id ? product : p));
-            alert(`Không thể cập nhật: ${error.message}`);
+            toast.error(`Lỗi cập nhật: ${error.message}`);
         }
     };
 
-    const handleDelete = async (product: Product) => {
-        if (window.confirm(`Bạn có chắc chắn muốn xóa "${product.name}"?`)) {
-            try {
-                setProducts(prev => prev.filter(p => p.id !== product.id));
-                await deleteProductApi(product.id);
-            } catch (error: any) {
-                alert(`Lỗi khi xóa: ${error.message}`);
-                loadData();
-            }
+    const initiateDelete = (product: Product) => {
+        setItemToDelete(product);
+    };
+
+    const confirmDelete = async () => {
+        if (!itemToDelete) return;
+        setIsDeleting(true);
+        try {
+            await deleteProductApi(itemToDelete.id);
+            setProducts(prev => prev.filter(p => p.id !== itemToDelete.id));
+            toast.success("Đã xóa sản phẩm thành công");
+        } catch (error: any) {
+            toast.error(`Lỗi khi xóa: ${error.message}`);
+            loadData(); // Reload to sync state
+        } finally {
+            setIsDeleting(false);
+            setItemToDelete(null);
         }
     };
 
@@ -105,7 +125,7 @@ const ProductManager: React.FC<{ onCreateTrigger: (trigger: () => void) => void 
     const totalProducts = products.length;
     const lowStockCount = products.filter(p => (p.stock || 0) > 0 && (p.stock || 0) < 10).length;
     const outOfStockCount = products.filter(p => (p.stock || 0) === 0).length;
-    const activeCategoriesCount = categories.length; // Assuming all fetched are active
+    const activeCategoriesCount = categories.length;
 
     // --- Filter Logic ---
     const filteredProducts = products.filter(p => {
@@ -250,11 +270,23 @@ const ProductManager: React.FC<{ onCreateTrigger: (trigger: () => void) => void 
                             loading={loading} 
                             onEdit={setEditingProduct} 
                             onToggleVisibility={handleToggleVisibility}
-                            onDelete={handleDelete}
+                            onDelete={initiateDelete}
                         />
                     </>
                 )}
             </div>
+
+            {/* DELETE CONFIRMATION MODAL */}
+            <ConfirmModal 
+                isOpen={!!itemToDelete}
+                title="Xóa sản phẩm"
+                message={`Bạn có chắc chắn muốn xóa sản phẩm "${itemToDelete?.name}"? Hành động này không thể hoàn tác.`}
+                confirmLabel="Xóa ngay"
+                type="danger"
+                isLoading={isDeleting}
+                onConfirm={confirmDelete}
+                onCancel={() => setItemToDelete(null)}
+            />
         </div>
     );
 };

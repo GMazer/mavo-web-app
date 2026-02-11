@@ -9,8 +9,11 @@ import OrderActions from '../components/orders/OrderActions';
 import OrderTable from '../components/orders/OrderTable';
 import CreateOrderModal from '../components/orders/CreateOrderModal';
 import OrderDetailModal from '../components/orders/OrderDetailModal';
+import ConfirmModal from '../components/ui/ConfirmModal';
+import { useToast } from '../../context/ToastContext';
 
 const OrderManager: React.FC = () => {
+    const toast = useToast();
     const [orders, setOrders] = useState<Order[]>([]);
     const [products, setProducts] = useState<Product[]>([]); 
     const [loading, setLoading] = useState(false);
@@ -24,6 +27,7 @@ const OrderManager: React.FC = () => {
     const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
     const [bulkStatus, setBulkStatus] = useState('processing');
     const [isBulkUpdating, setIsBulkUpdating] = useState(false);
+    const [showBulkConfirm, setShowBulkConfirm] = useState(false);
 
     // Filters
     const [filterStatus, setFilterStatus] = useState('All');
@@ -48,6 +52,7 @@ const OrderManager: React.FC = () => {
             setProducts(productsData);
         } catch (error) {
             console.error(error);
+            toast.error("Không thể tải danh sách đơn hàng");
         } finally {
             setLoading(false);
         }
@@ -100,19 +105,13 @@ const OrderManager: React.FC = () => {
         setSelectedOrderIds(newSelected);
     };
 
-    const handleBulkUpdate = async () => {
+    // Triggered when user clicks "Update" button in Action Bar
+    const initiateBulkUpdate = () => {
         if (selectedOrderIds.size === 0) return;
-        const getStatusText = (s: string) => {
-             // Quick helper, reused from components for alert
-             if(s === 'pending') return 'Chờ xử lý';
-             if(s === 'processing') return 'Đang giao';
-             if(s === 'completed') return 'Hoàn thành';
-             if(s === 'cancelled') return 'Đã hủy';
-             return s;
-        }
+        setShowBulkConfirm(true);
+    };
 
-        if (!window.confirm(`Bạn có chắc chắn muốn cập nhật trạng thái ${selectedOrderIds.size} đơn hàng thành "${getStatusText(bulkStatus)}"?`)) return;
-
+    const handleBulkUpdate = async () => {
         setIsBulkUpdating(true);
         try {
             const ids = Array.from(selectedOrderIds) as string[];
@@ -123,12 +122,13 @@ const OrderManager: React.FC = () => {
             
             // Clear selection
             setSelectedOrderIds(new Set());
-            alert("Cập nhật thành công!");
+            toast.success(`Đã cập nhật ${ids.length} đơn hàng thành công!`);
         } catch (error) {
             console.error(error);
-            alert("Lỗi khi cập nhật hàng loạt.");
+            toast.error("Lỗi khi cập nhật hàng loạt.");
         } finally {
             setIsBulkUpdating(false);
+            setShowBulkConfirm(false);
         }
     };
 
@@ -162,22 +162,35 @@ const OrderManager: React.FC = () => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        toast.info("Đang tải xuống file Excel...");
     };
 
     // --- Update Status Logic (Single) ---
     const handleUpdateStatus = async (id: string, newStatus: string) => {
-        await updateOrderStatusApi(id, newStatus);
-        
-        // Update local state
-        const updatedOrders = orders.map(o => o.id === id ? { ...o, status: newStatus } : o);
-        setOrders(updatedOrders);
-        
-        // If detail modal is open, update its selection too
-        if (selectedOrder && selectedOrder.id === id) {
-            setSelectedOrder({ ...selectedOrder, status: newStatus });
-        }
+        try {
+            await updateOrderStatusApi(id, newStatus);
+            
+            // Update local state
+            const updatedOrders = orders.map(o => o.id === id ? { ...o, status: newStatus } : o);
+            setOrders(updatedOrders);
+            
+            // If detail modal is open, update its selection too
+            if (selectedOrder && selectedOrder.id === id) {
+                setSelectedOrder({ ...selectedOrder, status: newStatus });
+            }
 
-        alert("Cập nhật trạng thái thành công!");
+            toast.success("Cập nhật trạng thái thành công!");
+        } catch (error) {
+            toast.error("Lỗi khi cập nhật trạng thái");
+        }
+    };
+
+    const getStatusText = (s: string) => {
+        if(s === 'pending') return 'Chờ xử lý';
+        if(s === 'processing') return 'Đang giao';
+        if(s === 'completed') return 'Hoàn thành';
+        if(s === 'cancelled') return 'Đã hủy';
+        return s;
     };
 
     return (
@@ -194,7 +207,7 @@ const OrderManager: React.FC = () => {
                 onClearSelection={() => setSelectedOrderIds(new Set())}
                 bulkStatus={bulkStatus}
                 setBulkStatus={setBulkStatus}
-                onBulkUpdate={handleBulkUpdate}
+                onBulkUpdate={initiateBulkUpdate} // Change to trigger modal
                 isBulkUpdating={isBulkUpdating}
                 filterStatus={filterStatus}
                 setFilterStatus={setFilterStatus}
@@ -230,6 +243,18 @@ const OrderManager: React.FC = () => {
                     onUpdateStatus={handleUpdateStatus}
                 />
             )}
+
+            {/* CONFIRM BULK UPDATE */}
+            <ConfirmModal 
+                isOpen={showBulkConfirm}
+                title="Cập nhật hàng loạt"
+                message={`Bạn có chắc chắn muốn cập nhật trạng thái ${selectedOrderIds.size} đơn hàng thành "${getStatusText(bulkStatus)}"?`}
+                confirmLabel="Xác nhận"
+                type="info"
+                isLoading={isBulkUpdating}
+                onConfirm={handleBulkUpdate}
+                onCancel={() => setShowBulkConfirm(false)}
+            />
         </div>
     );
 };
