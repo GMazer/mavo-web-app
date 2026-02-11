@@ -4,6 +4,7 @@ import { CartItem } from '../types';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import { Spinner } from '../admin-app/components/ui/Icons';
 import { useToast } from '../context/ToastContext';
+import SearchableSelect from './ui/SearchableSelect';
 
 // --- CONFIG API ---
 const API_BASE = 'https://mavo-fashion-api.mavo-web.workers.dev/api';
@@ -60,8 +61,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, onPlaceOrder }) => {
   }, []);
 
   // 2. Handle City Change -> Fetch Districts
-  const handleCityChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const code = e.target.value;
+  const handleCityChange = async (code: string) => {
       const city = provinces.find(p => p.code === code);
       
       setFormData(prev => ({
@@ -89,8 +89,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, onPlaceOrder }) => {
   };
 
   // 3. Handle District Change -> Fetch Wards
-  const handleDistrictChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const code = e.target.value;
+  const handleDistrictChange = async (code: string) => {
       const district = districts.find(d => d.code === code);
 
       setFormData(prev => ({
@@ -116,8 +115,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, onPlaceOrder }) => {
   };
 
   // 4. Handle Ward Change
-  const handleWardChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const code = e.target.value;
+  const handleWardChange = (code: string) => {
       const ward = wards.find(w => w.code === code);
       
       setFormData(prev => ({
@@ -230,54 +228,39 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, onPlaceOrder }) => {
                     </div>
                 </div>
 
-                {/* --- LOCATION SELECTORS (DB POWERED) --- */}
+                {/* --- LOCATION SELECTORS (SEARCHABLE) --- */}
                 <div>
-                    <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Tỉnh / Thành phố *</label>
-                    <select 
-                        name="cityCode" 
+                    <SearchableSelect 
+                        label="Tỉnh / Thành phố *"
+                        placeholder="Chọn Tỉnh / Thành phố..."
+                        options={provinces}
                         value={formData.cityCode}
-                        onChange={handleCityChange} 
-                        className="w-full h-12 border border-gray-200 bg-[#f9f9f9] px-4 text-sm outline-none focus:border-black rounded-none transition-colors"
-                    >
-                        <option value="">Chọn Tỉnh / Thành phố...</option>
-                        {provinces.map(loc => (
-                            <option key={loc.code} value={loc.code}>{loc.name_with_type}</option>
-                        ))}
-                    </select>
+                        onChange={handleCityChange}
+                    />
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-6">
-                     <div className="flex-1 relative">
-                        <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Quận / Huyện *</label>
-                        <select 
-                            name="districtCode" 
+                     <div className="flex-1">
+                        <SearchableSelect 
+                            label="Quận / Huyện *"
+                            placeholder={loadingDistricts ? "Đang tải..." : "Chọn Quận / Huyện..."}
+                            options={districts}
                             value={formData.districtCode}
-                            onChange={handleDistrictChange} 
+                            onChange={handleDistrictChange}
                             disabled={!formData.cityCode || loadingDistricts}
-                            className="w-full h-12 border border-gray-200 bg-[#f9f9f9] px-4 text-sm outline-none focus:border-black rounded-none transition-colors disabled:bg-gray-100 disabled:text-gray-400"
-                        >
-                            <option value="">{loadingDistricts ? 'Đang tải...' : 'Chọn Quận / Huyện...'}</option>
-                            {districts.map(d => (
-                                <option key={d.code} value={d.code}>{d.name_with_type}</option>
-                            ))}
-                        </select>
-                        {loadingDistricts && <div className="absolute right-3 top-[38px]"><Spinner /></div>}
+                            loading={loadingDistricts}
+                        />
                     </div>
-                    <div className="flex-1 relative">
-                        <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Phường / Xã *</label>
-                        <select 
-                            name="wardCode" 
+                    <div className="flex-1">
+                        <SearchableSelect 
+                            label="Phường / Xã *"
+                            placeholder={loadingWards ? "Đang tải..." : "Chọn Phường / Xã..."}
+                            options={wards}
                             value={formData.wardCode}
                             onChange={handleWardChange}
                             disabled={!formData.districtCode || loadingWards}
-                            className="w-full h-12 border border-gray-200 bg-[#f9f9f9] px-4 text-sm outline-none focus:border-black rounded-none transition-colors disabled:bg-gray-100 disabled:text-gray-400"
-                        >
-                            <option value="">{loadingWards ? 'Đang tải...' : 'Chọn Phường / Xã...'}</option>
-                            {wards.map(w => (
-                                <option key={w.code} value={w.code}>{w.name_with_type}</option>
-                            ))}
-                        </select>
-                        {loadingWards && <div className="absolute right-3 top-[38px]"><Spinner /></div>}
+                            loading={loadingWards}
+                        />
                     </div>
                 </div>
 
