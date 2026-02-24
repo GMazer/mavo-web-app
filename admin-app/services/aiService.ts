@@ -8,7 +8,11 @@ export const generateProductDescription = async (
   colors: string[]
 ): Promise<string> => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error("Vui lòng cấu hình VITE_GEMINI_API_KEY trong file .env");
+    }
+    const ai = new GoogleGenAI({ apiKey });
     const prompt = `Bạn là một chuyên gia viết nội dung bán hàng thời trang (copywriter) chuyên nghiệp.
 Hãy viết một đoạn mô tả sản phẩm thật hấp dẫn, thu hút khách hàng dựa trên các thông tin sau:
 - Tên sản phẩm: ${name}

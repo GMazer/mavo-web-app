@@ -153,7 +153,7 @@ app.put('/change-password', async (c) => {
     try {
         const authHeader = c.req.header('Authorization');
         if (!authHeader) return c.json({ error: "Unauthorized" }, 401);
-
+        
         const token = authHeader.split(' ')[1];
         const secret = c.env.JWT_SECRET || 'fallback-secret-dev';
         
@@ -193,6 +193,67 @@ app.put('/change-password', async (c) => {
 
     } catch (e: any) {
         console.error("Change Password Error:", e);
+        return c.json({ error: e.message }, 500);
+    }
+});
+
+// 6. RECOVER 2FA (Get Secret by Password)
+app.post('/recover', async (c) => {
+    try {
+        const { username, password } = await c.req.json();
+        
+        const admin = await c.env.DB.prepare("SELECT * FROM Admins WHERE username = ?").bind(username).first() as any;
+        if (!admin) return c.json({ error: "Invalid credentials" }, 401);
+
+        const validPass = await bcrypt.compare(password, admin.password);
+        if (!validPass) return c.json({ error: "Invalid credentials" }, 401);
+
+        // Re-generate URL
+        const totp = new OTPAuth.TOTP({
+            issuer: "MavoFashion",
+            label: username,
+            algorithm: "SHA1",
+            digits: 6,
+            period: 30,
+            secret: OTPAuth.Secret.fromBase32(admin.twoFactorSecret)
+        });
+
+        return c.json({
+            success: true,
+            secret: admin.twoFactorSecret,
+            otpauth_url: totp.toString()
+        });
+    } catch (e: any) {
+        return c.json({ error: e.message }, 500);
+    }
+});
+
+// 7. DEBUG: Get Current 2FA Code (DEV ONLY)
+app.get('/debug-2fa', async (c) => {
+    try {
+        const username = c.req.query('username');
+        if (!username) return c.json({ error: "Missing username" }, 400);
+
+        const admin = await c.env.DB.prepare("SELECT * FROM Admins WHERE username = ?").bind(username).first() as any;
+        if (!admin) return c.json({ error: "User not found" }, 404);
+
+        const totp = new OTPAuth.TOTP({
+            algorithm: "SHA1",
+            digits: 6,
+            period: 30,
+            secret: OTPAuth.Secret.fromBase32(admin.twoFactorSecret)
+        });
+
+        const currentCode = totp.generate();
+        
+        return c.json({
+            username: admin.username,
+            secret: admin.twoFactorSecret,
+            currentCode: currentCode,
+            message: "This is for debugging only. Do not expose in production."
+        });
+
+    } catch (e: any) {
         return c.json({ error: e.message }, 500);
     }
 });

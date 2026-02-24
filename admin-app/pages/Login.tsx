@@ -10,8 +10,8 @@ const Login: React.FC = () => {
     const { login } = useAuth();
     const toast = useToast();
     
-    // Modes: 'loading', 'setup', 'login', '2fa'
-    const [mode, setMode] = useState<'loading' | 'setup' | 'login' | '2fa'>('loading');
+    // Modes: 'loading', 'setup', 'login', '2fa', 'recover'
+    const [mode, setMode] = useState<'loading' | 'setup' | 'login' | '2fa' | 'recover'>('loading');
     
     // Form Data
     const [username, setUsername] = useState('');
@@ -19,7 +19,7 @@ const Login: React.FC = () => {
     const [twoFactorCode, setTwoFactorCode] = useState('');
     const [loading, setLoading] = useState(false);
 
-    // Setup Data
+    // Setup/Recover Data
     const [qrUrl, setQrUrl] = useState('');
     const [secret, setSecret] = useState('');
 
@@ -143,6 +143,29 @@ const Login: React.FC = () => {
         }
     };
 
+    const handleRecover = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            const res = await fetch(`${API_BASE}/auth/recover`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setQrUrl(data.otpauth_url);
+                setSecret(data.secret);
+            } else {
+                toast.error(data.error || "Khôi phục thất bại. Kiểm tra lại thông tin.");
+            }
+        } catch (e) {
+            toast.error("Lỗi kết nối");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleConfirmSetup = () => {
         setMode('login');
         setQrUrl('');
@@ -188,6 +211,44 @@ const Login: React.FC = () => {
                         </div>
                         <button disabled={loading} className="w-full bg-black text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition-colors flex justify-center">
                             {loading ? <Spinner /> : 'ĐĂNG NHẬP'}
+                        </button>
+                        <button type="button" onClick={() => setMode('recover')} className="w-full text-sm text-gray-500 hover:text-black mt-2">
+                            Quên mã 2FA?
+                        </button>
+                    </form>
+                )}
+
+                {mode === 'recover' && !qrUrl && (
+                    <form onSubmit={handleRecover} className="space-y-4 animate-fade-in">
+                        <div className="text-center mb-4">
+                            <h3 className="font-bold text-lg">Khôi phục mã 2FA</h3>
+                            <p className="text-xs text-gray-500">Nhập thông tin tài khoản để lấy lại mã QR</p>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Tên đăng nhập</label>
+                            <input 
+                                type="text" 
+                                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-black outline-none" 
+                                value={username}
+                                onChange={e => setUsername(e.target.value)}
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Mật khẩu</label>
+                            <input 
+                                type="password" 
+                                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-black outline-none"
+                                value={password}
+                                onChange={e => setPassword(e.target.value)}
+                                required
+                            />
+                        </div>
+                        <button disabled={loading} className="w-full bg-black text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition-colors flex justify-center">
+                            {loading ? <Spinner /> : 'LẤY MÃ QR'}
+                        </button>
+                        <button type="button" onClick={() => setMode('login')} className="w-full text-sm text-gray-500 hover:text-black mt-2">
+                            Quay lại đăng nhập
                         </button>
                     </form>
                 )}
@@ -239,9 +300,9 @@ const Login: React.FC = () => {
                     </form>
                 )}
 
-                {mode === 'setup' && qrUrl && (
+                {(mode === 'setup' || mode === 'recover') && qrUrl && (
                     <div className="space-y-6 text-center animate-fade-in">
-                        <h3 className="font-bold text-lg">Thiết lập 2FA</h3>
+                        <h3 className="font-bold text-lg">{mode === 'setup' ? 'Thiết lập 2FA' : 'Khôi phục 2FA'}</h3>
                         <p className="text-sm text-gray-600">Quét mã QR này bằng Google Authenticator hoặc Authy:</p>
                         
                         <div className="flex justify-center p-2 bg-white border border-gray-200 rounded-lg">
