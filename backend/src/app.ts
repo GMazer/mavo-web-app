@@ -11,6 +11,7 @@ import ordersRouter from './routes/orders';
 import locationsRouter from './routes/locations';
 import dashboardRouter from './routes/dashboard';
 import authRouter from './routes/auth';
+import aiRouter from './routes/ai';
 import { Bindings } from './bindings';
 import { rateLimiter } from './middleware/rateLimiter';
 
@@ -69,6 +70,7 @@ app.route('/api/categories', categoriesRouter);
 app.route('/api/orders', ordersRouter);
 app.route('/api/locations', locationsRouter);
 app.route('/api/dashboard', dashboardRouter);
+app.route('/api/ai', aiRouter);
 
 // 404 Handler
 app.notFound((c) => {

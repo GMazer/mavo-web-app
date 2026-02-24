@@ -18,7 +18,8 @@
     "hono": "^4.1.0",
     "aws4fetch": "^1.0.17",
     "bcryptjs": "^2.4.3",
-    "otpauth": "^9.2.2"
+    "otpauth": "^9.2.2",
+    "@google/genai": "^1.42.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240222.0",

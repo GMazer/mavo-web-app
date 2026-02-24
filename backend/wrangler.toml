@@ -25,3 +25,4 @@ R2_BUCKET_NAME = "mavo-assets"
 # Thay thế URL dưới đây bằng URL bạn vừa copy từ mục Public Access > R2.dev subdomain
 R2_PUBLIC_DOMAIN = "https://pub-eefc56436dc543eba8d1308b894ee6f4.r2.dev"
 # R2_SECRET_ACCESS_KEY should be set via secrets
+# GEMINI_API_KEY should be set via secrets for AI features

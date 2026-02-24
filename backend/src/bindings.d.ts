@@ -37,4 +37,7 @@ export type Bindings = {
   
   // Auth
   JWT_SECRET: string;
+
+  // AI
+  GEMINI_API_KEY: string;
 }

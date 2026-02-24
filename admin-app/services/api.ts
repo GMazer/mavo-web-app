@@ -3,8 +3,8 @@ import { Product, AppSettings, Category } from "../types";
 import { compressImage } from "../utils/helpers";
 
 // --- CONFIG API ---
-const API_ROOT = 'https://mavo-fashion-api.mavo-web.workers.dev';
-const API_BASE = `${API_ROOT}/api`;
+export const API_ROOT = 'https://mavo-fashion-api.mavo-web.workers.dev';
+export const API_BASE = `${API_ROOT}/api`;
 
 const API_URL = `${API_BASE}/products`;
 const SETTINGS_URL = `${API_BASE}/settings`;
