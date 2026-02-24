@@ -39,7 +39,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, onClick
             <button 
                 onClick={(e) => {
                     e.stopPropagation();
-                    onAddToCart(product);
+                    if (onClick) onClick();
                 }}
                 className="w-full bg-white text-black font-bold text-[11px] py-3 uppercase tracking-wider hover:bg-gray-50 shadow-md border border-transparent hover:border-gray-200"
             >

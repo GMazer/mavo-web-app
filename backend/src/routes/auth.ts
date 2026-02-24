@@ -1,6 +1,6 @@
 
 import { Hono } from 'hono';
-import { sign } from 'hono/jwt';
+import { sign, verify } from 'hono/jwt';
 import * as bcrypt from 'bcryptjs';
 import * as OTPAuth from 'otpauth';
 import { Bindings } from '../bindings';
@@ -135,7 +135,7 @@ app.post('/verify-2fa', async (c) => {
             username: admin.username,
             role: 'admin',
             exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24) // 24 hours
-        }, secret);
+        }, secret, 'HS256');
 
         return c.json({
             success: true,
@@ -144,6 +144,55 @@ app.post('/verify-2fa', async (c) => {
         });
 
     } catch (e: any) {
+        return c.json({ error: e.message }, 500);
+    }
+});
+
+// 5. CHANGE PASSWORD
+app.put('/change-password', async (c) => {
+    try {
+        const authHeader = c.req.header('Authorization');
+        if (!authHeader) return c.json({ error: "Unauthorized" }, 401);
+
+        const token = authHeader.split(' ')[1];
+        const secret = c.env.JWT_SECRET || 'fallback-secret-dev';
+        
+        // Verify Token
+        let payload;
+        try {
+            payload = await verify(token, secret, 'HS256');
+        } catch (err) {
+            return c.json({ error: "Invalid Token" }, 401);
+        }
+
+        const { oldPassword, newPassword } = await c.req.json();
+        if (!oldPassword || !newPassword) return c.json({ error: "Missing required fields" }, 400);
+
+        // Fetch Admin
+        const adminId = payload.sub;
+        const admin = await c.env.DB.prepare("SELECT * FROM Admins WHERE id = ?").bind(adminId).first() as any;
+
+        if (!admin) return c.json({ error: "Admin not found" }, 404);
+
+        // Verify Old Password
+        const validPass = await bcrypt.compare(oldPassword, admin.password);
+        if (!validPass) {
+            return c.json({ error: "Mật khẩu cũ không chính xác" }, 400);
+        }
+
+        // Hash New Password
+        const salt = await bcrypt.genSalt(10);
+        const hashedNewPassword = await bcrypt.hash(newPassword, salt);
+
+        // Update DB
+        await c.env.DB.prepare("UPDATE Admins SET password = ? WHERE id = ?")
+            .bind(hashedNewPassword, adminId)
+            .run();
+
+        return c.json({ success: true, message: "Đổi mật khẩu thành công" });
+
+    } catch (e: any) {
+        console.error("Change Password Error:", e);
         return c.json({ error: e.message }, 500);
     }
 });

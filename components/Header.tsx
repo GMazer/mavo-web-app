@@ -32,7 +32,7 @@ const Header: React.FC<HeaderProps> = ({ cartCount, onOpenCart, onLogoClick, onS
           </div>
 
           {/* Desktop Nav - Aligned Left next to Logo */}
-          <nav className="hidden xl:flex items-center space-x-8 text-sm text-gray-600 tracking-wide uppercase">
+          <nav className="hidden lg:flex items-center space-x-8 text-sm text-gray-600 tracking-wide uppercase">
             {/* Standard links turn Red #E71313 on hover */}
             <a href="#" onClick={(e) => { e.preventDefault(); onLogoClick(); }} className={`${navLinkBase} ${hoverEffect} hover:text-[#E71313]`}>QUẦN ÁO</a>
             <a href="#" className={`${navLinkBase} ${hoverEffect} hover:text-[#E71313]`}>GIÀY DÉP</a>

@@ -1,10 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
-import { fetchSettingsApi, saveSettingsApi, uploadImagesApi } from '../services/api';
+import { fetchSettingsApi, saveSettingsApi, uploadImagesApi, changePasswordApi } from '../services/api';
 import { AppSettings } from '../types';
 import { Spinner, UploadIcon } from '../components/ui/Icons';
+import { useToast } from '../../context/ToastContext';
 
 const Settings: React.FC = () => {
+    const toast = useToast();
     const [settings, setSettings] = useState<AppSettings>({
         hotline: '',
         email: '',
@@ -23,6 +25,12 @@ const Settings: React.FC = () => {
     const [uploadingSize, setUploadingSize] = useState(false);
     const [uploadingCare, setUploadingCare] = useState(false);
     const [uploadingReturn, setUploadingReturn] = useState(false);
+
+    // Password Change State
+    const [oldPassword, setOldPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [changingPassword, setChangingPassword] = useState(false);
 
     useEffect(() => {
         const loadSettings = async () => {
@@ -46,12 +54,44 @@ const Settings: React.FC = () => {
         setSaving(true);
         try {
             await saveSettingsApi(settings);
-            alert("Đã lưu cấu hình thành công!");
+            toast.success("Đã lưu cấu hình thành công!");
         } catch (err: any) {
             console.error(err);
-            alert(`Lỗi khi lưu cấu hình: ${err.message}`);
+            toast.error(`Lỗi khi lưu cấu hình: ${err.message}`);
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleChangePassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        if (!oldPassword || !newPassword || !confirmPassword) {
+            toast.error("Vui lòng điền đầy đủ thông tin mật khẩu");
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            toast.error("Mật khẩu mới không khớp nhau");
+            return;
+        }
+
+        if (newPassword.length < 6) {
+             toast.error("Mật khẩu mới phải có ít nhất 6 ký tự");
+             return;
+        }
+
+        setChangingPassword(true);
+        try {
+            await changePasswordApi(oldPassword, newPassword);
+            toast.success("Đổi mật khẩu thành công!");
+            setOldPassword('');
+            setNewPassword('');
+            setConfirmPassword('');
+        } catch (err: any) {
+            toast.error(err.message || "Lỗi khi đổi mật khẩu");
+        } finally {
+            setChangingPassword(false);
         }
     };
 
@@ -69,7 +109,7 @@ const Settings: React.FC = () => {
                 handleChange(key, urls[0]);
             }
         } catch (err) {
-            alert("Lỗi tải ảnh");
+            toast.error("Lỗi tải ảnh");
         } finally {
             setLoadingState(false);
             e.target.value = '';
@@ -258,6 +298,58 @@ const Settings: React.FC = () => {
                 {saving && <Spinner />}
                 {saving ? 'Đang lưu...' : 'Lưu Thay Đổi'}
             </button>
+
+             {/* Change Password Section */}
+             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mt-12 border-t-4 border-t-gray-700">
+                <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    Bảo mật & Tài khoản
+                </h3>
+                
+                <form onSubmit={handleChangePassword} className="max-w-md space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Mật khẩu cũ</label>
+                        <input 
+                            type="password" 
+                            className="w-full border border-gray-300 rounded p-2.5 text-sm outline-none focus:border-black transition-colors"
+                            value={oldPassword}
+                            onChange={(e) => setOldPassword(e.target.value)}
+                            placeholder="Nhập mật khẩu hiện tại"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Mật khẩu mới</label>
+                        <input 
+                            type="password" 
+                            className="w-full border border-gray-300 rounded p-2.5 text-sm outline-none focus:border-black transition-colors"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            placeholder="Mật khẩu mới (tối thiểu 6 ký tự)"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Xác nhận mật khẩu mới</label>
+                        <input 
+                            type="password" 
+                            className="w-full border border-gray-300 rounded p-2.5 text-sm outline-none focus:border-black transition-colors"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder="Nhập lại mật khẩu mới"
+                        />
+                    </div>
+                    
+                    <button 
+                        type="submit"
+                        disabled={changingPassword || !oldPassword || !newPassword || !confirmPassword}
+                        className="bg-gray-800 text-white px-6 py-2.5 rounded font-bold text-sm hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                        {changingPassword && <Spinner />}
+                        {changingPassword ? 'Đang đổi...' : 'Đổi mật khẩu'}
+                    </button>
+                </form>
+            </div>
         </div>
     );
 };

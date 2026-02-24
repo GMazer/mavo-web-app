@@ -37,14 +37,14 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
   // Stats passed up from Review Component
   const [ratingStats, setRatingStats] = useState({ avg: 0, count: 0 });
 
-  const [expandHighlights, setExpandHighlights] = useState(false);
-  const [expandBoughtTogether, setExpandBoughtTogether] = useState(false);
+  const [expandHighlights, setExpandHighlights] = useState(true);
+  const [expandBoughtTogether, setExpandBoughtTogether] = useState(true);
 
   useEffect(() => {
     setQuantity(1);
     setSelectedSize(null);
-    setExpandHighlights(false);
-    setExpandBoughtTogether(false);
+    setExpandHighlights(true);
+    setExpandBoughtTogether(true);
     setRatingStats({ avg: 0, count: 0 }); // Reset stats for new product
 
     window.scrollTo(0, 0);
@@ -79,7 +79,18 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
   };
 
   const relatedProducts = allProducts.filter(p => p.id !== product.id).slice(0, 4);
-  const boughtTogetherProducts = allProducts.filter(p => p.id !== product.id).slice(4, 8);
+  
+  // Suggest products from the same category first, then fallback to other products
+  const boughtTogetherProducts = React.useMemo(() => {
+    const sameCategory = allProducts.filter(p => p.id !== product.id && p.category === product.category);
+    const otherProducts = allProducts.filter(p => p.id !== product.id && p.category !== product.category);
+    
+    // Shuffle the arrays to make suggestions dynamic
+    const shuffle = (array: Product[]) => [...array].sort(() => 0.5 - Math.random());
+    
+    const suggestions = [...shuffle(sameCategory), ...shuffle(otherProducts)];
+    return suggestions.slice(0, 4);
+  }, [product.id, product.category, allProducts]);
 
   return (
     <div className="w-full">
@@ -266,7 +277,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
                 className="flex w-full justify-between items-center text-sm font-medium uppercase hover:text-gray-600 transition-colors"
                 onClick={() => setExpandBoughtTogether(!expandBoughtTogether)}
              >
-                SẢN PHẨM MUA CÙNG
+                CÓ THỂ BẠN SẼ THÍCH
                 <ChevronDownIcon className={`w-4 h-4 transition-transform duration-200 ${expandBoughtTogether ? 'rotate-180' : ''}`} />
              </button>
              <div className={`overflow-hidden transition-all duration-300 ${expandBoughtTogether ? 'max-h-96 mt-4' : 'max-h-0'}`}>

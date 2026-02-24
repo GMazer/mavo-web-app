@@ -45,6 +45,24 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('home');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
+
+  // Handle window resize to close category on desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) { // lg breakpoint in Tailwind
+        setIsCategoryOpen(false);
+      }
+    };
+
+    // Initial check
+    handleResize();
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // FETCH DATA FROM SERVER
   useEffect(() => {
@@ -178,6 +196,18 @@ const App: React.FC = () => {
     ? products 
     : products.filter(p => p.category === selectedCategory);
 
+  // --- PAGINATION LOGIC ---
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const currentProducts = filteredProducts.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Reset page when category changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory]);
+
   // Calculate total count for header badge
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -285,34 +315,41 @@ const App: React.FC = () => {
                         <h2 className="text-[26px] font-normal mb-8 uppercase tracking-wide">Lọc theo</h2>
                         
                         <div className="py-2">
-                            <button className="flex items-center justify-between w-full text-sm font-normal uppercase tracking-wider mb-3">
+                            <button 
+                                onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                                className="flex items-center justify-between w-full text-sm font-normal uppercase tracking-wider mb-3"
+                            >
                                 DANH MỤC
-                                <ChevronDownIcon className="w-3 h-3" />
+                                <ChevronDownIcon className={`w-3 h-3 transition-transform duration-300 ${isCategoryOpen ? 'rotate-180' : ''}`} />
                             </button>
                             <div className="w-full border-t border-gray-200 mb-4"></div>
                             
-                            <ul className="space-y-3 pl-1">
-                                {/* "All" Option */}
-                                <li>
-                                    <button 
-                                        onClick={() => setSelectedCategory('All')}
-                                        className={`text-sm text-left w-full transition-colors block py-0.5 ${selectedCategory === 'All' ? 'font-bold text-black' : 'text-gray-600 hover:text-black'}`}
-                                    >
-                                        Tất cả sản phẩm
-                                    </button>
-                                </li>
-                                {/* Dynamic Categories */}
-                                {displayCategories.map((cat, idx) => (
-                                    <li key={idx}>
-                                        <button 
-                                            onClick={() => setSelectedCategory(cat)}
-                                            className={`text-sm text-left w-full transition-colors block py-0.5 ${selectedCategory === cat ? 'font-bold text-black' : 'text-gray-600 hover:text-black'}`}
-                                        >
-                                            {cat}
-                                        </button>
-                                    </li>
-                                ))}
-                            </ul>
+                            <div className={`grid transition-all duration-300 ease-in-out ${isCategoryOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                                <div className="overflow-hidden">
+                                    <ul className="space-y-3 pl-1 pb-4">
+                                        {/* "All" Option */}
+                                        <li>
+                                            <button 
+                                                onClick={() => setSelectedCategory('All')}
+                                                className={`text-sm text-left w-full transition-colors block py-0.5 ${selectedCategory === 'All' ? 'font-bold text-black' : 'text-gray-600 hover:text-black'}`}
+                                            >
+                                                Tất cả sản phẩm
+                                            </button>
+                                        </li>
+                                        {/* Dynamic Categories */}
+                                        {displayCategories.map((cat, idx) => (
+                                            <li key={idx}>
+                                                <button 
+                                                    onClick={() => setSelectedCategory(cat)}
+                                                    className={`text-sm text-left w-full transition-colors block py-0.5 ${selectedCategory === cat ? 'font-bold text-black' : 'text-gray-600 hover:text-black'}`}
+                                                >
+                                                    {cat}
+                                                </button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                     </aside>
 
@@ -336,7 +373,7 @@ const App: React.FC = () => {
                             </div>
                         ) : (
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-12">
-                                {filteredProducts.map(product => (
+                                {currentProducts.map(product => (
                                     <ProductCard 
                                         key={product.id} 
                                         product={product} 
@@ -347,12 +384,36 @@ const App: React.FC = () => {
                             </div>
                         )}
                         
-                        {/* Pagination (Only show if there are products) */}
-                        {filteredProducts.length > 0 && (
+                        {/* Pagination (Only show if there are products and more than 1 page) */}
+                        {filteredProducts.length > 0 && totalPages > 1 && (
                             <div className="mt-20 flex justify-center gap-2">
-                                <span className="w-8 h-8 flex items-center justify-center bg-black text-white text-sm rounded-full">1</span>
-                                <span className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 text-gray-600 text-sm rounded-full cursor-pointer">2</span>
-                                <span className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 text-gray-600 text-sm rounded-full cursor-pointer"><ChevronRightIcon className="w-3 h-3" /></span>
+                                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                                    <button
+                                        key={page}
+                                        onClick={() => {
+                                            setCurrentPage(page);
+                                            window.scrollTo(0, 0);
+                                        }}
+                                        className={`w-8 h-8 flex items-center justify-center text-sm rounded-full transition-colors ${
+                                            currentPage === page
+                                                ? 'bg-black text-white'
+                                                : 'hover:bg-gray-100 text-gray-600 cursor-pointer'
+                                        }`}
+                                    >
+                                        {page}
+                                    </button>
+                                ))}
+                                {currentPage < totalPages && (
+                                    <button
+                                        onClick={() => {
+                                            setCurrentPage(prev => prev + 1);
+                                            window.scrollTo(0, 0);
+                                        }}
+                                        className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 text-gray-600 text-sm rounded-full cursor-pointer"
+                                    >
+                                        <ChevronRightIcon className="w-3 h-3" />
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>

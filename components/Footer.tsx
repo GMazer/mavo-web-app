@@ -164,7 +164,6 @@ const Footer: React.FC<FooterProps> = ({ settings }) => {
         <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
              <div className="flex items-center gap-4">
                 <p>Copyright © 2024 Mavo. All Rights Reserved.</p>
-                <a href="/admin-app/index.html" className="text-[10px] text-gray-500 hover:text-white border border-gray-700 hover:border-white px-2 py-0.5 rounded transition-colors">Go to Admin CMS</a>
              </div>
              <div className="flex gap-4 mt-4 md:mt-0 items-center">
                 <img src="http://online.gov.vn/Content/EndUser/LogoCCDVSaleNoti/logoSaleNoti.png" alt="Bo Cong Thuong" className="h-10" />

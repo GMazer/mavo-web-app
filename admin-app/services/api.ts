@@ -12,6 +12,7 @@ const CATEGORIES_URL = `${API_BASE}/categories`;
 const UPLOAD_URL = `${API_BASE}/uploads/presign`;
 const ORDERS_URL = `${API_BASE}/orders`;
 const DASHBOARD_URL = `${API_BASE}/dashboard`;
+const AUTH_URL = `${API_BASE}/auth`;
 
 // --- Dashboard ---
 export const fetchDashboardDataApi = async () => {
@@ -221,5 +222,29 @@ export const updateOrderStatusesApi = async (ids: string[], status: string) => {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.message || "Failed to bulk update status");
     }
+    return await res.json();
+};
+
+// --- Auth & Security ---
+
+export const changePasswordApi = async (oldPassword: string, newPassword: string) => {
+    const token = localStorage.getItem('mavo_admin_token');
+    
+    if (!token) throw new Error("Chưa đăng nhập");
+
+    const res = await fetch(`${AUTH_URL}/change-password`, {
+        method: 'PUT',
+        headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ oldPassword, newPassword })
+    });
+
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Đổi mật khẩu thất bại");
+    }
+    
     return await res.json();
 };
