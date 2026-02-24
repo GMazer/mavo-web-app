@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Product } from '../types';
+import { useLanguage } from '../context/LanguageContext';
 
 interface ProductCardProps {
   product: Product;
@@ -9,6 +10,7 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, onClick }) => {
+  const { t } = useLanguage();
   // Determine Primary and Secondary images
   const primaryImage = product.images?.[0] || product.image;
   const secondaryImage = product.images?.[1];
@@ -43,7 +45,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, onClick
                 }}
                 className="w-full bg-white text-black font-bold text-[11px] py-3 uppercase tracking-wider hover:bg-gray-50 shadow-md border border-transparent hover:border-gray-200"
             >
-                Mua ngay
+                {t('product.buynow')}
             </button>
         </div>
       </div>

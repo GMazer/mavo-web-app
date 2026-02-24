@@ -3,6 +3,7 @@ import { Product, Category, ProductColor } from '../../types';
 import { Spinner, UploadIcon, TrashIcon } from '../ui/Icons';
 import ProductImageGallery from './ProductImageGallery';
 import { saveProductApi, uploadImagesApi, fetchCategoriesApi } from '../../services/api';
+import { generateProductDescription } from '../../services/aiService';
 
 interface ProductFormProps {
     initialProduct: Product;
@@ -35,6 +36,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialProduct, onCancel, onS
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [uploadingSize, setUploadingSize] = useState(false);
+    const [generatingDesc, setGeneratingDesc] = useState(false);
     
     // Categories
     const [categories, setCategories] = useState<Category[]>([]);
@@ -115,6 +117,28 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialProduct, onCancel, onS
         } finally {
             setUploadingSize(false);
             e.target.value = '';
+        }
+    };
+
+    const handleGenerateDesc = async () => {
+        if (!product.name) {
+            alert("Vui lòng nhập tên sản phẩm trước khi tạo mô tả.");
+            return;
+        }
+        setGeneratingDesc(true);
+        try {
+            const desc = await generateProductDescription(
+                product.name,
+                product.material || '',
+                product.gender || 'FEMALE',
+                product.category || 'Quần áo',
+                (product.colors || []).map(c => c.name)
+            );
+            handleChange('description', desc);
+        } catch (error) {
+            alert("Không thể tạo mô tả bằng AI. Vui lòng thử lại.");
+        } finally {
+            setGeneratingDesc(false);
         }
     };
 
@@ -250,11 +274,24 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialProduct, onCancel, onS
                     </div>
 
                     <div className="space-y-4">
-                        <label className="block text-sm font-medium text-gray-700">Thông tin chi tiết (Hiển thị trong tab "Thông tin sản phẩm")</label>
+                        <div className="flex justify-between items-center">
+                            <label className="block text-sm font-medium text-gray-700">Thông tin chi tiết (Hiển thị trong tab "Thông tin sản phẩm")</label>
+                            <button
+                                type="button"
+                                onClick={handleGenerateDesc}
+                                disabled={generatingDesc}
+                                className="text-xs flex items-center gap-1 bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-3 py-1.5 rounded-full hover:shadow-md transition-all disabled:opacity-50"
+                            >
+                                {generatingDesc ? <Spinner /> : (
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                                )}
+                                {generatingDesc ? 'Đang viết...' : 'Viết bằng AI'}
+                            </button>
+                        </div>
                         <textarea 
                             value={product.description || ''}
                             onChange={(e) => handleChange('description', e.target.value)}
-                            className="w-full border border-gray-300 rounded-md p-2 h-24"
+                            className="w-full border border-gray-300 rounded-md p-2 h-40"
                             placeholder="Ví dụ: Thổi hồn vào những thiết kế MAVO..."
                         ></textarea>
                     </div>

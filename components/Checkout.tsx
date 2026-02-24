@@ -4,6 +4,7 @@ import { CartItem } from '../types';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import { Spinner } from '../admin-app/components/ui/Icons';
 import { useToast } from '../context/ToastContext';
+import { useLanguage } from '../context/LanguageContext';
 import SearchableSelect from './ui/SearchableSelect';
 
 // --- CONFIG API ---
@@ -23,6 +24,7 @@ interface CheckoutProps {
 
 const Checkout: React.FC<CheckoutProps> = ({ cartItems, onPlaceOrder }) => {
   const toast = useToast();
+  const { t } = useLanguage();
   const [paymentMethod, setPaymentMethod] = useState<'bank' | 'cod'>('bank');
   const [submitting, setSubmitting] = useState(false);
   
@@ -203,25 +205,21 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, onPlaceOrder }) => {
         
         {/* LEFT COLUMN: Billing Details */}
         <div className="flex-1">
-            <h2 className="text-2xl font-normal uppercase mb-6 border-b border-gray-200 pb-2">Thông tin thanh toán</h2>
+            <h2 className="text-2xl font-normal uppercase mb-6 border-b border-gray-200 pb-2">{t('checkout.shipping_info')}</h2>
             
             <form className="space-y-6">
                 <div className="flex flex-col md:flex-row gap-6">
                     <div className="flex-1">
-                        <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Tên *</label>
+                        <label className="block text-xs font-bold uppercase text-gray-500 mb-2">{t('checkout.fullname')} *</label>
                         <input name="firstName" value={formData.firstName} onChange={handleInputChange} type="text" className="w-full h-12 border border-gray-200 bg-[#f9f9f9] px-4 text-sm outline-none focus:border-black rounded-none transition-colors" />
                     </div>
                     <div className="flex-1">
-                        <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Họ</label>
-                        <input name="lastName" value={formData.lastName} onChange={handleInputChange} type="text" className="w-full h-12 border border-gray-200 bg-[#f9f9f9] px-4 text-sm outline-none focus:border-black rounded-none transition-colors" />
+                        <label className="block text-xs font-bold uppercase text-gray-500 mb-2">{t('checkout.phone')} *</label>
+                        <input name="phone" value={formData.phone} onChange={handleInputChange} type="tel" className="w-full h-12 border border-gray-200 bg-[#f9f9f9] px-4 text-sm outline-none focus:border-black rounded-none transition-colors" />
                     </div>
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-6">
-                    <div className="flex-1">
-                        <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Số điện thoại *</label>
-                        <input name="phone" value={formData.phone} onChange={handleInputChange} type="tel" className="w-full h-12 border border-gray-200 bg-[#f9f9f9] px-4 text-sm outline-none focus:border-black rounded-none transition-colors" />
-                    </div>
                     <div className="flex-1">
                         <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Địa chỉ Email</label>
                         <input name="email" value={formData.email} onChange={handleInputChange} type="email" className="w-full h-12 border border-gray-200 bg-[#f9f9f9] px-4 text-sm outline-none focus:border-black rounded-none transition-colors" />
@@ -265,13 +263,13 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, onPlaceOrder }) => {
                 </div>
 
                 <div>
-                    <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Địa chỉ cụ thể (Số nhà, đường...) *</label>
+                    <label className="block text-xs font-bold uppercase text-gray-500 mb-2">{t('checkout.address')} *</label>
                     <input name="addressDetail" value={formData.addressDetail} onChange={handleInputChange} type="text" className="w-full h-12 border border-gray-200 bg-[#f9f9f9] px-4 text-sm outline-none focus:border-black rounded-none transition-colors" placeholder="Ví dụ: Số 10, Ngõ 123 Đường ABC" />
                 </div>
 
                 <div className="pt-8">
                     <h3 className="text-xl font-normal uppercase mb-4">Thông tin bổ sung</h3>
-                    <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Ghi chú đơn hàng (tuỳ chọn)</label>
+                    <label className="block text-xs font-bold uppercase text-gray-500 mb-2">{t('checkout.notes')}</label>
                     <textarea 
                         name="note"
                         value={formData.note}
@@ -286,11 +284,11 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, onPlaceOrder }) => {
         {/* RIGHT COLUMN: Order Summary (Unchanged) */}
         <div className="w-full lg:w-[450px] flex-shrink-0">
             <div className="border-2 border-dashed border-gray-800 p-8 bg-[#fffcf5]">
-                <h2 className="text-xl font-normal uppercase text-center mb-8 tracking-wide">Đơn hàng của bạn</h2>
+                <h2 className="text-xl font-normal uppercase text-center mb-8 tracking-wide">{t('checkout.your_order')}</h2>
                 
                 <div className="flex justify-between text-xs font-bold uppercase border-b-2 border-gray-200 pb-3 mb-4 text-gray-500">
                     <span>Sản phẩm</span>
-                    <span>Tạm tính</span>
+                    <span>{t('checkout.subtotal')}</span>
                 </div>
 
                 {/* Product List */}
@@ -328,13 +326,13 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, onPlaceOrder }) => {
 
                 {/* Totals */}
                 <div className="flex justify-between items-center text-sm mb-4">
-                    <span className="font-bold">Tạm tính</span>
+                    <span className="font-bold">{t('checkout.subtotal')}</span>
                     <span className="font-bold text-[#E71313]">
                         {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(subtotal).replace('₫', '')}₫
                     </span>
                 </div>
                 <div className="flex justify-between items-center text-lg mb-8 border-b-2 border-gray-200 pb-6">
-                    <span className="font-bold">Tổng</span>
+                    <span className="font-bold">{t('checkout.total')}</span>
                     <span className="font-bold text-[#E71313]">
                         {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total).replace('₫', '')}₫
                     </span>
@@ -352,7 +350,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, onPlaceOrder }) => {
                             className="mt-1"
                         />
                         <div>
-                            <label htmlFor="bank" className="font-bold text-sm cursor-pointer">Chuyển khoản ngân hàng</label>
+                            <label htmlFor="bank" className="font-bold text-sm cursor-pointer">{t('checkout.bank')}</label>
                             {paymentMethod === 'bank' && (
                                 <div className="text-xs text-gray-500 mt-2 p-3 bg-white border border-gray-200">
                                     Thông tin hướng dẫn chuyển khoản sẽ được hiện khi bạn đặt hàng thành công. Vui lòng làm theo hướng dẫn sau đó để Mavo tiếp tục xử lý đơn hàng của bạn.
@@ -369,7 +367,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, onPlaceOrder }) => {
                             onChange={() => setPaymentMethod('cod')}
                             className="mt-0.5"
                         />
-                        <label htmlFor="cod" className="font-bold text-sm cursor-pointer">Trả tiền mặt khi nhận hàng (COD)</label>
+                        <label htmlFor="cod" className="font-bold text-sm cursor-pointer">{t('checkout.cod')}</label>
                     </div>
                 </div>
 
@@ -379,7 +377,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, onPlaceOrder }) => {
                     className="w-full bg-black text-white h-14 text-sm font-bold uppercase tracking-wider hover:bg-gray-800 transition-colors rounded-none disabled:opacity-50 flex justify-center items-center gap-2"
                 >
                     {submitting && <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>}
-                    {submitting ? 'Đang xử lý...' : 'Đặt hàng'}
+                    {submitting ? 'Đang xử lý...' : t('checkout.place_order')}
                 </button>
 
                 <div className="mt-6 text-[11px] text-gray-500 text-center leading-relaxed">

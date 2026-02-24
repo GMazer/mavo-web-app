@@ -1,12 +1,14 @@
 
 import React from 'react';
 import { AppSettings } from '../types';
+import { useLanguage } from '../context/LanguageContext';
 
 interface FooterProps {
     settings?: AppSettings;
 }
 
 const Footer: React.FC<FooterProps> = ({ settings }) => {
+  const { t } = useLanguage();
   const hotline = settings?.hotline || '1800 6525';
   const email = settings?.email || 'CSKH@MAVOFASHION.COM';
   
@@ -24,7 +26,7 @@ const Footer: React.FC<FooterProps> = ({ settings }) => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 border-b border-gray-800 pb-12 mb-12">
             {/* Column 1 */}
             <div>
-                <h3 className="text-base font-bold mb-4 uppercase">LIÊN HỆ VỚI MAVO</h3>
+                <h3 className="text-base font-bold mb-4 uppercase">{t('footer.about')}</h3>
                 <p className="text-gray-400 text-sm mb-6 leading-relaxed max-w-xs">
                     Nếu bạn có thắc mắc hoặc muốn đóng góp ý kiến vui lòng gửi liên hệ cho chúng tôi. 
                     Mọi ý kiến của bạn sẽ giúp cho trải nghiệm dịch vụ sản phẩm tốt hơn nữa
@@ -36,14 +38,14 @@ const Footer: React.FC<FooterProps> = ({ settings }) => {
 
             {/* Column 2 */}
             <div>
-                <h3 className="text-base font-bold mb-4 uppercase">HOTLINE: {hotline}</h3>
+                <h3 className="text-base font-bold mb-4 uppercase">{t('detail.hotline')}: {hotline}</h3>
                 <p className="text-gray-400 text-sm mb-2">Thời gian hỗ trợ hành chính: (8:30 - 17:00)</p>
                 <p className="text-sm font-bold uppercase mt-6 tracking-wide">EMAIL: {email}</p>
             </div>
 
              {/* Column 3 */}
             <div className="md:text-right">
-                 <h3 className="text-base font-bold mb-6 uppercase">KẾT NỐI VỚI CHÚNG TÔI</h3>
+                 <h3 className="text-base font-bold mb-6 uppercase">{t('footer.follow')}</h3>
                  <div className="flex gap-6 md:justify-end text-white">
                     {/* Facebook */}
                     <a href={facebook} target="_blank" rel="noopener noreferrer" className="hover:text-gray-300 transition-colors">

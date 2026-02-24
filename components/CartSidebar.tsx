@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { CartItem } from '../types';
 import { XMarkIcon, TrashIcon, MinusIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { useLanguage } from '../context/LanguageContext';
 
 interface CartSidebarProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
   onCheckout
 }) => {
   const [isVisible, setIsVisible] = useState(false);
+  const { t } = useLanguage();
 
   // Handle animation delay
   useEffect(() => {
@@ -52,7 +54,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
-          <h2 className="text-lg font-bold uppercase tracking-wider">Giỏ hàng ({cartItems.length})</h2>
+          <h2 className="text-lg font-bold uppercase tracking-wider">{t('cart.title')} ({cartItems.length})</h2>
           <button 
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -65,7 +67,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {cartItems.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-gray-500 space-y-4">
-              <p>Giỏ hàng của bạn đang trống.</p>
+              <p>{t('cart.empty')}</p>
               <button 
                 onClick={onClose}
                 className="text-black font-bold border-b border-black pb-0.5 uppercase text-sm hover:text-gray-600 hover:border-gray-600 transition-colors"
@@ -143,7 +145,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
         {cartItems.length > 0 && (
             <div className="border-t border-gray-100 p-6 bg-gray-50">
                 <div className="flex justify-between items-center mb-4">
-                    <span className="text-sm text-gray-600 uppercase">Tạm tính</span>
+                    <span className="text-sm text-gray-600 uppercase">{t('cart.total')}</span>
                     <span className="text-lg font-bold">
                         {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(subtotal).replace('₫', '')}₫
                     </span>
@@ -153,7 +155,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
                     onClick={onCheckout}
                     className="w-full bg-black text-white h-12 text-sm font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors"
                 >
-                    Thanh toán
+                    {t('cart.checkout')}
                 </button>
             </div>
         )}

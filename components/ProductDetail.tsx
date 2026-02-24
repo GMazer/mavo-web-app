@@ -10,6 +10,7 @@ import {
     ChevronDownIcon
 } from '@heroicons/react/24/outline';
 import { useToast } from '../context/ToastContext';
+import { useLanguage } from '../context/LanguageContext';
 
 // Import sub-components
 import ProductGallery from './product/ProductGallery';
@@ -28,6 +29,7 @@ interface ProductDetailProps {
 
 const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, settings, onAddToCart, onBuyNow, onRelatedClick }) => {
   const toast = useToast();
+  const { t } = useLanguage();
   const images = product.images && product.images.length > 0 ? product.images : [product.image];
   
   const [quantity, setQuantity] = useState(1);
@@ -64,7 +66,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
 
   const handleAddToCart = () => {
     if (!selectedSize) {
-        toast.error("Vui lòng chọn kích thước!");
+        toast.error(t('detail.select_size_error'));
         return;
     }
     onAddToCart(product, quantity, selectedSize);
@@ -72,7 +74,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
 
   const handleBuyNow = () => {
     if (!selectedSize) {
-        toast.error("Vui lòng chọn kích thước!");
+        toast.error(t('detail.select_size_error'));
         return;
     }
     onBuyNow(product, quantity, selectedSize);
@@ -104,7 +106,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
           <h1 className="text-2xl lg:text-[28px] font-normal mb-2 truncate" title={product.name}>{product.name}</h1>
           
           <div className="flex items-center gap-4 mb-4 text-sm text-gray-500">
-            <span>Mã sản phẩm: {product.code || 'N/A'}</span>
+            <span>{t('detail.code')} {product.code || 'N/A'}</span>
           </div>
 
           <div className="flex items-center gap-1 mb-6">
@@ -126,7 +128,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
           </div>
 
           <div className="mb-6">
-            <p className="text-sm mb-2">Màu sắc: <span className="font-bold">{selectedColor ? selectedColor.name : 'Chưa chọn'}</span></p>
+            <p className="text-sm mb-2">{t('detail.color')}: <span className="font-bold">{selectedColor ? selectedColor.name : ''}</span></p>
             <div className="flex gap-3">
                 {product.colors?.map((color, idx) => {
                     const hex = typeof color === 'string' ? color : color.hex;
@@ -152,7 +154,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
         </div>
 
           <div className="mb-6">
-            <p className="text-sm mb-2">Kích thước:</p>
+            <p className="text-sm mb-2">{t('detail.size')}:</p>
             <div className="flex gap-2">
                 {['S', 'M', 'L'].map((size) => (
                     <button 
@@ -197,13 +199,13 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
                     onClick={handleAddToCart}
                     className="flex-1 border border-black bg-white text-black h-12 text-xs font-bold uppercase tracking-wider hover:bg-gray-50 transition-colors"
                  >
-                    Thêm vào giỏ
+                    {t('detail.addtocart')}
                  </button>
                  <button 
                     onClick={handleBuyNow}
                     className="flex-1 bg-black text-white h-12 text-xs font-bold uppercase tracking-wider hover:bg-gray-800 transition-colors"
                  >
-                    Mua ngay
+                    {t('detail.buynow')}
                  </button>
              </div>
           </div>
@@ -262,7 +264,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
                 className="flex w-full justify-between items-center text-sm font-medium uppercase hover:text-gray-600 transition-colors"
                 onClick={() => setExpandHighlights(!expandHighlights)}
              >
-                ĐẶC ĐIỂM NỔI BẬT
+                {t('detail.highlights')}
                 <ChevronDownIcon className={`w-4 h-4 transition-transform duration-200 ${expandHighlights ? 'rotate-180' : ''}`} />
              </button>
              <div className={`overflow-hidden transition-all duration-300 ${expandHighlights ? 'max-h-96 mt-4' : 'max-h-0'}`}>
@@ -277,7 +279,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, allProducts, set
                 className="flex w-full justify-between items-center text-sm font-medium uppercase hover:text-gray-600 transition-colors"
                 onClick={() => setExpandBoughtTogether(!expandBoughtTogether)}
              >
-                CÓ THỂ BẠN SẼ THÍCH
+                {t('detail.youmaylike')}
                 <ChevronDownIcon className={`w-4 h-4 transition-transform duration-200 ${expandBoughtTogether ? 'rotate-180' : ''}`} />
              </button>
              <div className={`overflow-hidden transition-all duration-300 ${expandBoughtTogether ? 'max-h-96 mt-4' : 'max-h-0'}`}>

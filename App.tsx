@@ -1,5 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'motion/react';
 import Header from './components/Header';
 import ProductCard from './components/ProductCard';
 import ProductDetail from './components/ProductDetail';
@@ -7,11 +9,11 @@ import Footer from './components/Footer';
 import CartSidebar from './components/CartSidebar';
 import Checkout from './components/Checkout';
 import SearchOverlay from './components/SearchOverlay';
+import ComingSoon from './components/ComingSoon';
 import { Product, CartItem, AppSettings, Category } from './types';
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
 import { useToast } from './context/ToastContext';
-
-type ViewState = 'home' | 'product' | 'checkout';
+import { slugify } from './utils';
 
 // --- CONFIG API ---
 // Sử dụng Server Online (Cloudflare Workers)
@@ -23,6 +25,8 @@ const API_CATEGORIES = `${API_BASE}/categories`;
 
 const App: React.FC = () => {
   const toast = useToast(); // Hook for notifications
+  const navigate = useNavigate();
+  const location = useLocation();
   
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -42,7 +46,6 @@ const App: React.FC = () => {
   });
 
   // Navigation & Filter State
-  const [currentView, setCurrentView] = useState<ViewState>('home');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
@@ -121,6 +124,32 @@ const App: React.FC = () => {
     fetchData();
   }, []);
 
+  // Categories for Sidebar: Use DB categories if available and VISIBLE, else fallback
+  const displayCategories = categories.length > 0 
+    ? categories.filter(c => c.isVisible !== false).map(c => c.name) 
+    : ["Váy đầm", "Áo", "Quần", "Chân váy", "Set", "Jumpsuits", "Áo khoác"];
+
+  // Sync route with state
+  useEffect(() => {
+    if (products.length === 0) return;
+    
+    if (location.pathname.startsWith('/product/')) {
+      const slug = location.pathname.split('/product/')[1];
+      const product = products.find(p => slugify(p.name) === slug);
+      if (product) setSelectedProduct(product);
+    } else if (location.pathname.startsWith('/category/')) {
+      const slug = location.pathname.split('/category/')[1];
+      if (slug === 'sale-off') {
+        setSelectedCategory('Sale Off');
+      } else {
+        const cat = displayCategories.find(c => slugify(c) === slug);
+        if (cat) setSelectedCategory(cat);
+      }
+    } else if (location.pathname === '/') {
+      setSelectedCategory('All');
+    }
+  }, [location.pathname, products, displayCategories]);
+
   // Improved addToCart to handle grouping
   const addToCart = (product: Product, quantity = 1, size = 'M') => {
     setCart(prevCart => {
@@ -141,7 +170,7 @@ const App: React.FC = () => {
     toast.success(`Đã thêm "${product.name}" vào giỏ hàng!`);
 
     // Open sidebar automatically when adding, ONLY if not going straight to checkout
-    if (currentView !== 'checkout') {
+    if (location.pathname !== '/checkout') {
         setIsCartOpen(true);
     }
   };
@@ -149,13 +178,13 @@ const App: React.FC = () => {
   const handleBuyNow = (product: Product, quantity: number, size: string) => {
     addToCart(product, quantity, size);
     setIsCartOpen(false);
-    setCurrentView('checkout');
+    navigate('/checkout');
     window.scrollTo(0, 0);
   };
 
   const handleGoToCheckout = () => {
     setIsCartOpen(false);
-    setCurrentView('checkout');
+    navigate('/checkout');
     window.scrollTo(0, 0);
   };
 
@@ -174,15 +203,32 @@ const App: React.FC = () => {
   };
 
   const handleProductClick = (product: Product) => {
-    setSelectedProduct(product);
-    setCurrentView('product');
+    navigate(`/product/${slugify(product.name)}`);
     window.scrollTo(0,0);
   };
 
+  const handleNavClick = (view: string, title?: string) => {
+    if (view === 'coming-soon' && title) {
+      navigate('/coming-soon', { state: { title } });
+    } else if (view === 'home') {
+      goHome();
+    } else if (view === 'sale-off') {
+      navigate('/category/sale-off');
+    }
+    window.scrollTo(0, 0);
+  };
+
   const goHome = () => {
-    setSelectedProduct(null);
-    setCurrentView('home');
+    navigate('/');
     window.scrollTo(0,0);
+  };
+
+  const handleCategoryClick = (cat: string) => {
+    if (cat === 'All') {
+      navigate('/');
+    } else {
+      navigate(`/category/${slugify(cat)}`);
+    }
   };
 
   const handlePlaceOrder = () => {
@@ -194,7 +240,9 @@ const App: React.FC = () => {
   // --- FILTER LOGIC ---
   const filteredProducts = selectedCategory === 'All' 
     ? products 
-    : products.filter(p => p.category === selectedCategory);
+    : selectedCategory === 'Sale Off'
+      ? products.filter(p => p.originalPrice && p.originalPrice > p.price)
+      : products.filter(p => p.category === selectedCategory);
 
   // --- PAGINATION LOGIC ---
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
@@ -211,10 +259,119 @@ const App: React.FC = () => {
   // Calculate total count for header badge
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  // Categories for Sidebar: Use DB categories if available and VISIBLE, else fallback
-  const displayCategories = categories.length > 0 
-    ? categories.filter(c => c.isVisible !== false).map(c => c.name) 
-    : ["Váy đầm", "Áo", "Quần", "Chân váy", "Set", "Jumpsuits", "Áo khoác"];
+  const HomeView = () => (
+     <div className="px-6 lg:px-10 pb-20">
+         <div className="flex flex-col lg:flex-row gap-4">
+            {/* Sidebar Filters */}
+            <aside className="w-full lg:w-[300px] flex-shrink-0 pt-1">
+                <h2 className="text-[26px] font-normal mb-8 uppercase tracking-wide">Lọc theo</h2>
+                
+                <div className="py-2">
+                    <button 
+                        onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                        className="flex items-center justify-between w-full text-sm font-normal uppercase tracking-wider mb-3"
+                    >
+                        DANH MỤC
+                        <ChevronDownIcon className={`w-3 h-3 transition-transform duration-300 ${isCategoryOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                    <div className="w-full border-t border-gray-200 mb-4"></div>
+                    
+                    <div className={`grid transition-all duration-300 ease-in-out ${isCategoryOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                        <div className="overflow-hidden">
+                            <ul className="space-y-3 pl-1 pb-4">
+                                {/* "All" Option */}
+                                <li>
+                                    <button 
+                                        onClick={() => handleCategoryClick('All')}
+                                        className={`text-sm text-left w-full transition-colors block py-0.5 ${selectedCategory === 'All' ? 'font-bold text-black' : 'text-gray-600 hover:text-black'}`}
+                                    >
+                                        Tất cả sản phẩm
+                                    </button>
+                                </li>
+                                {/* Dynamic Categories */}
+                                {displayCategories.map((cat, idx) => (
+                                    <li key={idx}>
+                                        <button 
+                                            onClick={() => handleCategoryClick(cat)}
+                                            className={`text-sm text-left w-full transition-colors block py-0.5 ${selectedCategory === cat ? 'font-bold text-black' : 'text-gray-600 hover:text-black'}`}
+                                        >
+                                            {cat}
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            {/* Product Grid Content */}
+            <div className="flex-1">
+                <div className="mb-3">
+                    <h1 className="text-[26px] uppercase font-normal tracking-wide">
+                        {selectedCategory === 'All' ? 'QUẦN ÁO' : selectedCategory}
+                    </h1>
+                </div>
+
+                {filteredProducts.length === 0 ? (
+                    <div className="py-20 text-center flex flex-col items-center">
+                        <p className="text-gray-500 text-lg mb-2">Chưa có sản phẩm nào trong danh mục này.</p>
+                        <button 
+                            onClick={() => handleCategoryClick('All')}
+                            className="text-sm font-bold underline hover:text-gray-700"
+                        >
+                            Xem tất cả sản phẩm
+                        </button>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-12">
+                        {currentProducts.map(product => (
+                            <ProductCard 
+                                key={product.id} 
+                                product={product} 
+                                onAddToCart={(p) => addToCart(p, 1, 'M')} 
+                                onClick={() => handleProductClick(product)}
+                            />
+                        ))}
+                    </div>
+                )}
+                
+                {/* Pagination (Only show if there are products and more than 1 page) */}
+                {filteredProducts.length > 0 && totalPages > 1 && (
+                    <div className="mt-20 flex justify-center gap-2">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                            <button
+                                key={page}
+                                onClick={() => {
+                                    setCurrentPage(page);
+                                    window.scrollTo(0, 0);
+                                }}
+                                className={`w-8 h-8 flex items-center justify-center text-sm rounded-full transition-colors ${
+                                    currentPage === page
+                                        ? 'bg-black text-white'
+                                        : 'hover:bg-gray-100 text-gray-600 cursor-pointer'
+                                }`}
+                            >
+                                {page}
+                            </button>
+                        ))}
+                        {currentPage < totalPages && (
+                            <button
+                                onClick={() => {
+                                    setCurrentPage(prev => prev + 1);
+                                    window.scrollTo(0, 0);
+                                }}
+                                className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 text-gray-600 text-sm rounded-full cursor-pointer"
+                            >
+                                <ChevronRightIcon className="w-3 h-3" />
+                            </button>
+                        )}
+                    </div>
+                )}
+            </div>
+        </div>
+     </div>
+  );
 
   // Loading Screen
   if (loading) {
@@ -235,6 +392,7 @@ const App: React.FC = () => {
         onOpenCart={() => setIsCartOpen(true)}
         onLogoClick={goHome}
         onSearchClick={() => setIsSearchOpen(true)}
+        onNavClick={handleNavClick}
       />
 
       {/* Overlays */}
@@ -260,12 +418,17 @@ const App: React.FC = () => {
         <p className="text-sm text-gray-500 uppercase tracking-wide">
             <span className="hover:text-black cursor-pointer" onClick={goHome}>HOME</span> 
             
-            {currentView === 'checkout' ? (
+            {location.pathname === '/checkout' ? (
                  <>
                     <span className="mx-2 text-gray-300">/</span>
                     <span className="text-black">Thanh toán</span>
                  </>
-            ) : currentView === 'product' && selectedProduct ? (
+            ) : location.pathname.startsWith('/coming-soon') ? (
+                <>
+                    <span className="mx-2 text-gray-300">/</span>
+                    <span className="text-black">{location.state?.title || 'Đang cập nhật'}</span>
+                </>
+            ) : location.pathname.startsWith('/product/') && selectedProduct ? (
                 <>
                     <span className="mx-2 text-gray-300">/</span> 
                     <span className="hover:text-black cursor-pointer text-gray-500" onClick={goHome}>Quần áo</span>
@@ -290,136 +453,50 @@ const App: React.FC = () => {
       </div>
 
       {/* Main Content Router */}
-      <main className="w-full flex-grow">
-        {currentView === 'checkout' ? (
-             <Checkout 
-                cartItems={cart} 
-                onPlaceOrder={handlePlaceOrder}
-             />
-        ) : currentView === 'product' && selectedProduct ? (
-             <div className="px-6 lg:px-10 pb-20">
-                <ProductDetail 
-                    product={selectedProduct}
-                    allProducts={products}
-                    settings={appSettings} // Pass settings
-                    onAddToCart={addToCart}
-                    onBuyNow={handleBuyNow}
-                    onRelatedClick={handleProductClick}
-                />
-             </div>
-        ) : (
-             <div className="px-6 lg:px-10 pb-20">
-                 <div className="flex flex-col lg:flex-row gap-4">
-                    {/* Sidebar Filters */}
-                    <aside className="w-full lg:w-[300px] flex-shrink-0 pt-1">
-                        <h2 className="text-[26px] font-normal mb-8 uppercase tracking-wide">Lọc theo</h2>
-                        
-                        <div className="py-2">
-                            <button 
-                                onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-                                className="flex items-center justify-between w-full text-sm font-normal uppercase tracking-wider mb-3"
-                            >
-                                DANH MỤC
-                                <ChevronDownIcon className={`w-3 h-3 transition-transform duration-300 ${isCategoryOpen ? 'rotate-180' : ''}`} />
-                            </button>
-                            <div className="w-full border-t border-gray-200 mb-4"></div>
-                            
-                            <div className={`grid transition-all duration-300 ease-in-out ${isCategoryOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-                                <div className="overflow-hidden">
-                                    <ul className="space-y-3 pl-1 pb-4">
-                                        {/* "All" Option */}
-                                        <li>
-                                            <button 
-                                                onClick={() => setSelectedCategory('All')}
-                                                className={`text-sm text-left w-full transition-colors block py-0.5 ${selectedCategory === 'All' ? 'font-bold text-black' : 'text-gray-600 hover:text-black'}`}
-                                            >
-                                                Tất cả sản phẩm
-                                            </button>
-                                        </li>
-                                        {/* Dynamic Categories */}
-                                        {displayCategories.map((cat, idx) => (
-                                            <li key={idx}>
-                                                <button 
-                                                    onClick={() => setSelectedCategory(cat)}
-                                                    className={`text-sm text-left w-full transition-colors block py-0.5 ${selectedCategory === cat ? 'font-bold text-black' : 'text-gray-600 hover:text-black'}`}
-                                                >
-                                                    {cat}
-                                                </button>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </aside>
-
-                    {/* Product Grid Content */}
-                    <div className="flex-1">
-                        <div className="mb-3">
-                            <h1 className="text-[26px] uppercase font-normal tracking-wide">
-                                {selectedCategory === 'All' ? 'QUẦN ÁO' : selectedCategory}
-                            </h1>
-                        </div>
-
-                        {filteredProducts.length === 0 ? (
-                            <div className="py-20 text-center flex flex-col items-center">
-                                <p className="text-gray-500 text-lg mb-2">Chưa có sản phẩm nào trong danh mục này.</p>
-                                <button 
-                                    onClick={() => setSelectedCategory('All')}
-                                    className="text-sm font-bold underline hover:text-gray-700"
-                                >
-                                    Xem tất cả sản phẩm
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-12">
-                                {currentProducts.map(product => (
-                                    <ProductCard 
-                                        key={product.id} 
-                                        product={product} 
-                                        onAddToCart={(p) => addToCart(p, 1, 'M')} 
-                                        onClick={() => handleProductClick(product)}
-                                    />
-                                ))}
-                            </div>
-                        )}
-                        
-                        {/* Pagination (Only show if there are products and more than 1 page) */}
-                        {filteredProducts.length > 0 && totalPages > 1 && (
-                            <div className="mt-20 flex justify-center gap-2">
-                                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                                    <button
-                                        key={page}
-                                        onClick={() => {
-                                            setCurrentPage(page);
-                                            window.scrollTo(0, 0);
-                                        }}
-                                        className={`w-8 h-8 flex items-center justify-center text-sm rounded-full transition-colors ${
-                                            currentPage === page
-                                                ? 'bg-black text-white'
-                                                : 'hover:bg-gray-100 text-gray-600 cursor-pointer'
-                                        }`}
-                                    >
-                                        {page}
-                                    </button>
-                                ))}
-                                {currentPage < totalPages && (
-                                    <button
-                                        onClick={() => {
-                                            setCurrentPage(prev => prev + 1);
-                                            window.scrollTo(0, 0);
-                                        }}
-                                        className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 text-gray-600 text-sm rounded-full cursor-pointer"
-                                    >
-                                        <ChevronRightIcon className="w-3 h-3" />
-                                    </button>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                </div>
-             </div>
-        )}
+      <main className="w-full flex-grow relative">
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            <Route path="/coming-soon" element={
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
+                 <ComingSoon title={location.state?.title || 'Đang cập nhật'} onGoHome={goHome} />
+              </motion.div>
+            } />
+            <Route path="/checkout" element={
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
+                 <Checkout 
+                    cartItems={cart} 
+                    onPlaceOrder={handlePlaceOrder}
+                 />
+              </motion.div>
+            } />
+            <Route path="/product/:slug" element={
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
+                 {selectedProduct && (
+                   <div className="px-6 lg:px-10 pb-20">
+                      <ProductDetail 
+                          product={selectedProduct}
+                          allProducts={products}
+                          settings={appSettings}
+                          onAddToCart={addToCart}
+                          onBuyNow={handleBuyNow}
+                          onRelatedClick={handleProductClick}
+                      />
+                   </div>
+                 )}
+              </motion.div>
+            } />
+            <Route path="/category/:slug" element={
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
+                 <HomeView />
+              </motion.div>
+            } />
+            <Route path="/" element={
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
+                 <HomeView />
+              </motion.div>
+            } />
+          </Routes>
+        </AnimatePresence>
       </main>
 
       <Footer settings={appSettings} />

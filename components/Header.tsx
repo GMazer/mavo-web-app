@@ -7,9 +7,10 @@ interface HeaderProps {
   onOpenCart: () => void;
   onLogoClick: () => void;
   onSearchClick: () => void;
+  onNavClick: (view: string, title?: string) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ cartCount, onOpenCart, onLogoClick, onSearchClick }) => {
+const Header: React.FC<HeaderProps> = ({ cartCount, onOpenCart, onLogoClick, onSearchClick, onNavClick }) => {
   // Base style for nav links
   const navLinkBase = "relative py-2 transition-colors duration-300 inline-block";
   
@@ -34,17 +35,17 @@ const Header: React.FC<HeaderProps> = ({ cartCount, onOpenCart, onLogoClick, onS
           {/* Desktop Nav - Aligned Left next to Logo */}
           <nav className="hidden lg:flex items-center space-x-8 text-sm text-gray-600 tracking-wide uppercase">
             {/* Standard links turn Red #E71313 on hover */}
-            <a href="#" onClick={(e) => { e.preventDefault(); onLogoClick(); }} className={`${navLinkBase} ${hoverEffect} hover:text-[#E71313]`}>QUẦN ÁO</a>
-            <a href="#" className={`${navLinkBase} ${hoverEffect} hover:text-[#E71313]`}>GIÀY DÉP</a>
-            <a href="#" className={`${navLinkBase} ${hoverEffect} hover:text-[#E71313]`}>TÚI VÀ PHỤ KIỆN</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); onNavClick('home'); }} className={`${navLinkBase} ${hoverEffect} hover:text-[#E71313]`}>QUẦN ÁO</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); onNavClick('coming-soon', 'GIÀY DÉP'); }} className={`${navLinkBase} ${hoverEffect} hover:text-[#E71313]`}>GIÀY DÉP</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); onNavClick('coming-soon', 'TÚI VÀ PHỤ KIỆN'); }} className={`${navLinkBase} ${hoverEffect} hover:text-[#E71313]`}>TÚI VÀ PHỤ KIỆN</a>
             
             {/* Sale Off starts Black, turns Red #E71313 on hover */}
-            <a href="#" className={`${navLinkBase} ${hoverEffect} font-bold text-black hover:text-[#E71313]`}>SALE OFF</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); onNavClick('sale-off'); }} className={`${navLinkBase} ${hoverEffect} font-bold text-black hover:text-[#E71313]`}>SALE OFF</a>
             
-            <a href="#" className={`${navLinkBase} ${hoverEffect} hover:text-[#E71313]`}>BỘ SƯU TẬP</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); onNavClick('coming-soon', 'BỘ SƯU TẬP'); }} className={`${navLinkBase} ${hoverEffect} hover:text-[#E71313]`}>BỘ SƯU TẬP</a>
             
             {/* Changed to match other items: Starts Gray (inherited), turns Red #E71313 on hover */}
-            <a href="#" className={`${navLinkBase} ${hoverEffect} hover:text-[#E71313]`}>TRÌNH DIỄN THỜI TRANG</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); onNavClick('coming-soon', 'TRÌNH DIỄN THỜI TRANG'); }} className={`${navLinkBase} ${hoverEffect} hover:text-[#E71313]`}>TRÌNH DIỄN THỜI TRANG</a>
           </nav>
 
           {/* Icons & Actions - Aligned Right */}

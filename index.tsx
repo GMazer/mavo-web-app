@@ -1,8 +1,10 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { ToastProvider } from './context/ToastContext';
+import { LanguageProvider } from './context/LanguageContext';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -12,8 +14,12 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <ToastProvider>
-      <App />
-    </ToastProvider>
+    <BrowserRouter>
+      <LanguageProvider>
+        <ToastProvider>
+          <App />
+        </ToastProvider>
+      </LanguageProvider>
+    </BrowserRouter>
   </React.StrictMode>
 );
