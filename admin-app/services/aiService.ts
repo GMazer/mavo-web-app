@@ -6,7 +6,7 @@ export const generateProductDescription = async (
   gender: string,
   category: string,
   colors: string[]
-): Promise<string> => {
+): Promise<{ description: string; highlights: string }> => {
   try {
     const res = await fetch(`${API_BASE}/ai/generate-description`, {
       method: 'POST',
@@ -26,7 +26,10 @@ export const generateProductDescription = async (
     }
 
     const data = await res.json();
-    return data.text || '';
+    return {
+      description: data.description || '',
+      highlights: data.highlights || ''
+    };
   } catch (error) {
     console.error("Error generating description:", error);
     throw new Error("Không thể tạo mô tả bằng AI lúc này.");

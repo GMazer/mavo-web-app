@@ -127,14 +127,15 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialProduct, onCancel, onS
         }
         setGeneratingDesc(true);
         try {
-            const desc = await generateProductDescription(
+            const { description, highlights } = await generateProductDescription(
                 product.name,
                 product.material || '',
                 product.gender || 'FEMALE',
                 product.category || 'Quần áo',
                 (product.colors || []).map(c => c.name)
             );
-            handleChange('description', desc);
+            handleChange('description', description);
+            handleChange('highlights', highlights);
         } catch (error) {
             alert("Không thể tạo mô tả bằng AI. Vui lòng thử lại.");
         } finally {
