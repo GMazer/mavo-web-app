@@ -14,20 +14,19 @@ app.post('/generate-description', async (c) => {
         }
 
         const ai = new GoogleGenAI({ apiKey });
-        const prompt = `Bạn là một chuyên gia viết nội dung bán hàng thời trang (copywriter) chuyên nghiệp.
-Hãy viết một đoạn mô tả sản phẩm thật hấp dẫn, thu hút khách hàng dựa trên các thông tin sau:
-- Tên sản phẩm: ${name}
-- Chất liệu: ${material || 'Không xác định'}
-- Dành cho: ${gender === 'FEMALE' ? 'Nữ' : gender === 'MALE' ? 'Nam' : 'Unisex'}
-- Danh mục: ${category}
-- Màu sắc: ${colors && colors.length > 0 ? colors.join(', ') : 'Nhiều màu'}
+        const prompt = `Hãy tạo nội dung mô tả sản phẩm theo đúng mẫu định dạng sau (giữ nguyên các tiêu đề):
 
-Yêu cầu:
-- Viết bằng tiếng Việt, giọng văn thanh lịch, hiện đại, cuốn hút.
-- Nêu bật được ưu điểm của chất liệu và kiểu dáng.
-- Chia thành các đoạn ngắn dễ đọc, có thể dùng bullet points (gạch đầu dòng) cho các đặc điểm nổi bật.
-- Không cần viết tiêu đề chính, chỉ cần nội dung mô tả.
-- Độ dài khoảng 150 - 250 từ.`;
+THÔNG TIN SẢN PHẨM
+Sản Phẩm: ${name}
+Chất Vải: ${material || 'Vải cao cấp'}
+Dòng sản phẩm: ${gender}
+[Viết một câu slogan ngắn gọn, khoảng 20-30 từ, mang phong cách trẻ trung, năng động và hiện đại, ví dụ: "Thổi hồn vào những thiết kế Mavo đem đến cho bạn trải nghiệm dòng sản phẩm với phong cách trẻ trung, năng động và hiện đại."]
+
+Thông tin đầu vào:
+- Tên: ${name}
+- Chất liệu: ${material}
+- Danh mục: ${category}
+- Màu sắc: ${colors && colors.length > 0 ? colors.join(', ') : ''}`;
 
         const response = await ai.models.generateContent({
             model: "gemini-3-flash-preview",
